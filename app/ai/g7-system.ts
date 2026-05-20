@@ -21,7 +21,7 @@ type Dish = {
 
 function getPrice(name: string) {
   const item = ingredientDB.find(i => i.name === name)
-  return item ? item.price : 1
+  return item ? Number((item as any).price ?? 1) : 1
 }
 
 function buildIngredient(name: string, grams: number): Ingredient {
