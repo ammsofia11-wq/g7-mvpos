@@ -81,7 +81,7 @@ export function generateG7WeeklySystem(plan: G7Plan): G7WeeklySystem {
       protein: meal.protein,
       carbs: meal.carbs,
       fat: meal.fat,
-      kitchenMode: meal.kitchenOS.productionMode,
+      kitchenMode: "HOME_PREP",
       prepFocus: PREP_FOCUS[index],
     }
   })
