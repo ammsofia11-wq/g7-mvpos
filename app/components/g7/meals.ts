@@ -1,5 +1,39 @@
 import { PlanKey } from "./plans"
 
+import {
+  getMasterMeals,
+  getPlanScaling,
+  MasterMeal,
+} from "./master-meals"
+
+import {
+  getDefaultPortionMatrixPlan,
+  getPortionTargetForMeal,
+  PortionMealRole,
+} from "./portion-matrix"
+
+import {
+  calculateNutritionFromRaw,
+} from "./nutrition-calculator"
+
+import {
+  scaleRawIngredientsForPlan,
+} from "./portion-scaler"
+
+import {
+  CoachMacroPresetId,
+  getMealMacroSplit,
+} from "./macro-distribution"
+
+import {
+  calculateMacroGap,
+} from "./macro-gap-engine"
+
+import {
+  applyMacroAdjustmentsToRaw,
+  buildMacroAdjustments,
+} from "./macro-adjustment-engine"
+
 export type MealRole =
   | "BREAKFAST"
   | "LUNCH"
@@ -8,17 +42,69 @@ export type MealRole =
 export type MealStep = {
   title: string
   body: string
-  image: string
+}
+
+export type CarbType =
+  | "BREAD"
+  | "OATS"
+  | "POTATO"
+  | "RICE"
+  | "PASTA"
+  | "WRAP"
+  | "SHAKE"
+  | "MIXED"
+
+export type ProteinFamily =
+  | "EGGS"
+  | "CHICKEN"
+  | "BEEF"
+  | "TUNA"
+  | "FISH"
+  | "WHEY"
+  | "MIXED"
+
+export type MealTexture =
+  | "SOFT"
+  | "CREAMY"
+  | "SAUCY"
+  | "CRUNCHY"
+  | "LIQUID"
+
+export type DigestionLoad =
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH"
+
+export type DayType =
+  | "PERFORMANCE"
+  | "GLYCOGEN"
+  | "STREET_FIT"
+  | "MIDWEEK_LIGHT"
+  | "COMFORT"
+  | "RECOVERY"
+  | "FRESH_RESET"
+
+export type MacroStatus =
+  | "UNDER"
+  | "ON_TARGET"
+  | "OVER"
+
+export type MealAdjustment = {
+  ingredient: string
+  increaseGrams: number
+  reason: string
 }
 
 export type Meal = {
+  id: string
   day: string
   role: MealRole
 
   title: string
   subtitle: string
 
-  mealPurpose: string
+  purpose: string
+  icon: string
 
   kcal: number
   protein: number
@@ -26,492 +112,716 @@ export type Meal = {
   fat: number
   fiber: number
 
+  targetProtein: number
+  targetCarbs: number
+  targetFat: number
+
+  proteinGap: number
+  carbGap: number
+  fatGap: number
+
+  proteinStatus: MacroStatus
+  carbStatus: MacroStatus
+  fatStatus: MacroStatus
+
+  macroAdjustments: MealAdjustment[]
+  adjustmentSummary: string[]
+
   hero: string
 
   raw: [string, string][]
   cooked: [string, string][]
 
   steps: MealStep[]
+
+  flavorBaseId: string
+  flavorBaseTitle: string
+  smartTags: string[]
+
+  dayType: DayType
+
+  digestionLoad: DigestionLoad
+
+  texture: MealTexture
+
+  carbType: CarbType
+
+  proteinFamily: ProteinFamily
+
+  smartRole: string
+
+  weekLogic: string
+
+  proteinCookedWeight: number
+  carbCookedWeight: number
 }
 
-export const LEAN_BULK_MEALS: Meal[] = [
+const DEFAULT_PORTION_MATRIX =
+  getDefaultPortionMatrixPlan()
+
+const DAY_INTELLIGENCE: Record<
+  number,
   {
-    day: "Day 1",
+    dayType: DayType
+    weekLogic: string
+  }
+> = {
+  1: {
+    dayType: "PERFORMANCE",
+    weekLogic:
+      "Performance foundation day with stable energy and structured adherence.",
+  },
 
-    role: "BREAKFAST",
+  2: {
+    dayType: "GLYCOGEN",
+    weekLogic:
+      "Higher-carb performance rhythm supporting glycogen recovery.",
+  },
 
-    title: "Protein Oats Power Bowl",
-    subtitle: "Lean Muscle Breakfast",
+  3: {
+    dayType: "STREET_FIT",
+    weekLogic:
+      "Street-food psychological adherence without breaking portion structure.",
+  },
 
-    mealPurpose:
-      "High protein breakfast for stable energy and muscle recovery.",
+  4: {
+    dayType: "MIDWEEK_LIGHT",
+    weekLogic:
+      "Midweek digestion control and lighter operational rhythm.",
+  },
 
-    kcal: 540,
-    protein: 42,
-    carbs: 48,
-    fat: 14,
-    fiber: 9,
+  5: {
+    dayType: "COMFORT",
+    weekLogic:
+      "Comfort-food adherence structure using burger and kofta systems.",
+  },
+
+  6: {
+    dayType: "RECOVERY",
+    weekLogic:
+      "Recovery-focused meals with easier digestion and stable energy.",
+  },
+
+  7: {
+    dayType: "FRESH_RESET",
+    weekLogic:
+      "Fresh reset day using lighter proteins and lower digestion load.",
+  },
+}
+
+function includesAny(
+  text: string,
+  words: string[]
+) {
+  const normalized = text.toLowerCase()
+
+  return words.some((word) =>
+    normalized.includes(word.toLowerCase())
+  )
+}
+
+function detectProteinFamily(
+  meal: MasterMeal
+): ProteinFamily {
+  const text = `${meal.title} ${meal.subtitle}`
+
+  if (includesAny(text, ["chicken"]))
+    return "CHICKEN"
+
+  if (
+    includesAny(text, [
+      "beef",
+      "kofta",
+      "hawawshi",
+    ])
+  )
+    return "BEEF"
+
+  if (includesAny(text, ["tuna"]))
+    return "TUNA"
+
+  if (includesAny(text, ["fish"]))
+    return "FISH"
+
+  if (
+    includesAny(text, [
+      "whey",
+      "protein shake",
+      "protein oats",
+    ])
+  )
+    return "WHEY"
+
+  if (
+    includesAny(text, [
+      "egg",
+      "omelette",
+      "shakshuka",
+    ])
+  )
+    return "EGGS"
+
+  return "MIXED"
+}
+
+function detectCarbType(
+  meal: MasterMeal
+): CarbType {
+  const text = `${meal.title} ${meal.subtitle}`
+
+  if (includesAny(text, ["rice"]))
+    return "RICE"
+
+  if (includesAny(text, ["pasta"]))
+    return "PASTA"
+
+  if (
+    includesAny(text, [
+      "potato",
+      "sweet potato",
+    ])
+  )
+    return "POTATO"
+
+  if (
+    includesAny(text, [
+      "wrap",
+      "tortilla",
+      "quesadilla",
+    ])
+  )
+    return "WRAP"
+
+  if (includesAny(text, ["oats"]))
+    return "OATS"
+
+  if (includesAny(text, ["shake"]))
+    return "SHAKE"
+
+  if (
+    includesAny(text, [
+      "bread",
+      "bun",
+      "hawawshi",
+    ])
+  )
+    return "BREAD"
+
+  return "MIXED"
+}
+
+function detectTexture(
+  meal: MasterMeal
+): MealTexture {
+  const text = `${meal.title} ${meal.subtitle}`
+
+  if (includesAny(text, ["shake"]))
+    return "LIQUID"
+
+  if (
+    includesAny(text, [
+      "oats",
+      "pink sauce",
+      "creamy",
+      "yogurt",
+    ])
+  )
+    return "CREAMY"
+
+  if (
+    includesAny(text, [
+      "quesadilla",
+      "burger",
+      "hawawshi",
+      "wrap",
+    ])
+  )
+    return "CRUNCHY"
+
+  if (
+    includesAny(text, [
+      "kofta",
+      "pasta",
+      "tomato",
+      "shakshuka",
+    ])
+  )
+    return "SAUCY"
+
+  return "SOFT"
+}
+
+function detectDigestionLoad(
+  carbType: CarbType,
+  proteinFamily: ProteinFamily
+): DigestionLoad {
+  if (
+    carbType === "BREAD" &&
+    proteinFamily === "BEEF"
+  ) {
+    return "HIGH"
+  }
+
+  if (
+    proteinFamily === "TUNA" ||
+    proteinFamily === "FISH" ||
+    carbType === "SHAKE"
+  ) {
+    return "LOW"
+  }
+
+  return "MEDIUM"
+}
+
+function detectFlavorBase(
+  proteinFamily: ProteinFamily
+) {
+  if (proteinFamily === "CHICKEN") {
+    return {
+      flavorBaseId:
+        "week1-chicken-g7-spices",
+
+      flavorBaseTitle:
+        "Chicken G7 Spice Base",
+    }
+  }
+
+  if (proteinFamily === "BEEF") {
+    return {
+      flavorBaseId:
+        "week1-beef-kofta",
+
+      flavorBaseTitle:
+        "Beef Kofta Base",
+    }
+  }
+
+  if (
+    proteinFamily === "TUNA" ||
+    proteinFamily === "FISH"
+  ) {
+    return {
+      flavorBaseId:
+        "week1-fish-light",
+
+      flavorBaseTitle:
+        "Light Fish + Tuna Base",
+    }
+  }
+
+  return {
+    flavorBaseId:
+      "week1-general-g7-base",
+
+    flavorBaseTitle:
+      "G7 General Base",
+  }
+}
+
+function mapRoleToPortionRole(
+  role: MealRole
+): PortionMealRole {
+  if (role === "BREAKFAST")
+    return "BREAKFAST"
+
+  if (role === "LUNCH")
+    return "LUNCH"
+
+  return "DINNER"
+}
+
+function getPortionPlanId(
+  planId: PlanKey
+) {
+  if (planId === "shredding") {
+    return "shredding-3-meals"
+  }
+
+  if (planId === "lean_bulk") {
+    return "lean-bulk-3-meals"
+  }
+
+  if (planId === "mass_gainer") {
+    return "mass-gainer-3-meals"
+  }
+
+  return DEFAULT_PORTION_MATRIX.id
+}
+
+function getCoachPresetFromPlan(
+  planId: PlanKey
+): CoachMacroPresetId {
+  if (planId === "shredding") {
+    return "lean_cut"
+  }
+
+  if (planId === "lean_bulk") {
+    return "gym_standard"
+  }
+
+  if (planId === "mass_gainer") {
+    return "lean_bulk"
+  }
+
+  if (planId === "premium_chef") {
+    return "athlete_performance"
+  }
+
+  return "gym_standard"
+}
+
+function scaleMeal(
+  meal: MasterMeal,
+  planId: PlanKey
+): Meal {
+  getPlanScaling(planId)
+
+  const portionRole =
+    mapRoleToPortionRole(meal.role)
+
+  const portionPlanId =
+    getPortionPlanId(planId)
+
+  const coachPresetId =
+    getCoachPresetFromPlan(planId)
+
+  const macroTarget =
+    getMealMacroSplit(
+      coachPresetId,
+      meal.role
+    )
+
+  const proteinFamily =
+    detectProteinFamily(meal)
+
+  const carbType =
+    detectCarbType(meal)
+
+  const texture =
+    detectTexture(meal)
+
+  const digestionLoad =
+    detectDigestionLoad(
+      carbType,
+      proteinFamily
+    )
+
+  const flavorBase =
+    detectFlavorBase(
+      proteinFamily
+    )
+
+  const portionTarget =
+    getPortionTargetForMeal(
+      portionPlanId,
+      portionRole
+    ) ?? {
+      proteinCookedWeight:
+        meal.proteinCookedWeight ??
+        200,
+
+      carbCookedWeight:
+        meal.carbCookedWeight ??
+        150,
+
+      fatLevel: "LOW",
+    }
+
+  const proteinCookedWeight =
+    portionTarget.proteinCookedWeight
+
+  const carbCookedWeight =
+    portionTarget.carbCookedWeight
+
+  const scaledRaw =
+    scaleRawIngredientsForPlan(
+      meal.raw,
+      planId
+    )
+
+  const initialNutrition =
+    calculateNutritionFromRaw(
+      scaledRaw
+    )
+
+  const initialMacroGap =
+    calculateMacroGap({
+      actualProtein:
+        initialNutrition.protein,
+
+      actualCarbs:
+        initialNutrition.carbs,
+
+      actualFat:
+        initialNutrition.fat,
+
+      targetProtein:
+        macroTarget.protein,
+
+      targetCarbs:
+        macroTarget.carbs,
+
+      targetFat:
+        macroTarget.fat,
+    })
+
+  const macroAdjustments =
+    buildMacroAdjustments({
+      proteinGap:
+        initialMacroGap.proteinGap,
+
+      carbGap:
+        initialMacroGap.carbGap,
+
+      fatGap:
+        initialMacroGap.fatGap,
+
+      carbType,
+
+      proteinFamily,
+    })
+
+  const adjustedRaw =
+    applyMacroAdjustmentsToRaw(
+      scaledRaw,
+      macroAdjustments.adjustments
+    )
+
+  const nutrition =
+    calculateNutritionFromRaw(
+      adjustedRaw
+    )
+
+  const protein =
+    nutrition.protein
+
+  const carbs =
+    nutrition.carbs
+
+  const fat =
+    nutrition.fat
+
+  const kcal =
+    nutrition.kcal
+
+  const fiber =
+    nutrition.fiber
+
+  const macroGap =
+    calculateMacroGap({
+      actualProtein: protein,
+      actualCarbs: carbs,
+      actualFat: fat,
+
+      targetProtein:
+        macroTarget.protein,
+
+      targetCarbs:
+        macroTarget.carbs,
+
+      targetFat:
+        macroTarget.fat,
+    })
+
+  const dayIntelligence =
+    DAY_INTELLIGENCE[
+      meal.day
+    ] ?? DAY_INTELLIGENCE[1]
+
+  return {
+    id: meal.id,
+
+    day: `Day ${meal.day}`,
+
+    role: meal.role,
+
+    title: meal.title,
+
+    subtitle: meal.subtitle,
+
+    purpose: meal.purpose,
+
+    icon: meal.icon,
+
+    kcal,
+
+    protein,
+
+    carbs,
+
+    fat,
+
+    fiber,
+
+    targetProtein:
+      macroTarget.protein,
+
+    targetCarbs:
+      macroTarget.carbs,
+
+    targetFat:
+      macroTarget.fat,
+
+    proteinGap:
+      macroGap.proteinGap,
+
+    carbGap:
+      macroGap.carbGap,
+
+    fatGap:
+      macroGap.fatGap,
+
+    proteinStatus:
+      macroGap.proteinStatus,
+
+    carbStatus:
+      macroGap.carbStatus,
+
+    fatStatus:
+      macroGap.fatStatus,
+
+    macroAdjustments:
+      macroAdjustments.adjustments,
+
+    adjustmentSummary:
+      macroAdjustments.adjustments.map(
+        (item) =>
+          `+${item.increaseGrams}g ${item.ingredient}`
+      ),
 
     hero: "",
 
-    raw: [
-      ["Oats", "80g"],
-      ["Whey Protein", "1 scoop"],
-      ["Banana", "120g"],
-      ["Peanut Butter", "15g"],
+    raw: adjustedRaw,
+
+    cooked: [
+      [
+        "Cooked Protein Portion",
+        `${proteinCookedWeight}g`,
+      ],
+
+      [
+        "Cooked Carb Portion",
+        `${carbCookedWeight}g`,
+      ],
+
+      ...meal.cooked,
     ],
 
-    cooked: [["Prepared Bowl", "1 serving"]],
+    steps: meal.steps.map(
+      (step) => ({
+        title: step.title,
+        body: step.body,
+      })
+    ),
 
-    steps: [
-      {
-        title: "Prepare Oats",
-        body:
-          "Add oats and milk into a saucepan and cook on medium heat for 4–5 minutes until creamy.",
-        image: "",
-      },
+    flavorBaseId:
+      flavorBase.flavorBaseId,
 
-      {
-        title: "Add Protein",
-        body:
-          "Remove from heat, add whey protein slowly and mix well to avoid clumps.",
-        image: "",
-      },
+    flavorBaseTitle:
+      flavorBase.flavorBaseTitle,
 
-      {
-        title: "Final Toppings",
-        body:
-          "Top with sliced banana and peanut butter before serving.",
-        image: "",
-      },
-    ],
-  },
-
-  {
-    day: "Day 1",
-
-    role: "LUNCH",
-
-    title: "Chicken Rice Performance Bowl",
-    subtitle: "Athlete Lunch System",
-
-    mealPurpose:
-      "Balanced lunch for performance and lean muscle support.",
-
-    kcal: 690,
-    protein: 58,
-    carbs: 65,
-    fat: 16,
-    fiber: 8,
-
-    hero: "",
-
-    raw: [
-      ["Chicken Breast", "250g"],
-      ["Rice", "90g raw"],
-      ["Olive Oil", "10g"],
-      ["Mixed Vegetables", "150g"],
+    smartTags: [
+      proteinFamily,
+      carbType,
+      texture,
+      digestionLoad,
+      meal.role,
     ],
 
-    cooked: [["Cooked Chicken", "180g"]],
-
-    steps: [
-      {
-        title: "Season Chicken",
-        body:
-          "Season chicken with salt, pepper, paprika, and garlic powder.",
-        image: "",
-      },
-
-      {
-        title: "Cook Rice",
-        body:
-          "Boil rice until fluffy and fully cooked.",
-        image: "",
-      },
-
-      {
-        title: "Final Assembly",
-        body:
-          "Serve chicken over rice with vegetables and olive oil drizzle.",
-        image: "",
-      },
-    ],
-  },
-
-  {
-    day: "Day 1",
-
-    role: "DINNER",
-
-    title: "Beef Pasta Recovery Plate",
-    subtitle: "Recovery Dinner",
-
-    mealPurpose:
-      "Night recovery meal with quality protein and carbs.",
-
-    kcal: 760,
-    protein: 60,
-    carbs: 72,
-    fat: 18,
-    fiber: 10,
-
-    hero: "",
-
-    raw: [
-      ["Lean Beef", "220g"],
-      ["Pasta", "100g raw"],
-      ["Tomato Sauce", "120g"],
-      ["Parmesan", "15g"],
-    ],
-
-    cooked: [["Cooked Pasta", "280g"]],
-
-    steps: [
-      {
-        title: "Cook Pasta",
-        body:
-          "Boil pasta in salted water until al dente.",
-        image: "",
-      },
-
-      {
-        title: "Prepare Beef Sauce",
-        body:
-          "Cook beef with tomato sauce and seasonings until rich and thick.",
-        image: "",
-      },
-
-      {
-        title: "Plate Meal",
-        body:
-          "Serve pasta with beef sauce and parmesan topping.",
-        image: "",
-      },
-    ],
-  },
-]
-
-export const SHREDDING_MEALS: Meal[] = [
-  {
-    day: "Day 1",
-
-    role: "BREAKFAST",
-
-    title: "Egg White Cutting Plate",
-    subtitle: "Low Calorie High Protein",
-
-    mealPurpose:
-      "High protein breakfast with controlled calories.",
-
-    kcal: 360,
-    protein: 42,
-    carbs: 24,
-    fat: 8,
-    fiber: 6,
-
-    hero: "",
-
-    raw: [
-      ["Egg Whites", "250g"],
-      ["Whole Egg", "1"],
-      ["Baladi Bread", "50g"],
-      ["Cucumber + Lettuce", "150g"],
-    ],
-
-    cooked: [["Egg Plate", "1 serving"]],
-
-    steps: [
-      {
-        title: "Prepare Eggs",
-        body:
-          "Cook egg whites and whole egg on medium heat using nonstick pan.",
-        image: "",
-      },
-
-      {
-        title: "Prepare Salad",
-        body:
-          "Slice cucumber and lettuce and prepare fresh side salad.",
-        image: "",
-      },
-
-      {
-        title: "Serve Plate",
-        body:
-          "Serve eggs with baladi bread and salad.",
-        image: "",
-      },
-    ],
-  },
-
-  {
-    day: "Day 1",
-
-    role: "LUNCH",
-
-    title: "Grilled Chicken Potato Box",
-    subtitle: "Cutting Lunch",
-
-    mealPurpose:
-      "Lean protein with controlled carbs for fat loss.",
-
-    kcal: 520,
-    protein: 58,
-    carbs: 42,
-    fat: 8,
-    fiber: 7,
-
-    hero: "",
-
-    raw: [
-      ["Chicken Breast", "250g"],
-      ["Potato", "250g raw"],
-      ["Yogurt Sauce", "60g"],
-      ["Green Salad", "150g"],
-    ],
-
-    cooked: [["Cooked Chicken", "180g"]],
-
-    steps: [
-      {
-        title: "Season Chicken",
-        body:
-          "Season chicken using paprika, garlic, salt, and black pepper.",
-        image: "",
-      },
-
-      {
-        title: "Cook Potatoes",
-        body:
-          "Bake or air fry potatoes until golden.",
-        image: "",
-      },
-
-      {
-        title: "Serve Meal",
-        body:
-          "Plate chicken with potatoes and yogurt sauce.",
-        image: "",
-      },
-    ],
-  },
-
-  {
-    day: "Day 1",
-
-    role: "DINNER",
-
-    title: "Tuna Yogurt Salad Bowl",
-    subtitle: "Light Recovery Dinner",
-
-    mealPurpose:
-      "Light dinner for satiety and recovery.",
-
-    kcal: 420,
-    protein: 48,
-    carbs: 28,
-    fat: 10,
-    fiber: 8,
-
-    hero: "",
-
-    raw: [
-      ["Tuna in Water", "160g"],
-      ["Greek Yogurt", "100g"],
-      ["Corn", "50g"],
-      ["Mixed Salad", "200g"],
-    ],
-
-    cooked: [["Tuna Salad", "1 bowl"]],
-
-    steps: [
-      {
-        title: "Prepare Salad",
-        body:
-          "Wash and prepare mixed salad vegetables.",
-        image: "",
-      },
-
-      {
-        title: "Mix Dressing",
-        body:
-          "Combine yogurt with seasoning and lemon juice.",
-        image: "",
-      },
-
-      {
-        title: "Assemble Bowl",
-        body:
-          "Add tuna, salad, corn, and dressing into serving bowl.",
-        image: "",
-      },
-    ],
-  },
-]
-
-export const MASS_GAINER_MEALS: Meal[] = [
-  {
-    day: "Day 1",
-
-    role: "BREAKFAST",
-
-    title: "Mass Gainer Oats Shake",
-    subtitle: "High Calorie Breakfast",
-
-    mealPurpose:
-      "Easy calories for muscle gain.",
-
-    kcal: 780,
-    protein: 55,
-    carbs: 95,
-    fat: 20,
-    fiber: 10,
-
-    hero: "",
-
-    raw: [
-      ["Oats", "100g"],
-      ["Milk", "300ml"],
-      ["Banana", "150g"],
-      ["Peanut Butter", "25g"],
-    ],
-
-    cooked: [["Shake", "1 large serving"]],
-
-    steps: [
-      {
-        title: "Blend Ingredients",
-        body:
-          "Add all ingredients into blender and blend until smooth.",
-        image: "",
-      },
-
-      {
-        title: "Adjust Texture",
-        body:
-          "Add ice or milk based on preferred consistency.",
-        image: "",
-      },
-
-      {
-        title: "Serve Shake",
-        body:
-          "Serve immediately for best flavor and texture.",
-        image: "",
-      },
-    ],
-  },
-
-  {
-    day: "Day 1",
-
-    role: "LUNCH",
-
-    title: "Beef Rice Mass Bowl",
-    subtitle: "Heavy Muscle Lunch",
-
-    mealPurpose:
-      "High calorie protein and carb meal.",
-
-    kcal: 950,
-    protein: 70,
-    carbs: 105,
-    fat: 24,
-    fiber: 8,
-
-    hero: "",
-
-    raw: [
-      ["Lean Beef", "280g"],
-      ["Rice", "130g raw"],
-      ["Olive Oil", "15g"],
-      ["Vegetables", "120g"],
-    ],
-
-    cooked: [["Beef Rice Bowl", "1 serving"]],
-
-    steps: [
-      {
-        title: "Cook Beef",
-        body:
-          "Cook beef on high heat until caramelized and juicy.",
-        image: "",
-      },
-
-      {
-        title: "Prepare Rice",
-        body:
-          "Cook rice until fluffy and fully expanded.",
-        image: "",
-      },
-
-      {
-        title: "Build Bowl",
-        body:
-          "Serve beef over rice with vegetables and olive oil.",
-        image: "",
-      },
-    ],
-  },
-
-  {
-    day: "Day 1",
-
-    role: "DINNER",
-
-    title: "Chicken Pasta Bulk Plate",
-    subtitle: "Bulk Dinner",
-
-    mealPurpose:
-      "High carb dinner for recovery and growth.",
-
-    kcal: 900,
-    protein: 68,
-    carbs: 110,
-    fat: 18,
-    fiber: 9,
-
-    hero: "",
-
-    raw: [
-      ["Chicken Breast", "280g"],
-      ["Pasta", "130g raw"],
-      ["Tomato Sauce", "150g"],
-      ["Cheese", "20g"],
-    ],
-
-    cooked: [["Chicken Pasta", "1 serving"]],
-
-    steps: [
-      {
-        title: "Boil Pasta",
-        body:
-          "Cook pasta until soft but still slightly firm.",
-        image: "",
-      },
-
-      {
-        title: "Cook Chicken",
-        body:
-          "Season and grill chicken until fully cooked.",
-        image: "",
-      },
-
-      {
-        title: "Final Plating",
-        body:
-          "Combine pasta, sauce, chicken, and cheese before serving.",
-        image: "",
-      },
-    ],
-  },
-]
-
-export function getMealsForPlan(planId: PlanKey): Meal[] {
-  if (planId === "shredding") return SHREDDING_MEALS
-
-  if (planId === "mass_gainer") return MASS_GAINER_MEALS
-
-  return LEAN_BULK_MEALS
+    dayType:
+      dayIntelligence.dayType,
+
+    digestionLoad,
+
+    texture,
+
+    carbType,
+
+    proteinFamily,
+
+    smartRole:
+      meal.role === "BREAKFAST"
+        ? "Morning macro target meal."
+        : meal.role === "LUNCH"
+        ? "Main coach-macro performance meal."
+        : "Recovery coach-macro meal.",
+
+    weekLogic:
+      dayIntelligence.weekLogic,
+
+    proteinCookedWeight,
+
+    carbCookedWeight,
+  }
+}
+
+export function getMealsForPlan(
+  planId: PlanKey
+): Meal[] {
+  return getMasterMeals().map(
+    (meal) =>
+      scaleMeal(meal, planId)
+  )
+}
+
+export function getMealsGroupedByDay(
+  planId: PlanKey
+) {
+  const meals =
+    getMealsForPlan(planId)
+
+  const grouped: Record<
+    string,
+    Meal[]
+  > = {}
+
+  meals.forEach((meal) => {
+    if (!grouped[meal.day]) {
+      grouped[meal.day] = []
+    }
+
+    grouped[meal.day].push(meal)
+  })
+
+  return grouped
+}
+
+export function getDailyCalories(
+  meals: Meal[]
+) {
+  return meals.reduce(
+    (total, meal) =>
+      total + meal.kcal,
+    0
+  )
+}
+
+export function getDailyProtein(
+  meals: Meal[]
+) {
+  return meals.reduce(
+    (total, meal) =>
+      total + meal.protein,
+    0
+  )
+}
+
+export function getDailyCarbs(
+  meals: Meal[]
+) {
+  return meals.reduce(
+    (total, meal) =>
+      total + meal.carbs,
+    0
+  )
+}
+
+export function getDailyFat(
+  meals: Meal[]
+) {
+  return meals.reduce(
+    (total, meal) =>
+      total + meal.fat,
+    0
+  )
 }
