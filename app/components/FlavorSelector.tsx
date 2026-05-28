@@ -421,7 +421,7 @@ export default function FlavorSelector() {
 
                 <DecisionBox title="Kitchen OS Metadata">
                   <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                    <InfoCard title="Cost / Meal" value={meal.kitchenOS.costPerMeal} />
+                    
                     <InfoCard title="Shelf Life" value={meal.kitchenOS.shelfLife} />
                     <InfoCard title="Reheat" value={meal.kitchenOS.reheatMethod} />
                     <InfoCard title="Containers" value={meal.kitchenOS.prepContainers} />
