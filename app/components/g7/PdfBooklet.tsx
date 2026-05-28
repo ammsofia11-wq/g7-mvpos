@@ -8,9 +8,12 @@ import { getMealsForPlan, getMealsGroupedByDay, Meal } from "./meals"
 import { PlanKey } from "./plans"
 import { getPlanBranding } from "./plan-branding"
 
+export type PdfLanguage = "ar" | "en" | "bg"
+
 type PdfBookletProps = {
   selectedPlan: PlanKey
   clientName: string
+  language?: PdfLanguage
 }
 
 type GrocerySummaryItem = {
@@ -73,17 +76,31 @@ function buildWeeklyGroceryList(meals: Meal[]): GrocerySummaryItem[] {
           texts: [],
         }
 
-      if (normalized.amount.type === "grams") current.grams += normalized.amount.value
-      if (normalized.amount.type === "eggs") current.eggs += normalized.amount.value
-      if (normalized.amount.type === "cans") current.cans += normalized.amount.value
-      if (normalized.amount.type === "scoops") current.scoops += normalized.amount.value
+      if (normalized.amount.type === "grams") {
+        current.grams += normalized.amount.value
+      }
+
+      if (normalized.amount.type === "eggs") {
+        current.eggs += normalized.amount.value
+      }
+
+      if (normalized.amount.type === "cans") {
+        current.cans += normalized.amount.value
+      }
+
+      if (normalized.amount.type === "scoops") {
+        current.scoops += normalized.amount.value
+      }
 
       if (normalized.amount.type === "unit") {
         current.units[normalized.amount.unit] =
-          (current.units[normalized.amount.unit] ?? 0) + normalized.amount.value
+          (current.units[normalized.amount.unit] ?? 0) +
+          normalized.amount.value
       }
 
-      if (normalized.amount.type === "text") current.texts.push(normalized.amount.value)
+      if (normalized.amount.type === "text") {
+        current.texts.push(normalized.amount.value)
+      }
 
       map.set(key, current)
     })
@@ -134,6 +151,7 @@ function getMealRoleMeta(role: Meal["role"]) {
       label: "ENERGY",
       icon: "☀️",
       note: "فطار للطاقة وبداية اليوم.",
+      customerNote: "وجبة سهلة تساعدك تبدأ اليوم ببروتين وسعرات محسوبة.",
     }
   }
 
@@ -142,6 +160,7 @@ function getMealRoleMeta(role: Meal["role"]) {
       label: "ACTIVE",
       icon: "⚡",
       note: "غداء للطاقة والأداء خلال اليوم.",
+      customerNote: "وجبة أساسية معمولة عشان تشبعك وتخدم هدفك في التمرين.",
     }
   }
 
@@ -149,6 +168,7 @@ function getMealRoleMeta(role: Meal["role"]) {
     label: "RECOVERY",
     icon: "🌙",
     note: "عشاء للريكافري والشبع قبل النوم.",
+    customerNote: "وجبة ريكافري تساعدك تقفل اليوم من غير عشوائية.",
   }
 }
 
@@ -178,9 +198,94 @@ function getPrepWindow(day: string) {
   return "Fresh / Light Day · يوم أخف في نهاية الأسبوع"
 }
 
+function getClientFriendlyAdjustmentReason(ingredient: string) {
+  const lower = ingredient.toLowerCase()
+
+  if (lower.includes("chicken")) {
+    return "G7 adjusted the chicken amount to match your protein target."
+  }
+
+  if (lower.includes("beef")) {
+    return "G7 adjusted the beef amount to match your protein target."
+  }
+
+  if (lower.includes("fish")) {
+    return "G7 adjusted the fish amount to match your protein target."
+  }
+
+  if (lower.includes("tuna")) {
+    return "G7 adjusted the tuna amount to match your protein target."
+  }
+
+  if (
+    lower.includes("rice") ||
+    lower.includes("pasta") ||
+    lower.includes("potato") ||
+    lower.includes("bread") ||
+    lower.includes("tortilla") ||
+    lower.includes("oats")
+  ) {
+    return "G7 adjusted the carb amount to match your coach numbers."
+  }
+
+  if (
+    lower.includes("sauce") ||
+    lower.includes("fat") ||
+    lower.includes("mozzarella") ||
+    lower.includes("yogurt")
+  ) {
+    return "G7 adjusted the flavor/fat source without breaking your target."
+  }
+
+  return "G7 adjusted this ingredient so the meal fits your target."
+}
+
+function getClientFriendlyAdjustmentArabic(ingredient: string) {
+  const lower = ingredient.toLowerCase()
+
+  if (lower.includes("chicken")) {
+    return "G7 عدّل كمية الفراخ عشان توصل لهدف البروتين بتاعك."
+  }
+
+  if (lower.includes("beef")) {
+    return "G7 عدّل كمية اللحمة عشان توصل لهدف البروتين بتاعك."
+  }
+
+  if (lower.includes("fish")) {
+    return "G7 عدّل كمية السمك عشان توصل لهدف البروتين بتاعك."
+  }
+
+  if (lower.includes("tuna")) {
+    return "G7 عدّل كمية التونة عشان توصل لهدف البروتين بتاعك."
+  }
+
+  if (
+    lower.includes("rice") ||
+    lower.includes("pasta") ||
+    lower.includes("potato") ||
+    lower.includes("bread") ||
+    lower.includes("tortilla") ||
+    lower.includes("oats")
+  ) {
+    return "G7 عدّل كمية الكارب عشان الوجبة تطابق أرقام الكوتش."
+  }
+
+  if (
+    lower.includes("sauce") ||
+    lower.includes("fat") ||
+    lower.includes("mozzarella") ||
+    lower.includes("yogurt")
+  ) {
+    return "G7 ظبط الصوص أو مصدر الدهون عشان الطعم يفضل حلو والهدف يفضل محسوب."
+  }
+
+  return "G7 عدّل المكون ده عشان الوجبة تناسب هدفك."
+}
+
 export default function PdfBooklet({
   selectedPlan,
   clientName,
+  language = "ar",
 }: PdfBookletProps) {
   const branding = getPlanBranding(selectedPlan)
   const meals = getMealsForPlan(selectedPlan)
@@ -193,8 +298,76 @@ export default function PdfBooklet({
     0
   )
 
+  const estimatedMealCost =
+    estimatedTotal > 0 ? Math.round(estimatedTotal / 21) : 0
+
+  const isArabic = language === "ar"
+  const isEnglish = language === "en"
+  const isBulgarian = language === "bg"
+
+  const coverText = {
+    clientPdf: isBulgarian
+      ? "Персонализиран клиентски хранителен PDF"
+      : isEnglish
+      ? "Personalized Client Nutrition PDF"
+      : "Personalized Client Nutrition PDF",
+    clientSystem: isBulgarian
+      ? "Клиентска система"
+      : isEnglish
+      ? "Client System"
+      : "Client System",
+    coachNumbers: isBulgarian
+      ? "Твоят треньор ти даде числа"
+      : isEnglish
+      ? "Your Coach Gave You Numbers"
+      : "Your Coach Gave You Numbers",
+    systemLine: isBulgarian
+      ? "G7 ги превръща в реална хранителна система."
+      : isEnglish
+      ? "G7 turned them into a real food system."
+      : "G7 turned them into a real food system.",
+    supportLine: isBulgarian
+      ? "Треньорът ти даде числа. G7 ги превръща в пълна хранителна система."
+      : isEnglish
+      ? "Your coach gave you numbers. G7 turned them into a complete food system."
+      : "الكوتش اداك أرقام. G7 حولها لنظام أكل كامل.",
+    explanation: isBulgarian
+      ? "Този PDF не е просто списък с ястия. Това е 7-дневна chef-based хранителна система, изградена около твоя план, макроси, готвене и седмично пазаруване."
+      : isEnglish
+      ? "This PDF is not just a list of meals. It is a 7-day chef-based nutrition system built around your plan, your macros, your cooking rhythm, and your weekly shopping."
+      : "This PDF is not just a list of meals. It is a 7-day chef-based nutrition system built around your plan, your macros, your cooking rhythm, and your weekly shopping.",
+    overview: isBulgarian
+      ? "Преглед на системата"
+      : isEnglish
+      ? "System Overview"
+      : "System Overview",
+    whatYouGet: isBulgarian
+      ? "Какво получаваш"
+      : isEnglish
+      ? "What You Get"
+      : "What You Get",
+    whatYouGetSub: isBulgarian
+      ? "Пълен клиентски пакет"
+      : isEnglish
+      ? "Your full client package"
+      : "هتاخد إيه؟",
+    prepTitle: isBulgarian
+      ? "Седмичен метод за подготовка"
+      : isEnglish
+      ? "Weekly Prep Method"
+      : "طريقة التحضير الأسبوعية",
+    prepBody: isBulgarian
+      ? "Системата е направена да намали мисленето и да спести време: готвиш част от седмицата наведнъж, а останалите дни остават лесни."
+      : isEnglish
+      ? "The system is designed to reduce thinking and save time: cook part of the week once, then keep the remaining days easy and clear."
+      : "النظام معمول عشان يقلل التفكير والوقت: اطبخ جزء من الأسبوع مرة واحدة، وخلي باقي الأيام سهلة وواضحة.",
+  }
+
   return (
-    <div className="mx-auto w-full max-w-[760px] rounded-[26px] border border-[#22D3EE]/20 bg-[#020817] p-5 shadow-[0_0_40px_rgba(34,211,238,0.08)] print:max-w-none print:border-0 print:shadow-none">
+    <div
+      dir={isArabic ? "rtl" : "ltr"}
+      className="mx-auto w-full max-w-[760px] rounded-[26px] border border-[#22D3EE]/20 bg-[#020817] p-5 shadow-[0_0_40px_rgba(34,211,238,0.08)] print:max-w-none print:border-0 print:shadow-none"
+    >
       <section>
         <div className="flex items-start justify-between gap-5">
           <div>
@@ -205,17 +378,21 @@ export default function PdfBooklet({
             />
 
             <p className="mt-4 text-[9px] font-black uppercase tracking-[0.2em] text-white/45">
-              Personalized Client Nutrition PDF
+              {coverText.clientPdf}
             </p>
 
             <h1 className="mt-2 text-[34px] font-black leading-[0.95] text-white">
               {branding.publicName}
-              <span className="block text-[#B7F532]">Client System</span>
+              <span className="block text-[#B7F532]">
+                {coverText.clientSystem}
+              </span>
             </h1>
 
-            <p className="mt-1 text-[14px] font-black text-[#D8C56A]">
-              {branding.publicArabicName}
-            </p>
+            {isArabic && (
+              <p className="mt-1 text-[14px] font-black text-[#D8C56A]">
+                {branding.publicArabicName}
+              </p>
+            )}
 
             <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white/35">
               Internal Engine: {branding.internalName}
@@ -226,7 +403,7 @@ export default function PdfBooklet({
 
           <div className="rounded-[18px] border border-[#B7F532]/25 bg-black/25 px-4 py-3 text-right">
             <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45">
-              Price
+              {isBulgarian ? "Цена" : isEnglish ? "Price" : "Price"}
             </p>
 
             <p className="mt-1 text-[22px] font-black text-[#B7F532]">
@@ -239,7 +416,25 @@ export default function PdfBooklet({
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-4 gap-2">
+        <div className="mt-5 rounded-[20px] border border-[#22D3EE]/20 bg-[#06111E] p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#22D3EE]">
+            {coverText.coachNumbers}
+          </p>
+
+          <h2 className="mt-2 text-[24px] font-black leading-tight text-white">
+            {coverText.systemLine}
+          </h2>
+
+          <p className="mt-2 text-[14px] font-bold leading-7 text-[#B7F532]">
+            {coverText.supportLine}
+          </p>
+
+          <p className="mt-2 text-[12px] leading-6 text-white/55">
+            {coverText.explanation}
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-4 gap-2">
           {[
             ["KCAL", branding.kcalLabel],
             ["PROTEIN", branding.proteinLabel],
@@ -261,34 +456,93 @@ export default function PdfBooklet({
           ))}
         </div>
 
-        <div className="mt-4 rounded-[20px] border border-[#22D3EE]/20 bg-[#06111E] p-4">
-          <h2 className="text-[20px] font-black text-[#22D3EE]">
-            System Overview
-          </h2>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="rounded-[20px] border border-[#22D3EE]/20 bg-[#06111E] p-4">
+            <h2 className="text-[20px] font-black text-[#22D3EE]">
+              {coverText.overview}
+            </h2>
 
-          <p className="mt-2 text-[14px] leading-7 text-white/75">
-            {branding.description}
-          </p>
+            <p className="mt-2 text-[14px] leading-7 text-white/75">
+              {branding.description}
+            </p>
 
-          <p className="mt-2 text-[13px] font-bold text-[#B7F532]">
-            {branding.shortLabel}
-          </p>
+            <p className="mt-2 text-[13px] font-bold text-[#B7F532]">
+              {branding.shortLabel}
+            </p>
 
-          <p className="mt-2 text-[12px] leading-6 text-white/45">
-            Flavor Profile: Middle Eastern Performance · Chef-Based Nutrition OS
-          </p>
+            <p className="mt-2 text-[12px] leading-6 text-white/45">
+              Flavor Profile: Middle Eastern Performance · Chef-Based Nutrition
+              OS
+            </p>
+          </div>
+
+          <div className="rounded-[20px] border border-[#B7F532]/20 bg-[#B7F532]/[0.04] p-4">
+            <h2 className="text-[20px] font-black text-white">
+              {coverText.whatYouGet}
+            </h2>
+
+            <p className="mt-1 text-[13px] font-black text-[#B7F532]">
+              {coverText.whatYouGetSub}
+            </p>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {[
+                "7 Days",
+                "21 Meals",
+                "Shopping List",
+                "Cooking Steps",
+                "Macro Targets",
+                "Cost Estimate",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[12px] border border-white/10 bg-black/20 px-3 py-2 text-[10px] font-black text-white/75"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 rounded-[20px] border border-[#B7F532]/20 bg-[#B7F532]/[0.04] p-4">
           <h2 className="text-[20px] font-black text-white">
-            طريقة التحضير الأسبوعية
+            {coverText.prepTitle}
           </h2>
+
+          <p className="mt-2 text-[12px] leading-6 text-white/55">
+            {coverText.prepBody}
+          </p>
 
           <div className="mt-3 grid grid-cols-3 gap-3">
             {[
-              ["Batch 1", "Day 1–3", "اطبخ أول 3 أيام مرة واحدة"],
-              ["Batch 2", "Day 4–6", "اطبخ الأيام 4–6 مرة واحدة"],
-              ["Day 7", "Light Day", "تونة / سمك / تحضير أخف"],
+              [
+                "Batch 1",
+                "Day 1–3",
+                isBulgarian
+                  ? "Сготви първите 3 дни наведнъж"
+                  : isEnglish
+                  ? "Cook the first 3 days once"
+                  : "اطبخ أول 3 أيام مرة واحدة",
+              ],
+              [
+                "Batch 2",
+                "Day 4–6",
+                isBulgarian
+                  ? "Сготви дни 4–6 наведнъж"
+                  : isEnglish
+                  ? "Cook days 4–6 once"
+                  : "اطبخ الأيام 4–6 مرة واحدة",
+              ],
+              [
+                "Day 7",
+                "Light Day",
+                isBulgarian
+                  ? "Тон / риба / по-лека подготовка"
+                  : isEnglish
+                  ? "Tuna / fish / lighter prep"
+                  : "تونة / سمك / تحضير أخف",
+              ],
             ].map(([title, days, note]) => (
               <div
                 key={title}
@@ -308,6 +562,150 @@ export default function PdfBooklet({
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section
+        className="break-before-page rounded-[22px] border border-[#22D3EE]/15 bg-[#07111F] p-5"
+        style={{
+          pageBreakBefore: "always",
+          pageBreakInside: "avoid",
+          breakInside: "avoid",
+        }}
+      >
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#22D3EE]">
+          {isBulgarian
+            ? "Стартово ръководство"
+            : isEnglish
+            ? "Client Start Guide"
+            : "Client Start Guide"}
+        </p>
+
+        <h2 className="mt-2 text-[34px] font-black leading-tight text-white">
+          {isBulgarian ? "Твоята първа" : "Your First"}
+          <span className="block text-white">
+            {isBulgarian ? "подготовка" : "Prep Session"}
+          </span>
+          <span className="block text-[#B7F532]">
+            {isBulgarian ? "с G7" : "with G7"}
+          </span>
+        </h2>
+
+        <p className="mt-2 text-[20px] font-black text-[#D8C56A]">
+          {isBulgarian
+            ? "Започни оттук преди готвене"
+            : isEnglish
+            ? "Start here before cooking"
+            : "أول تحضير ليك مع G7"}
+        </p>
+
+        <p className="mt-4 max-w-[660px] text-[14px] leading-7 text-white/65">
+          {isBulgarian
+            ? "Не си оставен сам с PDF. Тази страница е направена така, че да усещаш шефа до теб в кухнята, стъпка по стъпка. Отвори списъка, подготви основните двигатели и после сглоби ястията лесно."
+            : isEnglish
+            ? "You are not left alone with a PDF. This page is designed to feel like the chef is standing with you in the kitchen, step by step. Open the list, prepare the core engines, then assemble your meals easily."
+            : "أنا مش سايبك مع PDF وخلاص. الصفحة دي معمولة عشان تحس إن الشيف معاك في المطبخ خطوة بخطوة. افتح الليست، حضّر المحركات الأساسية، وبعدها ركّب وجباتك بسهولة."}
+        </p>
+
+        <div className="mt-5 rounded-[20px] border border-[#22D3EE]/20 bg-[#06111E] p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#22D3EE]">
+            The G7 Prep Engine
+          </p>
+
+          <h3 className="mt-2 text-[21px] font-black leading-tight text-white">
+            {isBulgarian
+              ? "Не готвиш 21 ястия от нулата. Изграждаш ги от 3 умни двигателя."
+              : isEnglish
+              ? "You do not cook 21 meals from scratch. You build them from 3 smart engines."
+              : "أنت مش بتطبخ 21 وجبة من الصفر. أنت بتبنيهم من 3 محركات ذكية."}
+          </h3>
+
+          <p className="mt-2 text-[14px] font-black leading-6 text-[#B7F532]">
+            Protein Engine • Carb Engine • Sauce Engine
+          </p>
+
+          <p className="mt-2 text-[12px] leading-6 text-white/55">
+            {isBulgarian
+              ? "Пазаруваш веднъж седмично. Готвиш на всеки 3 дни. Сглобяваш ястията от готови протеини, чисти въглехидрати и вкусови системи."
+              : isEnglish
+              ? "Shop weekly. Cook every 3 days. Assemble your meals from prepared proteins, clean carbs, and flavor systems."
+              : "اشتري للأسبوع. اطبخ كل 3 أيام. ركّب وجباتك من بروتين جاهز، كارب محسوب، وصوصات ذكية."}
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          {[
+            [
+              "01",
+              "Protein Engine",
+              isBulgarian
+                ? "Подготви основните протеини: пилешко, телешко, тон, риба и яйца. Раздели само количеството за първите 3 дни и овкуси всяка част според системата."
+                : isEnglish
+                ? "Prepare your main proteins: chicken, beef, tuna, fish, and eggs. Split only the amount needed for the first 3 days and season each part based on the meals in the system."
+                : "حضّر البروتينات الأساسية: فراخ، لحمة، تونة، سمك، وبيض. قسّم الكمية لأول 3 أيام فقط، وتبّل كل جزء حسب نكهة الوجبات.",
+              "#22D3EE",
+            ],
+            [
+              "02",
+              "Carb Engine",
+              isBulgarian
+                ? "Сготви въглехидратите за първите 3 дни: ориз، картофи، паста، хляб، wrap или овес. Дръж ги като готова база."
+                : isEnglish
+                ? "Cook the carbs needed for the first 3 days: rice, potatoes, pasta, bread, wraps, or oats. Keep carbs ready as a clean base."
+                : "اطبخ الكارب المطلوب لأول 3 أيام: رز، بطاطس، مكرونة، عيش، راب، أو شوفان. خلي الكارب جاهز كـ base.",
+              "#B7F532",
+            ],
+            [
+              "03",
+              "Sauce Engine",
+              isBulgarian
+                ? "Сосовете и маринатите са тайната на вкуса. Същият протеин и въглехидрат могат да станат различни ястия."
+                : isEnglish
+                ? "Sauces and marinades are the secret to flavor. The same protein and carbs can become different meals through smart flavor systems."
+                : "الصوص والتتبيلة هما سر الطعم. نفس البروتين والكارب ممكن يتحولوا لوجبات مختلفة بسبب الصوص.",
+              "#D8C56A",
+            ],
+          ].map(([number, title, body, color]) => (
+            <div
+              key={number}
+              className="rounded-[18px] border border-white/10 bg-black/25 p-3"
+            >
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-black text-black"
+                style={{ backgroundColor: color }}
+              >
+                {number}
+              </div>
+
+              <p className="mt-3 text-[14px] font-black text-white">{title}</p>
+
+              <p className="mt-2 text-[11px] leading-6 text-white/58">
+                {body}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 rounded-[20px] border border-[#B7F532]/20 bg-[#B7F532]/[0.04] p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#B7F532]">
+            G7 Chef Rule
+          </p>
+
+          <h3 className="mt-2 text-[22px] font-black text-white">
+            {isBulgarian
+              ? "Не готви цялата седмица наведнъж."
+              : isEnglish
+              ? "Do not cook the full week at once."
+              : "ما تطبخش الأسبوع كله مرة واحدة."}
+          </h3>
+
+          <p className="mt-2 text-[13px] leading-7 text-white/60">
+            {isBulgarian
+              ? "Пазарувай за седмицата. Готви на всеки 3 дни. Подготви протеин، подготви въглехидрат، подготви сосове и после сглоби ястията."
+              : isEnglish
+              ? "Shop for the week. Cook every 3 days. Prepare protein, prepare carbs, prepare sauces, then assemble your meals."
+              : "اشتري للأسبوع. اطبخ كل 3 أيام. حضّر بروتين، حضّر كارب، حضّر صوص، وبعدها ركّب وجباتك."}
+          </p>
         </div>
       </section>
 
@@ -376,6 +774,10 @@ export default function PdfBooklet({
                       <p className="mt-2 text-[11px] font-bold text-[#D8C56A]">
                         {roleMeta.note}
                       </p>
+
+                      <p className="mt-1 text-[11px] leading-5 text-white/45">
+                        {roleMeta.customerNote}
+                      </p>
                     </div>
 
                     <p className="rounded-xl bg-[#B7F532]/10 px-3 py-2 text-[13px] font-black text-[#B7F532]">
@@ -391,9 +793,36 @@ export default function PdfBooklet({
                   </div>
 
                   <div className="mt-2 grid grid-cols-3 gap-2">
-                    <MacroCompare label="Protein" actual={meal.protein} target={meal.targetProtein} />
-                    <MacroCompare label="Carbs" actual={meal.carbs} target={meal.targetCarbs} />
-                    <MacroCompare label="Fat" actual={meal.fat} target={meal.targetFat} />
+                    <MacroCompare
+                      label="Protein"
+                      actual={meal.protein}
+                      target={meal.targetProtein}
+                    />
+                    <MacroCompare
+                      label="Carbs"
+                      actual={meal.carbs}
+                      target={meal.targetCarbs}
+                    />
+                    <MacroCompare
+                      label="Fat"
+                      actual={meal.fat}
+                      target={meal.targetFat}
+                    />
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {meal.raw.slice(0, 4).map(([name, amount]) => (
+                      <div
+                        key={`${meal.id}-${name}`}
+                        className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.035] px-3 py-2 text-[11px]"
+                      >
+                        <span className="text-white/65">{name}</span>
+
+                        <span className="font-black text-[#B7F532]">
+                          {amount}
+                        </span>
+                      </div>
+                    ))}
                   </div>
 
                   {meal.adjustmentSummary.length > 0 && (
@@ -401,11 +830,12 @@ export default function PdfBooklet({
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#D8C56A]">
-                            Applied Macro Corrections
+                            G7 Smart Adjustments
                           </p>
 
                           <p className="mt-1 text-[11px] text-white/50">
-                            Smart ingredient balancing applied automatically.
+                            تعديلات G7 الذكية على الكميات عشان الوجبة تطابق
+                            هدفك.
                           </p>
                         </div>
 
@@ -422,11 +852,20 @@ export default function PdfBooklet({
                           >
                             <div>
                               <p className="text-[11px] font-black text-white">
-                                +{adjustment.increaseGrams}g {adjustment.ingredient}
+                                +{adjustment.increaseGrams}g{" "}
+                                {adjustment.ingredient}
                               </p>
 
-                              <p className="mt-1 text-[10px] text-white/45">
-                                {adjustment.reason}
+                              <p className="mt-1 text-[10px] text-white/55">
+                                {getClientFriendlyAdjustmentReason(
+                                  adjustment.ingredient
+                                )}
+                              </p>
+
+                              <p className="mt-1 text-[10px] text-[#D8C56A]/80">
+                                {getClientFriendlyAdjustmentArabic(
+                                  adjustment.ingredient
+                                )}
                               </p>
                             </div>
 
@@ -438,21 +877,6 @@ export default function PdfBooklet({
                       </div>
                     </div>
                   )}
-
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    {meal.raw.slice(0, 4).map(([name, amount]) => (
-                      <div
-                        key={`${meal.id}-${name}`}
-                        className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.035] px-3 py-2 text-[11px]"
-                      >
-                        <span className="text-white/65">{name}</span>
-
-                        <span className="font-black text-[#B7F532]">
-                          {amount}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
 
                   <div className="mt-3 rounded-[16px] border border-[#22D3EE]/10 bg-[#07111F] p-3">
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#22D3EE]">
@@ -551,9 +975,15 @@ export default function PdfBooklet({
         }}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-[22px] font-black text-white">
-            Weekly Grocery List
-          </h2>
+          <div>
+            <h2 className="text-[22px] font-black text-white">
+              Your 7-Day Shopping System
+            </h2>
+
+            <p className="mt-1 text-[14px] font-black text-[#B7F532]">
+              قائمة مشترياتك للأسبوع بالكامل
+            </p>
+          </div>
 
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#22D3EE]">
             Full Week Shopping System
@@ -562,7 +992,8 @@ export default function PdfBooklet({
 
         <p className="mt-2 text-[12px] leading-6 text-white/55">
           الكميات دي محسوبة للأسبوع كامل بناءً على 7 أيام / 21 وجبة. بعض
-          المكونات قد تكون موجودة في البيت بالفعل.
+          المكونات قد تكون موجودة في البيت بالفعل، لذلك استخدم القائمة كدليل
+          تسوق ذكي وليس فاتورة ثابتة.
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -613,11 +1044,22 @@ export default function PdfBooklet({
               Estimated Weekly Cost
             </h2>
 
+            <p className="mt-1 text-[14px] font-black text-[#B7F532]">
+              التكلفة التقريبية للأسبوع
+            </p>
+
             <p className="mt-2 text-[12px] leading-6 text-white/55">
               تقدير تقريبي بناءً على أسعار سوقية عامة في مصر. السعر الحقيقي
               ممكن يختلف حسب كارفور العبور، العروض، الموسم، والحاجات الموجودة
               في البيت.
             </p>
+
+            {estimatedMealCost > 0 && (
+              <p className="mt-3 text-[13px] font-bold leading-6 text-[#D8C56A]">
+                تقريبًا {estimatedMealCost} جنيه للوجبة الواحدة عند تقسيم
+                التكلفة على 21 وجبة.
+              </p>
+            )}
           </div>
 
           <div className="rounded-[18px] border border-[#B7F532]/25 bg-black/25 px-5 py-4 text-center">
@@ -628,6 +1070,12 @@ export default function PdfBooklet({
             <p className="mt-1 text-[26px] font-black text-[#B7F532]">
               {estimatedTotal > 0 ? `${estimatedTotal} EGP` : "Manual"}
             </p>
+
+            {estimatedMealCost > 0 && (
+              <p className="mt-2 rounded-full border border-[#22D3EE]/20 px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#22D3EE]">
+                ~ {estimatedMealCost} EGP / meal
+              </p>
+            )}
           </div>
         </div>
       </section>

@@ -2,23 +2,77 @@
 
 import { useMemo, useRef, useState } from "react"
 
-import PdfBooklet from "../components/g7/PdfBooklet"
+import PdfBooklet, { type PdfLanguage } from "../components/g7/PdfBooklet"
 import { G7_PLANS, PlanKey } from "../components/g7/plans"
+
+const PDF_LANGUAGES: {
+  id: PdfLanguage
+  label: string
+  subtitle: string
+  fileSuffix: string
+}[] = [
+  {
+    id: "ar",
+    label: "Arabic",
+    subtitle: "نسخة عربية للعميل المصري / العربي",
+    fileSuffix: "ar",
+  },
+  {
+    id: "en",
+    label: "English",
+    subtitle: "Clean international client version",
+    fileSuffix: "en",
+  },
+  {
+    id: "bg",
+    label: "Bulgarian",
+    subtitle: "Версия за клиент в България",
+    fileSuffix: "bg",
+  },
+]
 
 export default function GeneratePage() {
   const pdfRef = useRef<HTMLDivElement>(null)
 
-  const [selectedPlan, setSelectedPlan] =
-    useState<PlanKey>("lean_bulk")
-
-  const [clientName, setClientName] =
-    useState("Ahmed Client")
-
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>("lean_bulk")
+  const [clientName, setClientName] = useState("Ahmed Client")
+  const [pdfLanguage, setPdfLanguage] = useState<PdfLanguage>("ar")
   const [copied, setCopied] = useState(false)
 
   const plan = G7_PLANS[selectedPlan]
 
+  const languageMeta =
+    PDF_LANGUAGES.find((item) => item.id === pdfLanguage) ?? PDF_LANGUAGES[0]
+
   const whatsappMessage = useMemo(() => {
+    if (pdfLanguage === "bg") {
+      return `Hi G7 👋
+
+I want to activate my G7 Nutrition System.
+
+Client Name: ${clientName}
+Selected Plan: ${plan.name}
+PDF Language: Bulgarian
+Calories: ${plan.kcal}
+Price: ${plan.price}
+
+Please prepare my full G7 client PDF in Bulgarian.`
+    }
+
+    if (pdfLanguage === "en") {
+      return `Hi G7 👋
+
+I want to activate my G7 Nutrition System.
+
+Client Name: ${clientName}
+Selected Plan: ${plan.name}
+PDF Language: English
+Calories: ${plan.kcal}
+Price: ${plan.price}
+
+Please prepare my full G7 client PDF in English.`
+    }
+
     return `Hi G7 👋
 
 I want to activate my G7 Nutrition System.
@@ -26,6 +80,7 @@ I want to activate my G7 Nutrition System.
 Client Name: ${clientName}
 Selected Plan: ${plan.name}
 Arabic Plan: ${plan.arabicName}
+PDF Language: Arabic
 Calories: ${plan.kcal}
 Price: ${plan.price}
 
@@ -37,7 +92,7 @@ I understand this is a 7-day system with:
 - batch cooking every 3 days
 
 Please prepare my full G7 client PDF.`
-  }, [clientName, plan])
+  }, [clientName, plan, pdfLanguage])
 
   const whatsappLink = useMemo(() => {
     return `https://wa.me/201128442058?text=${encodeURIComponent(
@@ -64,7 +119,7 @@ Please prepare my full G7 client PDF.`
       margin: 0.25,
       filename: `${clientName
         .replace(/\s+/g, "-")
-        .toLowerCase()}-${plan.name}.pdf`,
+        .toLowerCase()}-${plan.name}-${languageMeta.fileSuffix}.pdf`,
 
       image: {
         type: "jpeg",
@@ -77,12 +132,10 @@ Please prepare my full G7 client PDF.`
         backgroundColor: "#020817",
 
         onclone: (clonedDocument: Document) => {
-          const elements =
-            clonedDocument.querySelectorAll<HTMLElement>("*")
+          const elements = clonedDocument.querySelectorAll<HTMLElement>("*")
 
           elements.forEach((el) => {
-            const style =
-              clonedDocument.defaultView?.getComputedStyle(el)
+            const style = clonedDocument.defaultView?.getComputedStyle(el)
 
             if (!style) return
 
@@ -200,9 +253,7 @@ Please prepare my full G7 client PDF.`
 
           <h1 className="mt-2 text-[28px] font-black leading-tight text-white">
             Generate
-            <span className="block text-[#B7F532]">
-              Client PDF
-            </span>
+            <span className="block text-[#B7F532]">Client PDF</span>
           </h1>
 
           <div className="mt-4 grid gap-2">
@@ -210,7 +261,7 @@ Please prepare my full G7 client PDF.`
               onClick={generatePdf}
               className="w-full rounded-[16px] bg-[#B7F532] px-4 py-3 text-[11px] font-black uppercase tracking-[0.15em] text-black"
             >
-              Generate PDF
+              Generate {languageMeta.label} PDF
             </button>
 
             <a
@@ -249,12 +300,48 @@ Please prepare my full G7 client PDF.`
 
               <input
                 value={clientName}
-                onChange={(e) =>
-                  setClientName(e.target.value)
-                }
+                onChange={(e) => setClientName(e.target.value)}
                 className="mt-2 w-full rounded-[14px] border border-white/10 bg-black/30 px-3 py-2.5 text-[13px] text-white outline-none"
               />
             </label>
+
+            <div className="mt-4">
+              <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/45">
+                PDF Language
+              </p>
+
+              <div className="mt-2 grid gap-2">
+                {PDF_LANGUAGES.map((language) => (
+                  <button
+                    key={language.id}
+                    onClick={() => setPdfLanguage(language.id)}
+                    className={`rounded-[14px] border px-3 py-3 text-left transition ${
+                      pdfLanguage === language.id
+                        ? "border-[#B7F532] bg-[#B7F532]/10"
+                        : "border-white/10 bg-black/20 hover:border-[#22D3EE]/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[12px] font-black text-white">
+                          {language.label}
+                        </p>
+
+                        <p className="mt-1 text-[10px] leading-4 text-white/45">
+                          {language.subtitle}
+                        </p>
+                      </div>
+
+                      {pdfLanguage === language.id && (
+                        <span className="rounded-full bg-[#B7F532] px-2 py-1 text-[7px] font-black uppercase tracking-[0.12em] text-black">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="mt-4 rounded-[16px] border border-[#22D3EE]/15 bg-black/20 p-3">
               <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/45">
@@ -271,18 +358,14 @@ Please prepare my full G7 client PDF.`
 
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <div className="rounded-[12px] bg-white/[0.04] p-2">
-                  <p className="text-[8px] font-black text-[#22D3EE]">
-                    KCAL
-                  </p>
+                  <p className="text-[8px] font-black text-[#22D3EE]">KCAL</p>
                   <p className="text-[14px] font-black text-[#B7F532]">
                     {plan.kcal}
                   </p>
                 </div>
 
                 <div className="rounded-[12px] bg-white/[0.04] p-2">
-                  <p className="text-[8px] font-black text-[#22D3EE]">
-                    PRICE
-                  </p>
+                  <p className="text-[8px] font-black text-[#22D3EE]">PRICE</p>
                   <p className="text-[14px] font-black text-[#B7F532]">
                     {plan.price}
                   </p>
@@ -297,12 +380,13 @@ Please prepare my full G7 client PDF.`
             </p>
 
             <h3 className="mt-2 text-[18px] font-black text-white">
-              يطبخ كل 3 أيام
+              Shop weekly. Cook every 3 days.
             </h3>
 
             <p className="mt-2 text-[12px] leading-6 text-white/55">
-              النظام مبني على Batch Cooking: أول 3 أيام مرة، ثم الأيام 4–6 مرة،
-              واليوم السابع يكون أخف أو طازج.
+              The G7 method is built on Protein Engine, Carb Engine, and Sauce
+              Engine. The client shops once, cooks every 3 days, and assembles
+              meals easily.
             </p>
 
             <div className="mt-3 grid gap-2">
@@ -333,6 +417,7 @@ Please prepare my full G7 client PDF.`
             <PdfBooklet
               selectedPlan={selectedPlan}
               clientName={clientName}
+              language={pdfLanguage}
             />
           </div>
         </section>
