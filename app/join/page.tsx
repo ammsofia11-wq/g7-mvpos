@@ -242,7 +242,7 @@ ${carbs || system.carbs}g
   return (
     <main className="min-h-screen overflow-hidden bg-[#050B12] pb-24 text-white">
       <div className="pointer-events-none fixed left-[-160px] top-[-160px] h-[340px] w-[340px] rounded-full bg-[#19D9E6]/12 blur-[120px]" />
-      <div className="pointer-events-none fixed right-[-120px] top-[160px] h-[340px] w-[340px] rounded-full bg-[#B7F532]/10 blur-[120px]" />
+      <div className="pointer-events-none fixed right-[-120px] top-[160px] h-[340px] w-[340px] rounded-full bg-[#8FD14F]/10 blur-[120px]" />
       <div className="pointer-events-none fixed bottom-[-180px] left-[30%] h-[360px] w-[360px] rounded-full bg-[#D8C56A]/8 blur-[130px]" />
       <div className="pointer-events-none fixed right-[8%] top-[22%] h-[260px] w-[260px] rounded-full bg-[#C97A42]/12 blur-[120px]" />
       <div className="pointer-events-none fixed bottom-[10%] right-[18%] h-[240px] w-[240px] rounded-full bg-[#FF5A4F]/8 blur-[120px]" />
@@ -271,7 +271,7 @@ ${carbs || system.carbs}g
             href={smartWhatsappLink}
             target="_blank"
             rel="noreferrer"
-            className="rounded-[14px] bg-[#B7F532] px-3 py-2 text-[9px] font-black uppercase tracking-[0.1em] text-black transition hover:scale-[1.02] md:px-4 md:text-[10px] md:tracking-[0.12em]"
+            className="rounded-[14px] bg-[#8FD14F] px-3 py-2 text-[9px] font-black uppercase tracking-[0.1em] text-black transition hover:scale-[1.02] md:px-4 md:text-[10px] md:tracking-[0.12em]"
           >
             WhatsApp
           </a>
@@ -281,7 +281,7 @@ ${carbs || system.carbs}g
           <div className="grid gap-5 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
             <div className="order-2 text-center lg:sticky lg:top-5 lg:order-1 lg:text-left">
               <div className="mx-auto flex w-fit items-center gap-2 rounded-full border border-[#19D9E6]/20 bg-[#19D9E6]/10 px-4 py-2 lg:mx-0">
-                <span className="h-2 w-2 rounded-full bg-[#B7F532] shadow-[0_0_18px_rgba(183,245,50,0.9)]" />
+                <span className="h-2 w-2 rounded-full bg-[#8FD14F] shadow-[0_0_18px_rgba(143,209,79,0.9)]" />
                 <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#19D9E6]">
                   Live Coach Target Scanner
                 </p>
@@ -314,7 +314,7 @@ ${carbs || system.carbs}g
                   </p>
                 </div>
 
-                <div className="rounded-[18px] border border-[#B7F532]/15 bg-white/[0.04] p-3 text-center shadow-[0_0_25px_rgba(183,245,50,0.05)]">
+                <div className="rounded-[18px] border border-[#B7F532]/15 bg-white/[0.04] p-3 text-center shadow-[0_0_25px_rgba(143,209,79,0.05)]">
                   <p className="text-[8px] font-black uppercase tracking-[0.16em] text-white/35">
                     Output
                   </p>
@@ -354,7 +354,7 @@ ${carbs || system.carbs}g
               }}
             >
               <div className="pointer-events-none absolute right-[-80px] top-[-80px] h-[220px] w-[220px] rounded-full bg-[#19D9E6]/16 blur-[70px]" />
-              <div className="pointer-events-none absolute bottom-[-90px] left-[-90px] h-[220px] w-[220px] rounded-full bg-[#B7F532]/12 blur-[80px]" />
+              <div className="pointer-events-none absolute bottom-[-90px] left-[-90px] h-[220px] w-[220px] rounded-full bg-[#8FD14F]/12 blur-[80px]" />
               <div className="pointer-events-none absolute left-[20%] top-[12%] h-[180px] w-[180px] rounded-full bg-[#C97A42]/10 blur-[80px]" />
               <div className="pointer-events-none absolute bottom-[8%] right-[8%] h-[160px] w-[160px] rounded-full bg-[#FF5A4F]/8 blur-[70px]" />
 
@@ -383,7 +383,7 @@ ${carbs || system.carbs}g
                       Hot
                     </div>
 
-                    <div className="rounded-full border border-[#B7F532]/25 bg-[#B7F532]/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-[#B7F532]">
+                    <div className="rounded-full border border-[#B7F532]/25 bg-[#8FD14F]/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-[#B7F532]">
                       Instant
                     </div>
                   </div>
@@ -501,7 +501,7 @@ ${carbs || system.carbs}g
                         G7 System Generator
                       </p>
 
-                      <div className="h-2 w-2 rounded-full bg-[#B7F532] shadow-[0_0_18px_rgba(183,245,50,0.9)]" />
+                      <div className="h-2 w-2 rounded-full bg-[#8FD14F] shadow-[0_0_18px_rgba(143,209,79,0.9)]" />
                     </div>
 
                     <div className="space-y-2">
@@ -579,7 +579,7 @@ ${carbs || system.carbs}g
                       </div>
                     </div>
 
-                    <div className="mt-4 rounded-[22px] border border-[#B7F532]/15 bg-[#B7F532]/[0.055] p-4">
+                    <div className="mt-4 rounded-[22px] border border-[#B7F532]/15 bg-[#8FD14F]/[0.055] p-4">
                       <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#B7F532]">
                         What G7 generated for you
                       </p>
@@ -639,7 +639,7 @@ ${carbs || system.carbs}g
                       href={smartWhatsappLink}
                       target="_blank"
                       rel="noreferrer"
-                      className="mx-auto mt-5 flex w-full items-center justify-center rounded-[20px] bg-[#B7F532] px-7 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black transition hover:scale-[1.01]"
+                      className="mx-auto mt-5 flex w-full items-center justify-center rounded-[20px] bg-[#8FD14F] px-7 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black transition hover:scale-[1.01]"
                     >
                       Send This Plan To WhatsApp
                     </a>
@@ -769,7 +769,7 @@ ${carbs || system.carbs}g
                       target="_blank"
                       rel="noreferrer"
                       onClick={() => setSelectedSystem(system)}
-                      className="mt-4 flex w-full items-center justify-center rounded-[16px] bg-[#B7F532] px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:scale-[1.02]"
+                      className="mt-4 flex w-full items-center justify-center rounded-[16px] bg-[#8FD14F] px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:scale-[1.02]"
                     >
                       WhatsApp
                     </a>
@@ -786,7 +786,7 @@ ${carbs || system.carbs}g
           href={smartWhatsappLink}
           target="_blank"
           rel="noreferrer"
-          className="flex w-full items-center justify-center rounded-[18px] bg-[#B7F532] px-5 py-4 text-[12px] font-black uppercase tracking-[0.16em] text-black"
+          className="flex w-full items-center justify-center rounded-[18px] bg-[#8FD14F] px-5 py-4 text-[12px] font-black uppercase tracking-[0.16em] text-black"
         >
           WhatsApp — {selectedSystem.name}
         </a>
