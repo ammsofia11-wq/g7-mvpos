@@ -17,7 +17,7 @@ const G7_SYSTEMS = [
     color: "#B7F532",
     warmColor: "#FFB07A",
     promise: "Build lean muscle with controlled carbs, high protein, and real food variety.",
-    output: "7-day lean bulk food system with 21 meals, prep rhythm, and grocery list.",
+    output: "7-day lean bulk food system with 21 meals, simple cooking steps, and grocery list.",
     meals: [
       "🔥 Smoky Kofta Rice Bowl",
       "🥣 Creamy Muscle Oats",
