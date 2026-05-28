@@ -398,9 +398,7 @@ export default function FlavorSelector() {
                       <span className="g7-execution-badge">
                         HOME PREP
                       </span>
-                      <span className="g7-execution-badge g7-execution-badge-gold">
-                        💰 {meal.kitchenOS.costPerMeal}
-                      </span>
+                      
                     </div>
                   </div>
                 </section>
