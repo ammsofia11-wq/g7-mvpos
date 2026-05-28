@@ -471,11 +471,7 @@ export default function FlavorSelector() {
                   <InfoCard title="Kitchen Mode" value={execution.kitchenMode} />
                 </div>
 
-                <DecisionBox title="Production Note">
-                  <p className="text-xs leading-6 text-slate-300">
-                    {meal.kitchenOS.batchPrepNote}
-                  </p>
-                </DecisionBox>
+                <
 
                 <DecisionBox title="Storage Note">
                   <p className="text-xs leading-6 text-slate-300">
