@@ -247,21 +247,21 @@ ${carbs || system.carbs}g
       <div className="pointer-events-none fixed right-[8%] top-[22%] h-[260px] w-[260px] rounded-full bg-[#C97A42]/12 blur-[120px]" />
       <div className="pointer-events-none fixed bottom-[10%] right-[18%] h-[240px] w-[240px] rounded-full bg-[#FF5A4F]/8 blur-[120px]" />
 
-      <section className="relative z-10 mx-auto max-w-[1080px] px-4 py-4">
-        <header className="flex items-center justify-between rounded-[22px] border border-[#19D9E6]/15 bg-[#081522]/90 px-4 py-3 backdrop-blur">
+      <section className="relative z-10 mx-auto max-w-[1080px] px-3 py-3 md:px-4 md:py-4">
+        <header className="flex items-center justify-between rounded-[22px] border border-[#19D9E6]/15 bg-[#081522]/90 px-3 py-3 backdrop-blur md:px-4">
           <div className="flex items-center gap-3">
             <img
               src="/images/g7-logo-clean.png"
               alt="G7"
-              className="h-[48px] w-auto object-contain"
+              className="h-[42px] w-auto object-contain md:h-[48px]"
             />
 
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#19D9E6]">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#19D9E6] md:text-[10px] md:tracking-[0.24em]">
                 G7 Culinary Intelligence
               </p>
 
-              <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/40">
+              <p className="mt-1 text-[8px] uppercase tracking-[0.14em] text-white/40 md:text-[10px] md:tracking-[0.18em]">
                 Chef-Based Nutrition OS
               </p>
             </div>
@@ -271,15 +271,15 @@ ${carbs || system.carbs}g
             href={smartWhatsappLink}
             target="_blank"
             rel="noreferrer"
-            className="rounded-[14px] bg-[#B7F532] px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:scale-[1.02]"
+            className="rounded-[14px] bg-[#B7F532] px-3 py-2 text-[9px] font-black uppercase tracking-[0.1em] text-black transition hover:scale-[1.02] md:px-4 md:text-[10px] md:tracking-[0.12em]"
           >
             WhatsApp
           </a>
         </header>
 
-        <section className="pt-5">
+        <section className="pt-4 md:pt-5">
           <div className="grid gap-5 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
-            <div className="text-center lg:sticky lg:top-5 lg:text-left">
+            <div className="order-2 text-center lg:sticky lg:top-5 lg:order-1 lg:text-left">
               <div className="mx-auto flex w-fit items-center gap-2 rounded-full border border-[#19D9E6]/20 bg-[#19D9E6]/10 px-4 py-2 lg:mx-0">
                 <span className="h-2 w-2 rounded-full bg-[#B7F532] shadow-[0_0_18px_rgba(183,245,50,0.9)]" />
                 <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#19D9E6]">
@@ -295,7 +295,7 @@ ${carbs || system.carbs}g
                 </div>
               </div>
 
-              <h1 className="mt-4 text-[42px] font-black leading-[0.9] tracking-[-0.08em] text-white md:text-[58px]">
+              <h1 className="mt-4 text-[40px] font-black leading-[0.9] tracking-[-0.08em] text-white md:text-[58px]">
                 Enter Your
                 <span className="block text-[#D8C56A]">Coach Numbers</span>
               </h1>
@@ -347,7 +347,7 @@ ${carbs || system.carbs}g
             </div>
 
             <section
-              className="relative overflow-hidden rounded-[32px] border border-[#19D9E6]/18 bg-[#071421]/95 p-5 shadow-[0_30px_100px_rgba(25,217,230,0.12)] backdrop-blur"
+              className="order-1 relative overflow-hidden rounded-[30px] border border-[#19D9E6]/18 bg-[#071421]/95 p-4 shadow-[0_30px_100px_rgba(25,217,230,0.12)] backdrop-blur md:rounded-[32px] md:p-5 lg:order-2"
               style={{
                 boxShadow:
                   "0 30px 100px rgba(25,217,230,0.10), 0 0 0 1px rgba(201,122,66,0.10)",
@@ -367,18 +367,18 @@ ${carbs || system.carbs}g
               />
 
               <div className="relative z-10">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#19D9E6]">
                       Try It Now
                     </p>
 
-                    <h2 className="mt-2 text-[30px] font-black tracking-[-0.07em] text-white md:text-[36px]">
+                    <h2 className="mt-2 text-[36px] font-black leading-[0.95] tracking-[-0.08em] text-white md:text-[36px]">
                       Build My System
                     </h2>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
                     <div className="rounded-full border border-[#FF5A4F]/25 bg-[#FF5A4F]/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-[#FF8E84]">
                       Hot
                     </div>
@@ -479,7 +479,7 @@ ${carbs || system.carbs}g
 
                 <button
                   onClick={runG7Engine}
-                  className="mt-5 flex w-full items-center justify-center rounded-[22px] px-7 py-4 text-[12px] font-black uppercase tracking-[0.24em] text-black transition hover:scale-[1.01]"
+                  className="mt-5 flex w-full items-center justify-center rounded-[22px] px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black transition hover:scale-[1.01] md:px-7 md:text-[12px] md:tracking-[0.24em]"
                   style={{
                     background:
                       "linear-gradient(90deg, #19D9E6 0%, #67E4ED 45%, #FF7A59 100%)",
@@ -490,7 +490,7 @@ ${carbs || system.carbs}g
                   {isAnalyzing ? "Generating Your Food System..." : "Generate My G7 System"}
                 </button>
 
-                <p className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.16em] text-white/28">
+                <p className="mt-3 text-center text-[9px] font-bold uppercase tracking-[0.14em] text-white/28 md:text-[10px] md:tracking-[0.16em]">
                   No signup • No waiting • WhatsApp ready
                 </p>
 
@@ -522,7 +522,7 @@ ${carbs || system.carbs}g
 
                 {engineActivated ? (
                   <div
-                    className="mt-5 rounded-[30px] border border-white/10 bg-white/[0.055] p-5 backdrop-blur"
+                    className="mt-5 rounded-[30px] border border-white/10 bg-white/[0.055] p-4 backdrop-blur md:p-5"
                     style={{
                       boxShadow:
                         "0 0 46px rgba(201,122,66,0.10), inset 0 1px 0 rgba(255,255,255,0.04)",
@@ -534,7 +534,7 @@ ${carbs || system.carbs}g
                       </p>
 
                       <h3
-                        className="mt-2 text-[40px] font-black tracking-[-0.09em]"
+                        className="mt-2 text-[36px] font-black tracking-[-0.09em] md:text-[40px]"
                         style={{
                           color: selectedSystem.color,
                         }}
@@ -674,8 +674,8 @@ ${carbs || system.carbs}g
           </div>
         </section>
 
-        <section className="pb-8 pt-10">
-          <div className="mb-4 flex items-end justify-between gap-4">
+        <section className="pb-8 pt-8 md:pt-10">
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#19D9E6]">
                 More G7 System Examples
@@ -686,7 +686,7 @@ ${carbs || system.carbs}g
               </h2>
             </div>
 
-            <p className="max-w-[230px] text-right text-[11px] leading-5 text-white/45">
+            <p className="max-w-[230px] text-[11px] leading-5 text-white/45 md:text-right">
               The main result is generated above. These are quick examples from
               the G7 library.
             </p>
