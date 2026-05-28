@@ -419,16 +419,7 @@ export default function FlavorSelector() {
                   </div>
                 </div>
 
-                <DecisionBox title="Kitchen OS Metadata">
-                  <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                    
-                    <InfoCard title="Shelf Life" value={meal.kitchenOS.shelfLife} />
-                    <InfoCard title="Reheat" value={meal.kitchenOS.reheatMethod} />
-                    <InfoCard title="Containers" value={meal.kitchenOS.prepContainers} />
-                    <InfoCard title="Station" value={meal.kitchenOS.kitchenStation} />
-                    <InfoCard title="Mode" value={meal.kitchenOS.productionMode} />
-                  </div>
-                </DecisionBox>
+          
 
                 <section className="g7-ai-panel">
                   <div className="g7-ai-panel-inner">
