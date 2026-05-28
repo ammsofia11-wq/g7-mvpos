@@ -396,7 +396,7 @@ export default function FlavorSelector() {
                         {activePlan.emoji} {activePlan.label}
                       </span>
                       <span className="g7-execution-badge">
-                        ⚙️ {meal.kitchenOS.productionMode}
+                        HOME PREP
                       </span>
                       <span className="g7-execution-badge g7-execution-badge-gold">
                         💰 {meal.kitchenOS.costPerMeal}
