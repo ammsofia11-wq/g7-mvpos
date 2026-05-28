@@ -473,17 +473,7 @@ export default function FlavorSelector() {
 
                 <
 
-                <DecisionBox title="Storage Note">
-                  <p className="text-xs leading-6 text-slate-300">
-                    {meal.kitchenOS.storageNote}
-                  </p>
-                </DecisionBox>
-
-                <DecisionBox title="Kitchen Note">
-                  <p className="text-xs leading-6 text-slate-300">
-                    {meal.kitchenNote}
-                  </p>
-                </DecisionBox>
+                
 
                 <DecisionBox title="Repeatability Logic">
                   <p className="text-xs leading-6 text-slate-300">
