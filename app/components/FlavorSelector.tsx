@@ -92,7 +92,6 @@ const EXECUTION_META: Record<
     prepTime: string
     difficulty: string
     kitchenMode: string
-    batchType: string
   }
 > = {
   fat_loss: {
@@ -100,49 +99,42 @@ const EXECUTION_META: Record<
     prepTime: "18–22 min",
     difficulty: "Easy",
     kitchenMode: "Meal Prep Ready",
-    batchType: "3-day batch",
   },
   keto: {
     score: 90,
     prepTime: "20–24 min",
     difficulty: "Medium",
     kitchenMode: "Low-Carb Prep",
-    batchType: "2-day batch",
   },
   vegan: {
     score: 88,
     prepTime: "22–26 min",
     difficulty: "Medium",
     kitchenMode: "Plant Prep",
-    batchType: "2-day batch",
   },
   diabetic: {
     score: 93,
     prepTime: "18–23 min",
     difficulty: "Easy",
     kitchenMode: "Controlled Prep",
-    batchType: "3-day batch",
   },
   athlete: {
     score: 91,
     prepTime: "24–30 min",
     difficulty: "Medium",
     kitchenMode: "Performance Prep",
-    batchType: "4-day batch",
   },
   gf_df: {
     score: 89,
     prepTime: "20–25 min",
     difficulty: "Easy",
     kitchenMode: "Clean Comfort Prep",
-    batchType: "3-day batch",
   },
   carnivore: {
     score: 94,
     prepTime: "16–20 min",
     difficulty: "Easy",
     kitchenMode: "Primal Protein Prep",
-    batchType: "2-day batch",
   },
 }
 
@@ -203,7 +195,8 @@ export default function FlavorSelector() {
 
   const activePlan = PLAN_META[plan]
   const execution = EXECUTION_META[plan]
-  const repeatabilityScore = plan === "carnivore" ? 94 : plan === "athlete" ? 91 : 92
+  const repeatabilityScore =
+    plan === "carnivore" ? 94 : plan === "athlete" ? 91 : 92
 
   return (
     <div className="space-y-4 overflow-hidden">
@@ -218,7 +211,7 @@ export default function FlavorSelector() {
             </h2>
 
             <p className="mt-3 max-w-3xl text-xs leading-6 text-slate-300">
-              Decision layer + visual execution layer + Kitchen OS metadata.
+              Decision layer + visual execution layer + chef-based meal logic.
             </p>
           </div>
 
@@ -367,8 +360,7 @@ export default function FlavorSelector() {
 
                 <p className="mt-2 max-w-2xl text-xs leading-6 text-slate-300">
                   G7 will generate a premium meal card with macros,
-                  ingredients, kitchen timeline, AI chef mood, costing,
-                  production, storage, and reheating logic.
+                  ingredients, chef mood, flavor logic, and execution steps.
                 </p>
               </div>
             )}
@@ -395,10 +387,8 @@ export default function FlavorSelector() {
                       <span className="g7-execution-badge">
                         {activePlan.emoji} {activePlan.label}
                       </span>
-                      <span className="g7-execution-badge">
-                        HOME PREP
-                      </span>
-                      
+
+                      <span className="g7-execution-badge">HOME PREP</span>
                     </div>
                   </div>
                 </section>
@@ -414,12 +404,13 @@ export default function FlavorSelector() {
                   <div className="grid gap-2 lg:grid-cols-4">
                     <InfoCard title="Prep Time" value={execution.prepTime} />
                     <InfoCard title="Difficulty" value={execution.difficulty} />
-                    <InfoCard title="Repeatability" value={`${repeatabilityScore}%`} />
+                    <InfoCard
+                      title="Repeatability"
+                      value={`${repeatabilityScore}%`}
+                    />
                     <InfoCard title="Execution" value={`${execution.score}%`} />
                   </div>
                 </div>
-
-          
 
                 <section className="g7-ai-panel">
                   <div className="g7-ai-panel-inner">
@@ -470,10 +461,6 @@ export default function FlavorSelector() {
                   <InfoCard title="Flavor Mood" value={flavor} />
                   <InfoCard title="Kitchen Mode" value={execution.kitchenMode} />
                 </div>
-
-                <
-
-                
 
                 <DecisionBox title="Repeatability Logic">
                   <p className="text-xs leading-6 text-slate-300">
@@ -545,7 +532,7 @@ function InfoCard({
   value,
 }: {
   title: string
-  value: string
+  value: string | number
 }) {
   return (
     <div className="rounded-[18px] border border-white/10 bg-black/25 p-3">
@@ -570,7 +557,6 @@ function IngredientRow({
   return (
     <div className="g7-ingredient-card">
       <div className="g7-ingredient-dot">{index}</div>
-
       <p className="text-xs font-bold leading-5 text-slate-200">{value}</p>
     </div>
   )
@@ -586,7 +572,6 @@ function StepRow({
   return (
     <div className="g7-timeline-item">
       <div className="g7-timeline-number">{index}</div>
-
       <div className="g7-timeline-content">{value}</div>
     </div>
   )
