@@ -206,22 +206,22 @@ export default function JoinPage() {
 
   function buildWhatsappLink(system: G7System) {
     const message = `
-السلام عليكم 👋
+Hello G7 Team 👋
 
-أنا جربت G7 Coach Numbers Engine.
+I tried the G7 Coach Numbers Engine.
 
-الأرقام:
+My coach numbers:
 Protein: ${protein || system.protein}g
 Carbs: ${carbs || system.carbs}g
 
-النظام المقترح:
+Generated package:
 ${system.name} - ${system.subtitle}
 
-السعر:
+Package price:
 ${system.price} EGP
 
-أريد استلام نظام G7 الكامل:
-7 أيام / 21 وجبة / طريقة التحضير الأسبوعية / قائمة المشتريات.
+I would like to receive my complete G7 food system:
+7 days / 21 meals / weekly prep method / shopping list / portion guidance.
 `
 
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
