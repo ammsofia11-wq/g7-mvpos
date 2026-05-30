@@ -1,45 +1,26 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 const WHATSAPP_NUMBER = "201128442058"
 
 const G7_SYSTEMS = [
   {
-    id: "lean-bulk",
-    name: "LEAN BULK",
-    subtitle: "Balanced Athlete Transformation",
-    arabic: "زيادة عضلية نظيفة",
-    calories: 2200,
-    protein: 200,
-    carbs: 180,
-    price: 75,
-    color: "#B7F532",
-    warmColor: "#FFB07A",
-    promise: "Build lean muscle with controlled carbs, high protein, and real food variety.",
-    output: "7-day lean bulk food system with 21 meals, simple cooking steps, and grocery list.",
-    meals: [
-      "🔥 Smoky Kofta Rice Bowl",
-      "🥣 Creamy Muscle Oats",
-      "🍝 Italian Chicken Pasta",
-      "🥙 Lean Hawawshi",
-      "🐟 Tuna Rice Reset",
-      "🍗 Cajun Chicken Potato",
-    ],
-  },
-  {
     id: "budget-athlete",
-    name: "BUDGET ATHLETE",
-    subtitle: "Lifestyle Athlete System",
+    name: "G7 FLEX",
+    label: "BUDGET ATHLETE",
+    subtitle: "Smart Budget Food System",
     arabic: "نظام اقتصادي للرياضيين",
     calories: 2100,
     protein: 180,
-    carbs: 160,
+    carbs: 200,
     price: 50,
     color: "#19D9E6",
     warmColor: "#FFB07A",
-    promise: "A smart affordable system for gym clients who want results without expensive food.",
-    output: "7-day budget athlete system using simple ingredients and practical meal prep.",
+    promise:
+      "A smart affordable system for gym clients who want results without expensive food.",
+    output:
+      "7-day budget athlete system with 21 meals, shopping list, simple prep steps, and portion guidance.",
     meals: [
       "🥙 Chicken Wrap",
       "🍳 Morning Power Eggs",
@@ -51,17 +32,20 @@ const G7_SYSTEMS = [
   },
   {
     id: "shredding",
-    name: "SHREDDING",
-    subtitle: "Elite Fat Loss System",
+    name: "G7 SHRED",
+    label: "SHREDDING",
+    subtitle: "Shredding Food System",
     arabic: "تنشيف وحرق دهون",
     calories: 1700,
     protein: 180,
-    carbs: 120,
+    carbs: 140,
     price: 75,
-    color: "#FF8C42",
-    warmColor: "#FF5A4F",
-    promise: "High protein, lower carbs, controlled calories, and meals that still feel exciting.",
-    output: "7-day shredding system with filling meals, lean proteins, and fat-loss structure.",
+    color: "#FF4D4D",
+    warmColor: "#FF8C42",
+    promise:
+      "High protein, controlled carbs, lower calories, and meals that still feel exciting.",
+    output:
+      "7-day shredding system with filling meals, lean proteins, controlled carbs, and fat-loss structure.",
     meals: [
       "🔥 Shred Kofta Bowl",
       "🍳 Lean Omelette",
@@ -72,18 +56,46 @@ const G7_SYSTEMS = [
     ],
   },
   {
+    id: "lean-bulk",
+    name: "G7 CORE",
+    label: "LEAN BULK",
+    subtitle: "Clean Muscle Gain System",
+    arabic: "زيادة عضلية نظيفة",
+    calories: 2200,
+    protein: 200,
+    carbs: 180,
+    price: 75,
+    color: "#B7F532",
+    warmColor: "#FFB07A",
+    promise:
+      "Build lean muscle with controlled carbs, high protein, and real food variety.",
+    output:
+      "7-day clean muscle gain system with 21 meals, cooking steps, portion map, and grocery list.",
+    meals: [
+      "🔥 Smoky Kofta Rice Bowl",
+      "🥣 Creamy Muscle Oats",
+      "🍝 Italian Chicken Pasta",
+      "🥙 Lean Hawawshi",
+      "🐟 Tuna Rice Reset",
+      "🍗 Cajun Chicken Potato",
+    ],
+  },
+  {
     id: "mass-gainer",
-    name: "MASS GAINER",
-    subtitle: "Lean Muscle Growth",
+    name: "G7 MASS",
+    label: "MASS GAINER",
+    subtitle: "Mass Gain Food System",
     arabic: "تضخيم عضلي نظيف",
     calories: 3200,
     protein: 240,
-    carbs: 300,
+    carbs: 320,
     price: 100,
-    color: "#D8C56A",
+    color: "#FF8C42",
     warmColor: "#FFB07A",
-    promise: "A higher calorie system for athletes who need serious fuel without eating randomly.",
-    output: "7-day mass gain system with high-calorie meals, controlled protein, and smart carbs.",
+    promise:
+      "A higher calorie system for athletes who need serious fuel without eating randomly.",
+    output:
+      "7-day mass gain system with high-calorie meals, controlled protein, smart carbs, and weekly prep.",
     meals: [
       "🍝 Mass Chicken Pasta",
       "🥣 Power Oats",
@@ -95,17 +107,20 @@ const G7_SYSTEMS = [
   },
   {
     id: "premium-chef",
-    name: "PREMIUM CHEF",
-    subtitle: "Chef Performance Edition",
+    name: "G7 PREMIUM",
+    label: "PREMIUM CHEF",
+    subtitle: "Premium Chef Food System",
     arabic: "تجربة شيف احترافية",
     calories: 2400,
-    protein: 210,
-    carbs: 200,
+    protein: 220,
+    carbs: 220,
     price: 150,
     color: "#D96CFF",
     warmColor: "#FFB07A",
-    promise: "A premium chef-style food system for people who want taste, structure, and variety.",
-    output: "7-day premium chef system with elevated meals, flavor rotation, and smart prep.",
+    promise:
+      "A premium chef-style food system for people who want taste, structure, and variety.",
+    output:
+      "7-day premium chef system with elevated meals, flavor rotation, smart prep, and a premium food experience.",
     meals: [
       "🥩 Egyptian Beef Plate",
       "🍝 Creamy Pink Chicken",
@@ -115,7 +130,7 @@ const G7_SYSTEMS = [
       "🍗 Chef Chicken Bowl",
     ],
   },
-]
+] as const
 
 const scanSteps = [
   "Reading protein target...",
@@ -125,43 +140,35 @@ const scanSteps = [
 ]
 
 const quickPresets = [
-  {
-    label: "200P / 150C",
-    protein: "200",
-    carbs: "150",
-  },
-  {
-    label: "180P / 120C",
-    protein: "180",
-    carbs: "120",
-  },
-  {
-    label: "240P / 300C",
-    protein: "240",
-    carbs: "300",
-  },
+  { label: "200P / 150C", protein: "200", carbs: "150" },
+  { label: "180P / 120C", protein: "180", carbs: "120" },
+  { label: "240P / 300C", protein: "240", carbs: "300" },
 ]
 
 type G7System = (typeof G7_SYSTEMS)[number]
 
 function getSystemFromNumbers(proteinValue: number, carbValue: number) {
-  if (proteinValue >= 220 && carbValue >= 250) {
-    return G7_SYSTEMS.find((system) => system.id === "mass-gainer") ?? G7_SYSTEMS[0]
-  }
-
-  if (proteinValue >= 200 && carbValue <= 220) {
+  if (!proteinValue || !carbValue) {
     return G7_SYSTEMS.find((system) => system.id === "lean-bulk") ?? G7_SYSTEMS[0]
   }
 
-  if (proteinValue >= 180 && carbValue <= 160) {
+  if (proteinValue >= 230 && carbValue >= 260) {
+    return G7_SYSTEMS.find((system) => system.id === "mass-gainer") ?? G7_SYSTEMS[0]
+  }
+
+  if (proteinValue >= 210 && carbValue >= 170) {
+    return G7_SYSTEMS.find((system) => system.id === "premium-chef") ?? G7_SYSTEMS[0]
+  }
+
+  if (proteinValue >= 190 && carbValue >= 150) {
+    return G7_SYSTEMS.find((system) => system.id === "lean-bulk") ?? G7_SYSTEMS[0]
+  }
+
+  if (proteinValue >= 170 && carbValue <= 150) {
     return G7_SYSTEMS.find((system) => system.id === "shredding") ?? G7_SYSTEMS[0]
   }
 
-  if (proteinValue <= 170) {
-    return G7_SYSTEMS.find((system) => system.id === "budget-athlete") ?? G7_SYSTEMS[0]
-  }
-
-  return G7_SYSTEMS.find((system) => system.id === "premium-chef") ?? G7_SYSTEMS[0]
+  return G7_SYSTEMS.find((system) => system.id === "budget-athlete") ?? G7_SYSTEMS[0]
 }
 
 export default function JoinPage() {
@@ -169,7 +176,10 @@ export default function JoinPage() {
   const [carbs, setCarbs] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [engineActivated, setEngineActivated] = useState(false)
-  const [selectedSystem, setSelectedSystem] = useState<G7System>(G7_SYSTEMS[0])
+  const [activeStep, setActiveStep] = useState(0)
+  const [selectedSystem, setSelectedSystem] = useState<G7System>(
+    G7_SYSTEMS.find((system) => system.id === "lean-bulk") ?? G7_SYSTEMS[0]
+  )
 
   const detectedSystem = useMemo(() => {
     const proteinValue = Number(protein)
@@ -180,23 +190,35 @@ export default function JoinPage() {
     return getSystemFromNumbers(proteinValue, carbValue)
   }, [protein, carbs, selectedSystem])
 
+  useEffect(() => {
+    if (!isAnalyzing) return
+
+    const timers = scanSteps.map((_, index) =>
+      window.setTimeout(() => {
+        setActiveStep(index)
+      }, index * 360)
+    )
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer))
+    }
+  }, [isAnalyzing])
+
   function buildWhatsappLink(system: G7System) {
     const message = `
 السلام عليكم 👋
 
 أنا جربت G7 Coach Numbers Engine.
 
+الأرقام:
+Protein: ${protein || system.protein}g
+Carbs: ${carbs || system.carbs}g
+
 النظام المقترح:
-${system.name}
+${system.name} - ${system.subtitle}
 
-الهدف:
-${system.subtitle}
-
-Protein:
-${protein || system.protein}g
-
-Carbs:
-${carbs || system.carbs}g
+السعر:
+${system.price} EGP
 
 أريد استلام نظام G7 الكامل:
 7 أيام / 21 وجبة / طريقة التحضير الأسبوعية / قائمة المشتريات.
@@ -206,30 +228,42 @@ ${carbs || system.carbs}g
   }
 
   function runG7Engine() {
-    const finalProtein = protein || "200"
-    const finalCarbs = carbs || "150"
+    const finalProtein = protein.trim() || "200"
+    const finalCarbs = carbs.trim() || "150"
 
     const proteinValue = Number(finalProtein)
     const carbValue = Number(finalCarbs)
 
-    if (!proteinValue || !carbValue) return
+    if (!proteinValue || !carbValue) {
+      setEngineActivated(false)
+      return
+    }
+
+    const generatedSystem = getSystemFromNumbers(proteinValue, carbValue)
 
     setProtein(finalProtein)
     setCarbs(finalCarbs)
+    setSelectedSystem(generatedSystem)
     setEngineActivated(false)
     setIsAnalyzing(true)
+    setActiveStep(0)
 
-    setTimeout(() => {
-      setSelectedSystem(getSystemFromNumbers(proteinValue, carbValue))
+    window.setTimeout(() => {
       setIsAnalyzing(false)
       setEngineActivated(true)
-    }, 1200)
+      setSelectedSystem(generatedSystem)
+    }, 1700)
   }
 
   function applyPreset(preset: (typeof quickPresets)[number]) {
+    const presetSystem = getSystemFromNumbers(Number(preset.protein), Number(preset.carbs))
+
     setProtein(preset.protein)
     setCarbs(preset.carbs)
+    setSelectedSystem(presetSystem)
     setEngineActivated(false)
+    setIsAnalyzing(false)
+    setActiveStep(0)
   }
 
   const smartWhatsappLink = useMemo(
@@ -398,6 +432,7 @@ ${carbs || system.carbs}g
                     <button
                       key={preset.label}
                       onClick={() => applyPreset(preset)}
+                      type="button"
                       className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-white/60 transition hover:border-[#FF7A59]/35 hover:bg-[#FF7A59]/8 hover:text-[#FFB07A]"
                     >
                       {preset.label}
@@ -428,8 +463,18 @@ ${carbs || system.carbs}g
                         type="number"
                         value={protein}
                         onChange={(event) => {
-                          setProtein(event.target.value)
+                          const nextValue = event.target.value
+                          setProtein(nextValue)
                           setEngineActivated(false)
+                          setIsAnalyzing(false)
+                          setActiveStep(0)
+
+                          const proteinValue = Number(nextValue)
+                          const carbValue = Number(carbs)
+
+                          if (proteinValue && carbValue) {
+                            setSelectedSystem(getSystemFromNumbers(proteinValue, carbValue))
+                          }
                         }}
                         placeholder="200"
                         className="w-full bg-transparent text-center text-[42px] font-black tracking-[-0.08em] text-white outline-none placeholder:text-white/12"
@@ -463,8 +508,18 @@ ${carbs || system.carbs}g
                         type="number"
                         value={carbs}
                         onChange={(event) => {
-                          setCarbs(event.target.value)
+                          const nextValue = event.target.value
+                          setCarbs(nextValue)
                           setEngineActivated(false)
+                          setIsAnalyzing(false)
+                          setActiveStep(0)
+
+                          const proteinValue = Number(protein)
+                          const carbValue = Number(nextValue)
+
+                          if (proteinValue && carbValue) {
+                            setSelectedSystem(getSystemFromNumbers(proteinValue, carbValue))
+                          }
                         }}
                         placeholder="150"
                         className="w-full bg-transparent text-center text-[42px] font-black tracking-[-0.08em] text-white outline-none placeholder:text-white/12"
@@ -479,7 +534,9 @@ ${carbs || system.carbs}g
 
                 <button
                   onClick={runG7Engine}
-                  className="mt-5 flex w-full items-center justify-center rounded-[22px] px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black transition hover:scale-[1.01] md:px-7 md:text-[12px] md:tracking-[0.24em]"
+                  type="button"
+                  disabled={isAnalyzing}
+                  className="mt-5 flex w-full items-center justify-center rounded-[22px] px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-80 md:px-7 md:text-[12px] md:tracking-[0.24em]"
                   style={{
                     background:
                       "linear-gradient(90deg, #19D9E6 0%, #67E4ED 45%, #FF7A59 100%)",
@@ -508,7 +565,11 @@ ${carbs || system.carbs}g
                       {scanSteps.map((step, index) => (
                         <div
                           key={step}
-                          className="rounded-[14px] border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-bold text-white/70"
+                          className={`rounded-[14px] border px-3 py-2 text-[11px] font-bold transition ${
+                            index <= activeStep
+                              ? "border-[#B7F532]/25 bg-[#B7F532]/10 text-white"
+                              : "border-white/10 bg-white/[0.04] text-white/35"
+                          }`}
                         >
                           <span className="mr-2 text-[#FFB07A]">
                             0{index + 1}
@@ -533,8 +594,15 @@ ${carbs || system.carbs}g
                         Generated Plan Preview
                       </p>
 
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#B7F532]/25 bg-[#B7F532]/10 px-4 py-2">
+                        <span className="h-2 w-2 rounded-full bg-[#B7F532] shadow-[0_0_14px_rgba(183,245,50,0.8)]" />
+                        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#B7F532]">
+                          Generated package
+                        </p>
+                      </div>
+
                       <h3
-                        className="mt-2 text-[36px] font-black tracking-[-0.09em] md:text-[40px]"
+                        className="mt-3 text-[38px] font-black tracking-[-0.09em] md:text-[44px]"
                         style={{
                           color: selectedSystem.color,
                         }}
@@ -542,18 +610,36 @@ ${carbs || system.carbs}g
                         {selectedSystem.name}
                       </h3>
 
-                      <p className="mt-1 text-[13px] font-bold text-white/58">
+                      <p className="mt-1 text-[14px] font-black text-white">
+                        {selectedSystem.subtitle}
+                      </p>
+
+                      <p className="mt-2 text-[13px] font-bold leading-6 text-white/58">
                         {selectedSystem.promise}
                       </p>
                     </div>
 
-                    <div className="mt-5 grid grid-cols-3 gap-2">
+                    <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
+                      <div className="rounded-[18px] border border-white/10 bg-black/20 p-3 text-center">
+                        <p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/30">
+                          Price
+                        </p>
+
+                        <p className="mt-1 text-[22px] font-black text-[#B7F532]">
+                          {selectedSystem.price}
+                        </p>
+
+                        <p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35">
+                          EGP
+                        </p>
+                      </div>
+
                       <div className="rounded-[18px] border border-white/10 bg-black/20 p-3 text-center">
                         <p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/30">
                           Calories
                         </p>
 
-                        <p className="mt-1 text-[20px] font-black text-white">
+                        <p className="mt-1 text-[22px] font-black text-white">
                           {selectedSystem.calories}
                         </p>
                       </div>
@@ -563,7 +649,7 @@ ${carbs || system.carbs}g
                           Protein
                         </p>
 
-                        <p className="mt-1 text-[20px] font-black text-[#19D9E6]">
+                        <p className="mt-1 text-[22px] font-black text-[#19D9E6]">
                           {protein || selectedSystem.protein}g
                         </p>
                       </div>
@@ -573,7 +659,7 @@ ${carbs || system.carbs}g
                           Carbs
                         </p>
 
-                        <p className="mt-1 text-[20px] font-black text-[#FFB07A]">
+                        <p className="mt-1 text-[22px] font-black text-[#FFB07A]">
                           {carbs || selectedSystem.carbs}g
                         </p>
                       </div>
@@ -620,7 +706,7 @@ ${carbs || system.carbs}g
 
                     <div className="mt-4 rounded-[22px] border border-white/10 bg-black/20 p-4">
                       <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#19D9E6]">
-                        Meal preview from your plan
+                        Meal preview from your package
                       </p>
 
                       <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -641,7 +727,7 @@ ${carbs || system.carbs}g
                       rel="noreferrer"
                       className="mx-auto mt-5 flex w-full items-center justify-center rounded-[20px] bg-[#8FD14F] px-7 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black transition hover:scale-[1.01]"
                     >
-                      Send This Plan To WhatsApp
+                      Send {selectedSystem.name} To WhatsApp
                     </a>
                   </div>
                 ) : (
@@ -652,7 +738,7 @@ ${carbs || system.carbs}g
                     }}
                   >
                     <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
-                      Live Preview
+                      Live Package Preview
                     </p>
 
                     <p
@@ -664,8 +750,18 @@ ${carbs || system.carbs}g
                       {heroSystem.name}
                     </p>
 
-                    <p className="mt-1 text-[11px] font-semibold text-white/42">
-                      Your generated plan will appear here after scanning.
+                    <p className="mt-1 text-[13px] font-black text-white/70">
+                      {heroSystem.subtitle}
+                    </p>
+
+                    <div className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full border border-[#B7F532]/20 bg-[#B7F532]/10 px-4 py-2">
+                      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#B7F532]">
+                        {heroSystem.price} EGP
+                      </p>
+                    </div>
+
+                    <p className="mt-2 text-[11px] font-semibold text-white/42">
+                      Press Generate to activate the full package preview.
                     </p>
                   </div>
                 )}
@@ -678,17 +774,17 @@ ${carbs || system.carbs}g
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#19D9E6]">
-                More G7 System Examples
+                G7 Package Library
               </p>
 
               <h2 className="mt-2 text-[28px] font-black tracking-[-0.06em] text-white">
-                Other plans you can explore
+                Choose the package that fits your numbers
               </h2>
             </div>
 
-            <p className="max-w-[230px] text-[11px] leading-5 text-white/45 md:text-right">
-              The main result is generated above. These are quick examples from
-              the G7 library.
+            <p className="max-w-[260px] text-[11px] leading-5 text-white/45 md:text-right">
+              The generated package appears above. These are the current G7
+              market-test packages and prices.
             </p>
           </div>
 
@@ -713,6 +809,12 @@ ${carbs || system.carbs}g
                     }}
                   />
 
+                  {selected ? (
+                    <div className="absolute right-3 top-3 rounded-full bg-[#B7F532] px-2 py-1 text-[7px] font-black uppercase tracking-[0.12em] text-black">
+                      Matched
+                    </div>
+                  ) : null}
+
                   <div className="relative z-10">
                     <h3 className="text-[19px] font-black tracking-[-0.06em] text-white">
                       {system.name}
@@ -731,7 +833,25 @@ ${carbs || system.carbs}g
                       {system.subtitle}
                     </p>
 
-                    <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="mt-4 rounded-[18px] border border-white/10 bg-black/25 p-3 text-center">
+                      <p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/30">
+                        Package price
+                      </p>
+
+                      <div className="mt-1 flex items-end justify-center gap-1">
+                        <p
+                          className="text-[28px] font-black tracking-[-0.06em]"
+                          style={{ color: system.color }}
+                        >
+                          {system.price}
+                        </p>
+                        <p className="mb-1 text-[10px] font-black text-white/65">
+                          EGP
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
                       <div className="rounded-[14px] border border-white/10 bg-black/20 p-2">
                         <p className="text-[7px] font-black uppercase tracking-[0.12em] text-white/30">
                           kcal
@@ -771,7 +891,7 @@ ${carbs || system.carbs}g
                       onClick={() => setSelectedSystem(system)}
                       className="mt-4 flex w-full items-center justify-center rounded-[16px] bg-[#8FD14F] px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:scale-[1.02]"
                     >
-                      WhatsApp
+                      WhatsApp — {system.price} EGP
                     </a>
                   </div>
                 </div>
@@ -788,7 +908,7 @@ ${carbs || system.carbs}g
           rel="noreferrer"
           className="flex w-full items-center justify-center rounded-[18px] bg-[#8FD14F] px-5 py-4 text-[12px] font-black uppercase tracking-[0.16em] text-black"
         >
-          WhatsApp — {selectedSystem.name}
+          WhatsApp — {selectedSystem.name} • {selectedSystem.price} EGP
         </a>
       </div>
     </main>
