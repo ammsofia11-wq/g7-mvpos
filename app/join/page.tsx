@@ -220,6 +220,11 @@ ${system.name} - ${system.subtitle}
 Package price:
 ${system.price} EGP
 
+Payment method:
+Vodafone Cash / Etisalat Cash / InstaPay
+
+Please send me the payment details.
+
 I would like to receive my complete G7 food system:
 7 days / 21 meals / weekly prep method / shopping list / portion guidance.
 `
@@ -551,6 +556,15 @@ I would like to receive my complete G7 food system:
                   No signup • No waiting • WhatsApp ready
                 </p>
 
+                <div className="mt-3 rounded-[18px] border border-[#B7F532]/15 bg-[#8FD14F]/[0.055] px-4 py-3 text-center">
+                  <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#B7F532]">
+                    Payment available
+                  </p>
+                  <p className="mt-1 text-[11px] font-bold text-white/62">
+                    Vodafone Cash • Etisalat Cash • InstaPay
+                  </p>
+                </div>
+
                 {isAnalyzing ? (
                   <div className="mt-5 rounded-[26px] border border-[#19D9E6]/20 bg-[#06111E]/85 p-4">
                     <div className="mb-4 flex items-center justify-between">
@@ -721,6 +735,20 @@ I would like to receive my complete G7 food system:
                       </div>
                     </div>
 
+                    <div className="mt-4 rounded-[22px] border border-[#19D9E6]/15 bg-[#19D9E6]/[0.045] p-4 text-center">
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#19D9E6]">
+                        Payment methods
+                      </p>
+
+                      <p className="mt-2 text-[12px] font-bold leading-6 text-white/62">
+                        Vodafone Cash • Etisalat Cash • InstaPay
+                      </p>
+
+                      <p className="mt-1 text-[10px] font-semibold leading-5 text-white/38">
+                        Tap WhatsApp and we will send the payment details for your generated package.
+                      </p>
+                    </div>
+
                     <a
                       href={smartWhatsappLink}
                       target="_blank"
@@ -783,8 +811,8 @@ I would like to receive my complete G7 food system:
             </div>
 
             <p className="max-w-[260px] text-[11px] leading-5 text-white/45 md:text-right">
-              The generated package appears above. These are the current G7
-              market-test packages and prices.
+              The generated package appears above. Payment is available via
+              Vodafone Cash, Etisalat Cash, or InstaPay.
             </p>
           </div>
 
