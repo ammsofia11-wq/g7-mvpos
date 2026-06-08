@@ -276,7 +276,7 @@ export function parseIngredientAmount(amount: string): ParsedIngredientAmount {
     }
   }
 
-  const eggMatch = cleaned.match(/^(\d+(?:\.\d+)?)\s?eggs?$/i)
+  const eggMatch = cleaned.match(/^(\d+(?:\.\d+)?)\s?eggs*$/i)
   if (eggMatch) {
     return {
       type: "eggs",
@@ -284,7 +284,7 @@ export function parseIngredientAmount(amount: string): ParsedIngredientAmount {
     }
   }
 
-  const canMatch = cleaned.match(/^(\d+(?:\.\d+)?)\s?cans?$/i)
+  const canMatch = cleaned.match(/^(\d+(?:\.\d+)?)\s?cans*$/i)
   if (canMatch) {
     return {
       type: "cans",
@@ -292,7 +292,7 @@ export function parseIngredientAmount(amount: string): ParsedIngredientAmount {
     }
   }
 
-  const scoopMatch = cleaned.match(/^(\d+(?:\.\d+)?)\s?scoops?$/i)
+  const scoopMatch = cleaned.match(/^(\d+(?:\.\d+)?)\s?scoops*$/i)
   if (scoopMatch) {
     return {
       type: "scoops",
@@ -359,23 +359,43 @@ export function formatNormalizedAmount(input: {
   }
 
   if (input.eggs > 0) {
-    parts.push(`${input.eggs} eggs`)
+    parts.push(`${input.eggs} ${input.eggs === 1 ? "egg" : "eggs"}`)
   }
 
   if (input.cans > 0) {
-    parts.push(`${input.cans} cans`)
+    parts.push(`${input.cans} ${input.cans === 1 ? "can" : "cans"}`)
   }
 
   if (input.scoops > 0) {
-    parts.push(`${input.scoops} scoops`)
+    parts.push(`${input.scoops} ${input.scoops === 1 ? "scoop" : "scoops"}`)
   }
 
   Object.entries(input.units).forEach(([unit, value]) => {
-    parts.push(`${value} ${unit}`)
+    const cleanUnit = unit
+      .replace(/eggss/gi, "eggs")
+      .replace(/canss/gi, "cans")
+      .replace(/scoopss/gi, "scoops")
+      .replace(/slicess/gi, "slices")
+      .replace(/wrapss/gi, "wraps")
+      .replace(/loafss/gi, "loaves")
+
+    parts.push(`${value} ${cleanUnit}`)
   })
 
   if (input.texts.length > 0) {
-    parts.push(input.texts.join(" + "))
+    parts.push(
+      input.texts
+        .join(" + ")
+        .replace(/eggss/gi, "eggs")
+        .replace(/canss/gi, "cans")
+        .replace(/scoopss/gi, "scoops")
+        .replace(/slicess/gi, "slices")
+        .replace(/wrapss/gi, "wraps")
+        .replace(/loafss/gi, "loaves")
+        .replace(/\b1 eggs\b/gi, "1 egg")
+        .replace(/\b1 cans\b/gi, "1 can")
+        .replace(/\b1 scoops\b/gi, "1 scoop")
+    )
   }
 
   return parts.join(" / ")
