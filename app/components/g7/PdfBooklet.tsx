@@ -2945,52 +2945,52 @@ function getSopLabel(
 ) {
   const labels: Record<PdfLanguage, Record<string, string>> = {
     ar: {
-      supportTitle: "تجهيز باقي المكونات",
+      supportTitle: "G7 Prep Engine",
       supportSubtitle:
-        "بعد تحضير اللحمة والفراخ، جهّز الكارب، صوصات G7، الخضار، وبدائل البروتين المصرية بدون تعقيد.",
-      quickProtein: "بروتين سريع / بدائل مصرية",
-      carbs: "الكارب",
+        "حضّر الأسبوع كـ 4 Engines واضحة: Protein Engine، Carb Engine، Sauce Engine، وFresh Engine. بعدها افتح Portion Engine ووزّع كل علبة بالميزان.",
+      quickProtein: "Protein Engine السريع",
+      carbs: "Carb Engine",
       sauces: "Sauce Engine",
-      vegetables: "الخضار",
+      vegetables: "Fresh Engine",
       total: "إجمالي الأسبوع",
       batch1: "الأيام 1–3",
       batch2: "الأيام 4–6",
       day7: "اليوم 7",
-      workflow: "قاعدة التشغيل",
+      workflow: "G7 Operating Rule",
       workflowBody:
-        "صفحات تجهيز العلب هي مرجع الكميات الدقيقة. هنا افهم طريقة التجهيز فقط: البروتين السريع حسب يومه، الكارب لكل مرحلة، الصوص منفصل، والخضار متغسل ومتقطع.",
+        "لا تطبخ 21 وجبة من الصفر. حضّر البروتين، الكارب، الصوص، والخضار كقواعد منفصلة، ثم استخدم خريطة تجهيز العلب كـ Portion Engine للتوزيع النهائي.",
     },
     en: {
-      supportTitle: "Prep the remaining components",
+      supportTitle: "G7 Prep Engine",
       supportSubtitle:
-        "After beef and chicken, prepare carbs, G7 sauce engines, vegetables, and Egypt-friendly protein alternatives without overthinking.",
-      quickProtein: "Quick proteins / Egypt alternatives",
-      carbs: "Carbs",
+        "Prep the week as 4 clear engines: Protein Engine, Carb Engine, Sauce Engine, and Fresh Engine. Then open the Portion Engine and weigh each container.",
+      quickProtein: "Quick Protein Engine",
+      carbs: "Carb Engine",
       sauces: "Sauce Engine",
-      vegetables: "Vegetables",
+      vegetables: "Fresh Engine",
       total: "Full week",
       batch1: "Days 1–3",
       batch2: "Days 4–6",
       day7: "Day 7",
-      workflow: "Operating rule",
+      workflow: "G7 Operating Rule",
       workflowBody:
-        "The portion maps are the exact quantity reference. This page only explains how to prep: quick proteins on their day, carbs by batch, sauces separate, and vegetables washed and cut.",
+        "Do not cook 21 meals from scratch. Prep protein, carbs, sauces, and fresh vegetables as separate engines, then use the Portion Map as the final Portion Engine.",
     },
     bg: {
-      supportTitle: "Подготви останалите компоненти",
+      supportTitle: "G7 Prep Engine",
       supportSubtitle:
-        "След телешкото и пилешкото подготви въглехидрати, сосове, зеленчуци и бързи протеини без усложняване.",
-      quickProtein: "Бързи протеини",
-      carbs: "Въглехидрати",
-      sauces: "Сосове и мазнини",
-      vegetables: "Зеленчуци",
+        "Подготви седмицата като 4 ясни engines: Protein Engine, Carb Engine, Sauce Engine и Fresh Engine. После използвай Portion Engine за кутиите.",
+      quickProtein: "Quick Protein Engine",
+      carbs: "Carb Engine",
+      sauces: "Sauce Engine",
+      vegetables: "Fresh Engine",
       total: "Цяла седмица",
       batch1: "Дни 1–3",
       batch2: "Дни 4–6",
       day7: "Ден 7",
-      workflow: "Правило за работа",
+      workflow: "G7 Operating Rule",
       workflowBody:
-        "Картите за разпределяне са точният източник за количества. Тук е само логиката: бързите протеини се използват в конкретния ден, въглехидратите се подготвят по етап, сосовете се държат отделно, а зеленчуците се измиват и нарязват.",
+        "Не готви 21 ястия от нулата. Подготви протеин, въглехидрати, сосове и fresh зеленчуци като отделни engines, после използвай Portion Map.",
     },
   };
 
@@ -3004,33 +3004,33 @@ function getPrepCardRule(
   const rules: Record<PdfLanguage, Record<string, string>> = {
     ar: {
       quickProtein:
-        "في نسخة مصر: الجبنة القريش هي البروتين السريع العملي والمتوفر. البيض، التونة، السمك والجبنة القريش يستخدموا حسب الوجبة في خريطة تجهيز العلب.",
+        "اللحمة والفراخ هم Protein Batch الأساسي. البروتين السريع مثل الجبنة القريش، البيض، التونة والسمك يستخدم حسب اليوم داخل خريطة تجهيز العلب.",
       carbs:
-        "اطبخ كارب المرحلة فقط. أرز أو مكرونة أو بطاطس حسب خريطة تجهيز العلب، أما الشوفان والعيش والتورتيلا فيستخدموا حسب الوجبة.",
+        "اطبخ كارب المرحلة فقط: أرز، مكرونة، بطاطس أو بطاطا. العيش، التورتيلا، الشوفان والموز لا يدخلوا Bulk Cooking؛ استخدمهم وقت التجميع.",
       sauces:
-        "لا تشتري صوصات جاهزة. حضّر 3 Engines: صوص طماطم G7، صوص زبادي جي سفن بخلطة G7، وجواكامولي البسلة اختياري. زيت الزيتون أو بخاخ الطبخ يستخدم حسب المكتوب.",
+        "لا تشتري صوصات جاهزة. حضّر Sauce Engine: صوص طماطم G7، صوص زبادي G7، وجواكامولي البسلة عند الحاجة. خزّن الصوص منفصل للحفاظ على القوام.",
       vegetables:
-        "اغسل وقطّع الخضار وخزّنه منفصلًا للحفاظ على القوام. ضيفه للعلبة حسب الكمية المكتوبة في خريطة تجهيز العلب.",
+        "اغسل، نشّف، قطّع، وخزّن الخضار منفصلًا. الخضار الطازة تدخل وقت التجميع، والخضار المطبوخة تدخل حسب خريطة العلب.",
     },
     en: {
       quickProtein:
-        "For the Egypt version, cottage cheese is the practical replacement for egg whites and whey. Eggs, tuna, fish, and cottage cheese are used per meal in the portion map.",
+        "Beef and chicken are the main Protein Batch. Quick proteins like cottage cheese, eggs, tuna, and fish are used on their specific day inside the Portion Map.",
       carbs:
-        "Cook only the current batch carbs. Rice, pasta, or potatoes follow the portion map; oats, bread, and tortillas are used per meal.",
+        "Cook only the current batch carbs: rice, pasta, potatoes, or sweet potatoes. Bread, tortillas, oats, and bananas are not bulk-cooked; use them during assembly.",
       sauces:
-        "Do not buy ready-made sauces. Make 3 engines: G7 tomato sauce, G7 yogurt spice sauce, and optional green pea guacamole. Olive oil or cooking spray is used only when listed.",
+        "Do not buy ready-made sauces. Build the Sauce Engine: G7 tomato sauce, G7 yogurt spice sauce, and green pea guacamole when needed. Store sauces separately.",
       vegetables:
-        "Wash and cut vegetables, then store separately for better texture. Add them to each container using the portion map amount.",
+        "Wash, dry, cut, and store vegetables separately. Fresh vegetables are assembled later; cooked vegetables follow the Portion Map.",
     },
     bg: {
       quickProtein:
-        "Яйца, риба тон, риба и суроватъчен протеин не влизат в маринатата за телешко/пилешко. Използвай ги в деня, показан в картата за разпределяне.",
+        "Телешкото и пилешкото са основният Protein Batch. Бързи протеини като cottage cheese, яйца, риба тон и риба се използват в конкретния ден от Portion Map.",
       carbs:
-        "Сготви само въглехидратите за текущия етап. Ориз, паста или картофи са по картата за разпределяне; овес, хляб и тортили се използват според конкретното ястие.",
+        "Сготви само въглехидратите за текущия етап: ориз, паста, картофи или сладък картоф. Хляб, тортили, овес и банан не се готвят bulk.",
       sauces:
-        "Подготви сосовете в малки кутии и ги дръж отделно при нужда. Зехтин или спрей за готвене се използва само за готвени ястия, когато е посочено.",
+        "Не купувай готови сосове. Изгради Sauce Engine: G7 доматен сос, G7 йогурт сос и гуакамоле от грах при нужда. Дръж сосовете отделно.",
       vegetables:
-        "Измий и нарежи зеленчуците, после съхранявай отделно за по-добра текстура. Добавяй според количеството в картата за разпределяне.",
+        "Измий, подсуши, нарежи и съхранявай зеленчуците отделно. Fresh зеленчуците се добавят при сглобяване; готвените следват Portion Map.",
     },
   };
 
@@ -3043,16 +3043,16 @@ function getPrepCardFooter(
 ) {
   const footers: Record<PdfLanguage, Record<string, string>> = {
     ar: {
-      quickProtein: "الرقم الدقيق لكل وجبة موجود في خريطة تجهيز العلب.",
-      carbs: "لا تطبخ كارب الأسبوع كله مرة واحدة.",
-      sauces: "الصوص المنفصل يحافظ على الطعم والقوام.",
-      vegetables: "الخضار الطازة أفضل عند التخزين المنفصل.",
+      quickProtein: "البروتين السريع لا يدخل في باتش اللحمة أو الفراخ؛ استخدمه حسب اليوم.",
+      carbs: "اطبخ كارب المرحلة فقط، وليس كارب الأسبوع كله.",
+      sauces: "الصوص المنفصل يحافظ على الطعم والقوام ويمنع العلبة من أنها تطرى.",
+      vegetables: "الخضار الطازة أفضل عند التخزين المنفصل والتجميع وقت الأكل.",
     },
     en: {
-      quickProtein: "Exact per-meal amounts are in the portion map.",
-      carbs: "Do not cook the whole week of carbs at once.",
-      sauces: "Separate sauces preserve flavor and texture.",
-      vegetables: "Fresh vegetables hold better when stored separately.",
+      quickProtein: "Quick proteins do not enter the beef or chicken batch; use them by day.",
+      carbs: "Cook the current carb batch only, not the whole week.",
+      sauces: "Separate sauces preserve flavor, texture, and container quality.",
+      vegetables: "Fresh vegetables hold better when stored separately and assembled later.",
     },
     bg: {
       quickProtein: "Точните количества са в картата за разпределяне.",
