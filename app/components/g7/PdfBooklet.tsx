@@ -908,6 +908,106 @@ function getCookedIngredientDisplayName(
   return `cooked ${baseName}`;
 }
 
+function getMixedProteinPortionInfo(
+  canonicalName: string,
+  rawGrams: number,
+  language: PdfLanguage,
+) {
+  const name = canonicalName.toLowerCase();
+
+  if (!Number.isFinite(rawGrams) || rawGrams <= 0) return null;
+
+  const isChicken = name.includes("chicken");
+  const isBeef = name.includes("beef");
+
+  if (!isChicken && !isBeef) return null;
+
+  const mixedFactor = isChicken ? 1.111 : 1.299;
+  const cookedYieldFromMixed = isChicken ? 0.7 : 0.7;
+
+  const mixedGrams = roundToNearest(rawGrams * mixedFactor, 5);
+  const cookedMixedGrams = roundToNearest(mixedGrams * cookedYieldFromMixed, 5);
+
+  if (language === "ar") {
+    return {
+      rawLabel: "بروتين خام داخل الخليط",
+      mixedLabel: "خليط متبل قبل الطبخ",
+      cookedLabel: "وقت التوزيع بعد الطبخ",
+      mixedName: isChicken ? "خليط فراخ متبل" : "خليط لحمة متبل",
+      cookedName: isChicken ? "فراخ مطبوخة متبلة" : "كفتة مطبوخة",
+      mixedGrams,
+      cookedMixedGrams,
+      approx: "حوالي",
+    };
+  }
+
+  if (language === "bg") {
+    return {
+      rawLabel: "суров протеин в сместа",
+      mixedLabel: "овкусена смес преди готвене",
+      cookedLabel: "готова порция за кутията",
+      mixedName: isChicken ? "овкусена пилешка смес" : "овкусена телешка смес",
+      cookedName: isChicken ? "готово овкусено пиле" : "готова телешка кофта",
+      mixedGrams,
+      cookedMixedGrams,
+      approx: "около",
+    };
+  }
+
+  return {
+    rawLabel: "raw protein inside mix",
+    mixedLabel: "seasoned mix before cooking",
+    cookedLabel: "cooked portion for container",
+    mixedName: isChicken ? "seasoned chicken mix" : "seasoned beef mix",
+    cookedName: isChicken ? "cooked seasoned chicken" : "cooked beef kofta",
+    mixedGrams,
+    cookedMixedGrams,
+    approx: "approx.",
+  };
+}
+
+function formatMixedProteinPortionLine(
+  item: {
+    name: string;
+    grams: number;
+    eggs: number;
+    cans: number;
+    scoops: number;
+    units: Record<string, number>;
+    texts: string[];
+  },
+  language: PdfLanguage,
+  mealId?: string,
+) {
+  const mixedInfo = getMixedProteinPortionInfo(
+    item.name,
+    item.grams,
+    language,
+  );
+
+  if (!mixedInfo) return null;
+
+  const rawAmount = formatGroupedPortionAmount(item, language);
+  const displayName = getDisplayIngredientName(item.name, language, mealId);
+
+  const rawLine = cleanFinalPortionLine(
+    `${rawAmount} ${displayName}`,
+    language,
+  );
+
+  const mixedLine = cleanFinalPortionLine(
+    `${formatGrams(mixedInfo.mixedGrams, language)} ${mixedInfo.mixedName}`,
+    language,
+  );
+
+  const cookedLine = cleanFinalPortionLine(
+    `${formatGrams(mixedInfo.cookedMixedGrams, language)} ${mixedInfo.cookedName}`,
+    language,
+  );
+
+  return `${mixedInfo.rawLabel}: ${rawLine}\n${mixedInfo.mixedLabel}: ${mixedInfo.approx} ${mixedLine}\n${mixedInfo.cookedLabel}: ${mixedInfo.approx} ${cookedLine}`;
+}
+
 function formatRawToCookedLine(
   item: {
     name: string;
@@ -947,6 +1047,16 @@ function formatRawToCookedLine(
 
   if (item.grams <= 0) {
     return cleanFinalPortionLine(`${rawAmount} ${displayName}`, language);
+  }
+
+  const mixedProteinLine = formatMixedProteinPortionLine(
+    item,
+    language,
+    mealId,
+  );
+
+  if (mixedProteinLine) {
+    return mixedProteinLine;
   }
 
   const yieldInfo = getCookedYieldInfo(item.name);
