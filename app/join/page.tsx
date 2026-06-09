@@ -238,20 +238,26 @@ export default function JoinPage() {
   }, [isAnalyzing])
 
   function buildWhatsappLink(system: G7System) {
+    const enteredProtein = protein || `${system.protein}`
+    const enteredCarbs = carbs || `${system.carbs}`
+
     const message = `
 Hello G7 Team 👋
 
 I tried the G7 Coach Numbers Engine.
 
-My coach numbers:
-Protein: ${protein || system.protein}g
-Carbs: ${carbs || system.carbs}g
+Coach numbers entered:
+Protein: ${enteredProtein}g
+Carbs: ${enteredCarbs}g
 
-Generated package:
+Closest G7 base package:
 ${system.name} - ${system.subtitle}
 
-Package target:
+Base package target:
 ${system.calories} kcal / ${system.protein}g protein / ${system.carbs}g carbs / ${system.fat}g fat
+
+Note:
+My coach numbers may need a custom adjustment.
 
 Package price:
 ${system.price} EGP
@@ -495,7 +501,9 @@ I would like to receive my complete G7 food system:
 
             <section
               className={`order-1 relative overflow-hidden rounded-[30px] border bg-[#071421]/95 p-4 shadow-[0_30px_100px_rgba(25,217,230,0.12)] backdrop-blur md:rounded-[32px] md:p-5 lg:order-2 ${
-                isAnalyzing ? "g7-pulse-border border-[#B7F532]/45" : "border-[#19D9E6]/18"
+                isAnalyzing
+                  ? "g7-pulse-border border-[#B7F532]/45"
+                  : "border-[#19D9E6]/18"
               }`}
               style={{
                 boxShadow:
