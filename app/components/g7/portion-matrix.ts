@@ -9,7 +9,7 @@ export type PortionMealRole =
 
 export type FatLevel = "LOW" | "MEDIUM" | "HIGH"
 
-export type G7PortionSize = "JUNIOR" | "S" | "M" | "L"
+export type G7PortionSize = "S" | "M" | "L" | "XL"
 
 export type G7WeightStage =
   | "PURCHASE_WEIGHT"
@@ -29,18 +29,13 @@ export type PortionTarget = {
   size: G7PortionSize
 
   /*
-    NEW G7 Kitchen OS logic:
+    G7 Gym Core logic:
     - proteinRawWeight = protein before cooking
-    - carbCookedWeight = carb after cooking / portioning weight
+    - proteinCookedWeight = estimated cooked protein portion
+    - carbCookedWeight = cooked carb portion inside the box
   */
   proteinRawWeight: number
   carbCookedWeight: number
-
-  /*
-    BACKWARD COMPATIBILITY:
-    meals.ts still reads proteinCookedWeight.
-    Keep this field so the current build does not break.
-  */
   proteinCookedWeight: number
 
   vegRawWeight: number
@@ -54,20 +49,14 @@ export type PortionMatrixPlan = {
   label: string
   arabicLabel: string
 
-  clientType:
-    | "FATHER_46"
-    | "MOTHER_34"
-    | "CHILD_11"
-    | "GRANDFATHER_65"
-    | "GENERAL"
+  clientType: "GENERAL_GYM"
 
   planType:
-    | "SHREDDING"
-    | "CLASSIC_LIGHT"
-    | "BALANCED_JUNIOR"
-    | "CLASSIC_BALANCED"
-    | "LEAN_BULK"
-    | "MASS_GAINER"
+    | "G7_SHRED"
+    | "G7_CORE"
+    | "G7_MASS"
+    | "G7_FLEX"
+    | "G7_PREMIUM"
 
   mealCount: MealCount
   displayKcalRange: string
@@ -143,23 +132,15 @@ export const WEIGHT_LIFECYCLE_STAGES: WeightLifecycleStage[] = [
   {
     id: "PORTIONING_WEIGHT",
     label: "Portioning Weight",
-    arabicLabel: "وزن الغرف",
+    arabicLabel: "وزن التوزيع",
     description:
       "The final cooked weight placed inside the meal container using the scale.",
     arabicDescription:
-      "الوزن النهائي بعد الطبخ اللي بيتحط في العلبة بالميزان.",
+      "الوزن النهائي بعد الطبخ اللي بيتحط في العلبة بالميزان حسب خريطة تجهيز العلب.",
   },
 ]
 
 export const G7_STANDARD_PORTIONS: Record<G7PortionSize, PortionTarget> = {
-  JUNIOR: createPortionTarget({
-    size: "JUNIOR",
-    proteinRawWeight: 100,
-    carbCookedWeight: 130,
-    vegRawWeight: 80,
-    sauceWeight: 25,
-    fatLevel: "MEDIUM",
-  }),
   S: createPortionTarget({
     size: "S",
     proteinRawWeight: 120,
@@ -179,89 +160,56 @@ export const G7_STANDARD_PORTIONS: Record<G7PortionSize, PortionTarget> = {
   L: createPortionTarget({
     size: "L",
     proteinRawWeight: 190,
-    carbCookedWeight: 140,
+    carbCookedWeight: 160,
     vegRawWeight: 100,
     sauceWeight: 35,
     fatLevel: "MEDIUM",
+  }),
+  XL: createPortionTarget({
+    size: "XL",
+    proteinRawWeight: 210,
+    carbCookedWeight: 200,
+    vegRawWeight: 100,
+    sauceWeight: 40,
+    fatLevel: "HIGH",
   }),
 }
 
 export const PORTION_MATRIX_PLANS: PortionMatrixPlan[] = [
   {
-    id: "father-46-shredding",
-    label: "Father 46 · G7 Shred",
-    arabicLabel: "الأب 46 · تنشيف متوازن",
-    clientType: "FATHER_46",
-    planType: "SHREDDING",
+    id: "g7-shred",
+    label: "G7 SHRED",
+    arabicLabel: "تنشيف وحرق دهون",
+    clientType: "GENERAL_GYM",
+    planType: "G7_SHRED",
     mealCount: 3,
-    displayKcalRange: "1900–2000 CAL",
+    displayKcalRange: "1650–1750 CAL",
     macroTarget: {
-      kcal: 1950,
-      protein: 155,
-      carbs: 165,
-      fat: 60,
+      kcal: 1700,
+      protein: 180,
+      carbs: 140,
+      fat: 47,
     },
     meals: {
       BREAKFAST: createPortionTarget({
         size: "M",
-        proteinRawWeight: 120,
-        carbCookedWeight: 100,
-        vegRawWeight: 80,
+        proteinRawWeight: 140,
+        carbCookedWeight: 90,
+        vegRawWeight: 100,
         sauceWeight: 20,
-        fatLevel: "MEDIUM",
+        fatLevel: "LOW",
       }),
       LUNCH: createPortionTarget({
         size: "L",
         proteinRawWeight: 190,
-        carbCookedWeight: 130,
+        carbCookedWeight: 120,
         vegRawWeight: 100,
-        sauceWeight: 30,
-        fatLevel: "MEDIUM",
+        sauceWeight: 25,
+        fatLevel: "LOW",
       }),
       DINNER: createPortionTarget({
-        size: "M",
-        proteinRawWeight: 160,
-        carbCookedWeight: 100,
-        vegRawWeight: 100,
-        sauceWeight: 30,
-        fatLevel: "MEDIUM",
-      }),
-    },
-  },
-  {
-    id: "mother-34-classic-light",
-    label: "Mother 34 · Classic Light",
-    arabicLabel: "الأم 34 · نزول دهون بسيط",
-    clientType: "MOTHER_34",
-    planType: "CLASSIC_LIGHT",
-    mealCount: 3,
-    displayKcalRange: "1500–1650 CAL",
-    macroTarget: {
-      kcal: 1600,
-      protein: 115,
-      carbs: 140,
-      fat: 50,
-    },
-    meals: {
-      BREAKFAST: createPortionTarget({
-        size: "S",
-        proteinRawWeight: 100,
-        carbCookedWeight: 100,
-        vegRawWeight: 80,
-        sauceWeight: 20,
-        fatLevel: "MEDIUM",
-      }),
-      LUNCH: createPortionTarget({
-        size: "M",
-        proteinRawWeight: 160,
-        carbCookedWeight: 130,
-        vegRawWeight: 100,
-        sauceWeight: 30,
-        fatLevel: "MEDIUM",
-      }),
-      DINNER: createPortionTarget({
-        size: "M",
-        proteinRawWeight: 160,
+        size: "L",
+        proteinRawWeight: 190,
         carbCookedWeight: 100,
         vegRawWeight: 100,
         sauceWeight: 25,
@@ -270,81 +218,40 @@ export const PORTION_MATRIX_PLANS: PortionMatrixPlan[] = [
     },
   },
   {
-    id: "child-11-balanced-junior",
-    label: "Child 11 · Balanced Junior",
-    arabicLabel: "الطفل 11 · نظام صحي متوازن",
-    clientType: "CHILD_11",
-    planType: "BALANCED_JUNIOR",
+    id: "g7-core",
+    label: "G7 CORE",
+    arabicLabel: "نظام جيم متوازن",
+    clientType: "GENERAL_GYM",
+    planType: "G7_CORE",
     mealCount: 3,
-    displayKcalRange: "1650–1750 CAL",
+    displayKcalRange: "1950–2050 CAL",
     macroTarget: {
-      kcal: 1700,
-      protein: 85,
-      carbs: 210,
-      fat: 55,
+      kcal: 2000,
+      protein: 180,
+      carbs: 200,
+      fat: 53,
     },
     meals: {
       BREAKFAST: createPortionTarget({
-        size: "JUNIOR",
-        proteinRawWeight: 80,
-        carbCookedWeight: 130,
-        vegRawWeight: 80,
-        sauceWeight: 15,
-        fatLevel: "MEDIUM",
-      }),
-      LUNCH: createPortionTarget({
-        size: "JUNIOR",
-        proteinRawWeight: 100,
-        carbCookedWeight: 140,
-        vegRawWeight: 80,
+        size: "M",
+        proteinRawWeight: 130,
+        carbCookedWeight: 120,
+        vegRawWeight: 100,
         sauceWeight: 25,
         fatLevel: "MEDIUM",
       }),
-      DINNER: createPortionTarget({
-        size: "JUNIOR",
-        proteinRawWeight: 100,
-        carbCookedWeight: 130,
-        vegRawWeight: 80,
-        sauceWeight: 20,
-        fatLevel: "MEDIUM",
-      }),
-    },
-  },
-  {
-    id: "grandfather-65-classic-balanced",
-    label: "Grandfather 65 · Classic Balanced",
-    arabicLabel: "الجد 65 · نزول دهون آمن",
-    clientType: "GRANDFATHER_65",
-    planType: "CLASSIC_BALANCED",
-    mealCount: 3,
-    displayKcalRange: "1900–2000 CAL",
-    macroTarget: {
-      kcal: 1950,
-      protein: 140,
-      carbs: 185,
-      fat: 60,
-    },
-    meals: {
-      BREAKFAST: createPortionTarget({
-        size: "M",
-        proteinRawWeight: 120,
-        carbCookedWeight: 130,
-        vegRawWeight: 80,
-        sauceWeight: 20,
-        fatLevel: "MEDIUM",
-      }),
       LUNCH: createPortionTarget({
-        size: "M",
-        proteinRawWeight: 160,
-        carbCookedWeight: 140,
+        size: "L",
+        proteinRawWeight: 180,
+        carbCookedWeight: 160,
         vegRawWeight: 100,
-        sauceWeight: 35,
+        sauceWeight: 30,
         fatLevel: "MEDIUM",
       }),
       DINNER: createPortionTarget({
-        size: "M",
-        proteinRawWeight: 160,
-        carbCookedWeight: 130,
+        size: "L",
+        proteinRawWeight: 180,
+        carbCookedWeight: 150,
         vegRawWeight: 100,
         sauceWeight: 30,
         fatLevel: "MEDIUM",
@@ -352,43 +259,125 @@ export const PORTION_MATRIX_PLANS: PortionMatrixPlan[] = [
     },
   },
   {
-    id: "mass-gainer-3-meals",
-    label: "Mass Gainer · 3 Meal Plan",
-    arabicLabel: "تضخيم · 3 وجبات",
-    clientType: "GENERAL",
-    planType: "MASS_GAINER",
+    id: "g7-mass",
+    label: "G7 MASS",
+    arabicLabel: "زيادة كتلة عضلية",
+    clientType: "GENERAL_GYM",
+    planType: "G7_MASS",
     mealCount: 3,
-    displayKcalRange: "3000–3300 CAL",
+    displayKcalRange: "2450–2550 CAL",
     macroTarget: {
-      kcal: 3200,
-      protein: 240,
-      carbs: 320,
-      fat: 90,
+      kcal: 2500,
+      protein: 200,
+      carbs: 300,
+      fat: 56,
     },
     meals: {
       BREAKFAST: createPortionTarget({
         size: "L",
+        proteinRawWeight: 150,
+        carbCookedWeight: 170,
+        vegRawWeight: 100,
+        sauceWeight: 30,
+        fatLevel: "MEDIUM",
+      }),
+      LUNCH: createPortionTarget({
+        size: "XL",
         proteinRawWeight: 190,
-        carbCookedWeight: 140,
+        carbCookedWeight: 220,
         vegRawWeight: 100,
         sauceWeight: 35,
+        fatLevel: "MEDIUM",
+      }),
+      DINNER: createPortionTarget({
+        size: "XL",
+        proteinRawWeight: 190,
+        carbCookedWeight: 210,
+        vegRawWeight: 100,
+        sauceWeight: 35,
+        fatLevel: "MEDIUM",
+      }),
+    },
+  },
+  {
+    id: "g7-flex",
+    label: "G7 FLEX",
+    arabicLabel: "نظام اقتصادي مرن",
+    clientType: "GENERAL_GYM",
+    planType: "G7_FLEX",
+    mealCount: 3,
+    displayKcalRange: "1850–1950 CAL",
+    macroTarget: {
+      kcal: 1900,
+      protein: 160,
+      carbs: 180,
+      fat: 53,
+    },
+    meals: {
+      BREAKFAST: createPortionTarget({
+        size: "M",
+        proteinRawWeight: 120,
+        carbCookedWeight: 110,
+        vegRawWeight: 90,
+        sauceWeight: 20,
+        fatLevel: "MEDIUM",
+      }),
+      LUNCH: createPortionTarget({
+        size: "M",
+        proteinRawWeight: 160,
+        carbCookedWeight: 150,
+        vegRawWeight: 100,
+        sauceWeight: 25,
+        fatLevel: "MEDIUM",
+      }),
+      DINNER: createPortionTarget({
+        size: "M",
+        proteinRawWeight: 160,
+        carbCookedWeight: 130,
+        vegRawWeight: 100,
+        sauceWeight: 25,
+        fatLevel: "MEDIUM",
+      }),
+    },
+  },
+  {
+    id: "g7-premium",
+    label: "G7 PREMIUM",
+    arabicLabel: "نظام شيف بريميوم للجيم",
+    clientType: "GENERAL_GYM",
+    planType: "G7_PREMIUM",
+    mealCount: 3,
+    displayKcalRange: "2150–2250 CAL",
+    macroTarget: {
+      kcal: 2200,
+      protein: 190,
+      carbs: 230,
+      fat: 58,
+    },
+    meals: {
+      BREAKFAST: createPortionTarget({
+        size: "L",
+        proteinRawWeight: 140,
+        carbCookedWeight: 130,
+        vegRawWeight: 110,
+        sauceWeight: 25,
         fatLevel: "MEDIUM",
       }),
       LUNCH: createPortionTarget({
         size: "L",
         proteinRawWeight: 190,
-        carbCookedWeight: 220,
-        vegRawWeight: 100,
-        sauceWeight: 40,
-        fatLevel: "HIGH",
+        carbCookedWeight: 180,
+        vegRawWeight: 110,
+        sauceWeight: 35,
+        fatLevel: "MEDIUM",
       }),
       DINNER: createPortionTarget({
         size: "L",
-        proteinRawWeight: 190,
-        carbCookedWeight: 220,
-        vegRawWeight: 100,
-        sauceWeight: 40,
-        fatLevel: "HIGH",
+        proteinRawWeight: 180,
+        carbCookedWeight: 170,
+        vegRawWeight: 110,
+        sauceWeight: 35,
+        fatLevel: "MEDIUM",
       }),
     },
   },
@@ -399,7 +388,7 @@ export function getPortionMatrixPlan(id: string) {
 }
 
 export function getDefaultPortionMatrixPlan() {
-  return PORTION_MATRIX_PLANS[0]
+  return PORTION_MATRIX_PLANS.find((plan) => plan.id === "g7-core") ?? PORTION_MATRIX_PLANS[0]
 }
 
 export function getPortionTargetForMeal(

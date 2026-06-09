@@ -6,16 +6,18 @@ type ScaleRule = {
   names: string[]
 
   /*
-    Current temporary client mapping:
-    - shredding = Father 46 · Balanced Shred
-    - lean_bulk = Mother 34 · Classic Light
-    - budget_athlete = Child 11 · Balanced Junior
-    - premium_chef = Grandfather 65 · Classic Senior
-    - mass_gainer = Grandmother 75 · Senior Light
+    G7 Gym Core MVP scaling.
+
+    Public plan meaning:
+    - shredding      = G7 SHRED   · Fat loss / high protein / lower carbs
+    - lean_bulk      = G7 CORE    · Balanced gym plan
+    - mass_gainer    = G7 MASS    · Higher calories / higher carbs / muscle gain
+    - budget_athlete = G7 FLEX    · Budget flexible gym plan
+    - premium_chef   = G7 PREMIUM · Premium chef-style gym plan
 
     Important:
-    These factors are not public plan names.
-    They are internal scaling controls until we build a true client-profile engine.
+    These factors are for Gym Plans only.
+    No family profiles, no father/mother/child/senior mapping.
   */
   shredding: number
   lean_bulk: number
@@ -26,11 +28,19 @@ type ScaleRule = {
 
 const SCALE_RULES: ScaleRule[] = [
   /*
-    Main cooked proteins.
-    These were the reason portions became too large.
-    Example before:
-    Mother/lean_bulk was using 1.15, which pushed chicken/beef portions to ~322g raw.
-    Now Mother uses 0.55, closer to 140–160g raw portions.
+    Main raw proteins.
+
+    Current observed baseline from generated PDFs:
+    - CORE at 0.55 gives about 150g raw protein per main meal.
+    - MASS at 0.40 gave only about 110g raw protein, which is wrong.
+    - Huge factors above 1.0 pushed meals to 280–340g raw, which is also wrong.
+
+    Target:
+    - FLEX: about 130g raw protein per main meal
+    - CORE: about 150g raw protein per main meal
+    - SHRED: about 165g raw protein per main meal
+    - MASS: about 180g raw protein per main meal
+    - PREMIUM: about 170g raw protein per main meal
   */
   {
     names: [
@@ -40,17 +50,18 @@ const SCALE_RULES: ScaleRule[] = [
       "Lean Beef Core Raw",
       "Fish Fillet Raw",
     ],
-    shredding: 0.65,
+    shredding: 0.6,
     lean_bulk: 0.55,
-    mass_gainer: 0.4,
-    budget_athlete: 0.38,
-    premium_chef: 0.55,
+    mass_gainer: 0.65,
+    budget_athlete: 0.48,
+    premium_chef: 0.62,
   },
 
   /*
-    Carbs.
-    Mother needs controlled carbs, child needs enough carbs but not athlete-sized portions,
-    seniors need moderate carbs.
+    Gram-based carbs.
+
+    Carbs should carry the main difference between CORE and MASS.
+    MASS must be clearly higher than CORE in rice, pasta, oats, potatoes.
   */
   {
     names: [
@@ -61,17 +72,18 @@ const SCALE_RULES: ScaleRule[] = [
       "Sweet Potato Raw",
       "Oats",
     ],
-    shredding: 0.9,
+    shredding: 0.75,
     lean_bulk: 0.85,
-    mass_gainer: 0.75,
-    budget_athlete: 0.85,
-    premium_chef: 0.9,
+    mass_gainer: 1.15,
+    budget_athlete: 0.8,
+    premium_chef: 0.95,
   },
 
   /*
     Bread / wraps.
-    Do not aggressively increase units.
-    For family / junior / senior plans we keep bread simple and avoid weird extra gram outputs.
+
+    Keep bread and wraps readable.
+    We avoid weird outputs and do not aggressively scale unit-based items.
   */
   {
     names: [
@@ -81,16 +93,17 @@ const SCALE_RULES: ScaleRule[] = [
       "Whole Wheat Tortilla",
     ],
     shredding: 0.85,
-    lean_bulk: 0.75,
-    mass_gainer: 0.65,
-    budget_athlete: 0.75,
-    premium_chef: 0.8,
+    lean_bulk: 0.85,
+    mass_gainer: 1,
+    budget_athlete: 0.8,
+    premium_chef: 0.9,
   },
 
   /*
     Fast proteins.
-    This controls cottage-cheese substitutions later in PdfBooklet.
-    The old lean_bulk 1.1 produced 270–314g cottage cheese breakfasts.
+
+    Keep eggs, tuna, whey, and egg whites practical.
+    MASS should not explode into too many cans/eggs.
   */
   {
     names: [
@@ -101,16 +114,16 @@ const SCALE_RULES: ScaleRule[] = [
       "Whole Egg",
     ],
     shredding: 0.8,
-    lean_bulk: 0.65,
-    mass_gainer: 0.55,
-    budget_athlete: 0.5,
-    premium_chef: 0.7,
+    lean_bulk: 0.75,
+    mass_gainer: 0.9,
+    budget_athlete: 0.65,
+    premium_chef: 0.8,
   },
 
   /*
     Sauces / fats.
-    Keep sauces flavorful but controlled.
-    This should reduce items like 132g tomato sauce and very high weekly oil totals.
+
+    Sauces should support flavor, not break the macros.
   */
   {
     names: [
@@ -126,17 +139,17 @@ const SCALE_RULES: ScaleRule[] = [
       "Lemon Herb Marinade",
       "Healthy Fat Source",
     ],
-    shredding: 0.75,
-    lean_bulk: 0.65,
-    mass_gainer: 0.55,
-    budget_athlete: 0.6,
-    premium_chef: 0.65,
+    shredding: 0.7,
+    lean_bulk: 0.75,
+    mass_gainer: 0.9,
+    budget_athlete: 0.65,
+    premium_chef: 0.85,
   },
 
   /*
     Vegetables.
-    Keep vegetables mostly stable, but slightly reduce for child / senior-light
-    where huge volume may be harder to finish.
+
+    Vegetables stay mostly stable and practical.
   */
   {
     names: [
@@ -152,11 +165,11 @@ const SCALE_RULES: ScaleRule[] = [
       "Parsley",
       "Pickles",
     ],
-    shredding: 1,
+    shredding: 0.95,
     lean_bulk: 0.9,
-    mass_gainer: 0.8,
-    budget_athlete: 0.8,
-    premium_chef: 0.9,
+    mass_gainer: 0.95,
+    budget_athlete: 0.85,
+    premium_chef: 1,
   },
 ]
 
@@ -226,10 +239,13 @@ function scaleCans(amount: string, factor: number) {
 
 function scaleUnitAmount(amount: string, factor: number) {
   /*
-    We intentionally avoid increasing units for these first real family clients.
-    The previous logic created confusing outputs like:
+    Keep pure unit outputs stable.
+
+    This avoids confusing PDF outputs like:
     "2 medium wraps + 41g + 24g"
-    We keep units stable and let grams scale where grams exist.
+
+    We only scale gram values, eggs, scoops, and cans.
+    Bread/wrap units stay readable for the customer.
   */
 
   if (amount.includes("1 slice")) {
