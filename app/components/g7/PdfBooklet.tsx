@@ -2235,7 +2235,13 @@ function getQuickStartActions(language: PdfLanguage) {
 type EngineDistributionItem = {
   day: string;
   title: string;
+
+  /*
+    grams = pure raw protein weight used for macro calculation.
+    mixedGrams = approximate seasoned mix weight before cooking, after adding marinade/veg/spices.
+  */
   grams: number;
+  mixedGrams?: number;
 };
 
 type EngineRecipeItem = {
@@ -2337,6 +2343,59 @@ function sumDistributionForDays(
     (total, item) => (days.includes(item.day) ? total + item.grams : total),
     0,
   );
+}
+
+function sumMixedDistributionForDays(
+  distribution: EngineDistributionItem[],
+  days: string[],
+) {
+  return distribution.reduce(
+    (total, item) =>
+      days.includes(item.day) ? total + (item.mixedGrams ?? item.grams) : total,
+    0,
+  );
+}
+
+function addMixedWeightsToDistribution(
+  distribution: EngineDistributionItem[],
+  totalProtein: number,
+  readyMix: number,
+): EngineDistributionItem[] {
+  if (!Number.isFinite(totalProtein) || totalProtein <= 0) return distribution;
+
+  const mixFactor = readyMix / totalProtein;
+
+  return distribution.map((item) => ({
+    ...item,
+    mixedGrams: roundToNearest(item.grams * mixFactor, 5),
+  }));
+}
+
+function getMixedPortionLabels(language: PdfLanguage) {
+  if (language === "ar") {
+    return {
+      raw: "بروتين خام",
+      mixed: "خليط متبل قبل الطبخ",
+      note:
+        "قسّم الخليط المتبل بالميزان، وليس وزن البروتين الخام وحده. لو التتبيلة طلعت سوائل أثناء الطبخ، اقسم الوزن المطبوخ النهائي على عدد الوجبات.",
+    };
+  }
+
+  if (language === "bg") {
+    return {
+      raw: "суров протеин",
+      mixed: "овкусена смес преди готвене",
+      note:
+        "Разделяй овкусената смес с кантар, не само суровия протеин. Ако маринатата пусне течност, сготви batch-а и раздели готовото тегло по броя порции.",
+    };
+  }
+
+  return {
+    raw: "raw protein",
+    mixed: "seasoned mix before cooking",
+    note:
+      "Portion the seasoned mix by scale, not the pure raw protein alone. If the marinade releases liquid, cook the batch first and divide the final cooked weight by the number of portions.",
+  };
 }
 
 function buildScaledRecipeItems(
@@ -3409,6 +3468,22 @@ function buildEngineSopSummary(
   const beefItems = buildScaledRecipeItems(beefTotal, beefRecipe);
   const chickenItems = buildScaledRecipeItems(chickenTotal, chickenRecipe);
 
+  const beefReadyMix =
+    beefTotal + beefItems.reduce((total, item) => total + item.grams, 0);
+  const chickenReadyMix =
+    chickenTotal + chickenItems.reduce((total, item) => total + item.grams, 0);
+
+  const beefMixedDistribution = addMixedWeightsToDistribution(
+    beefDistribution,
+    beefTotal,
+    beefReadyMix,
+  );
+  const chickenMixedDistribution = addMixedWeightsToDistribution(
+    chickenDistribution,
+    chickenTotal,
+    chickenReadyMix,
+  );
+
   return {
     beef: {
       title:
@@ -3425,20 +3500,19 @@ function buildEngineSopSummary(
             : "Seasoned minced beef for the week",
       totalProtein: beefTotal,
       recipeItems: beefItems,
-      readyMix:
-        beefTotal + beefItems.reduce((total, item) => total + item.grams, 0),
-      batch1: sumDistributionForDays(beefDistribution, [
+      readyMix: beefReadyMix,
+      batch1: sumMixedDistributionForDays(beefMixedDistribution, [
         "Day 1",
         "Day 2",
         "Day 3",
       ]),
-      batch2: sumDistributionForDays(beefDistribution, [
+      batch2: sumMixedDistributionForDays(beefMixedDistribution, [
         "Day 4",
         "Day 5",
         "Day 6",
       ]),
-      day7: sumDistributionForDays(beefDistribution, ["Day 7"]),
-      distribution: beefDistribution,
+      day7: sumMixedDistributionForDays(beefMixedDistribution, ["Day 7"]),
+      distribution: beefMixedDistribution,
     },
     chicken: {
       title:
@@ -3455,21 +3529,19 @@ function buildEngineSopSummary(
             : "Seasoned chicken breast for the week",
       totalProtein: chickenTotal,
       recipeItems: chickenItems,
-      readyMix:
-        chickenTotal +
-        chickenItems.reduce((total, item) => total + item.grams, 0),
-      batch1: sumDistributionForDays(chickenDistribution, [
+      readyMix: chickenReadyMix,
+      batch1: sumMixedDistributionForDays(chickenMixedDistribution, [
         "Day 1",
         "Day 2",
         "Day 3",
       ]),
-      batch2: sumDistributionForDays(chickenDistribution, [
+      batch2: sumMixedDistributionForDays(chickenMixedDistribution, [
         "Day 4",
         "Day 5",
         "Day 6",
       ]),
-      day7: sumDistributionForDays(chickenDistribution, ["Day 7"]),
-      distribution: chickenDistribution,
+      day7: sumMixedDistributionForDays(chickenMixedDistribution, ["Day 7"]),
+      distribution: chickenMixedDistribution,
     },
     quickProteins: getEgyptQuickProteinPrepFromGrocery(groceryGroups, language),
     carbPrep: buildPrepBatchSummary(
@@ -4313,12 +4385,21 @@ export default function PdfBooklet({
                       <p className="truncate text-[8px] font-bold text-white/78">
                         {getDayDisplay(item.day, language)} · {item.title}
                       </p>
-                      <p className="text-[8px] font-black text-[#22D3EE]">
-                        {formatSopWeight(item.grams, language)}
-                      </p>
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-[8px] font-black text-[#22D3EE]">
+                          {getMixedPortionLabels(language).raw}: {formatSopWeight(item.grams, language)}
+                        </p>
+                        <p className="text-[8px] font-black text-[#B7F532]">
+                          {getMixedPortionLabels(language).mixed}: {formatSopWeight(item.mixedGrams ?? item.grams, language)}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                <p className="mt-2 text-[8px] font-bold leading-4 text-white/55">
+                  {getMixedPortionLabels(language).note}
+                </p>
               </div>
             </div>
           ))}
