@@ -170,8 +170,32 @@ function getSystemFromNumbers(proteinValue: number, carbValue: number) {
     return findSystem("lean-bulk")
   }
 
+  /*
+    G7 Join Matching Logic
+
+    The Join page is a lead scanner, not the final PDF generator.
+    It matches coach numbers to the closest G7 base package, then the
+    WhatsApp message explains if a custom adjustment is needed.
+
+    Important examples:
+    - 180P / 140C -> SHRED
+    - 160P / 180C -> FLEX
+    - 180P / 200C -> CORE
+    - 190P / 230C -> PREMIUM
+    - 200P / 300C -> MASS
+    - 250P / 200C -> PREMIUM with a custom high-protein adjustment
+  */
+
   if (proteinValue >= 195 && carbValue >= 260) {
     return findSystem("mass-gainer")
+  }
+
+  if (proteinValue >= 220 && carbValue <= 175) {
+    return findSystem("shredding")
+  }
+
+  if (proteinValue >= 220 && carbValue >= 180) {
+    return findSystem("premium-chef")
   }
 
   if (proteinValue >= 185 && carbValue >= 215) {
@@ -187,6 +211,35 @@ function getSystemFromNumbers(proteinValue: number, carbValue: number) {
   }
 
   return findSystem("lean-bulk")
+}
+
+function formatGap(value: number) {
+  if (value === 0) return "matches the base package"
+  if (value > 0) return `${value}g above the base package`
+  return `${Math.abs(value)}g below the base package`
+}
+
+function buildCustomAdjustmentText(
+  system: G7System,
+  enteredProtein: number,
+  enteredCarbs: number
+) {
+  const proteinGap = enteredProtein - system.protein
+  const carbGap = enteredCarbs - system.carbs
+
+  const needsProteinAdjustment = Math.abs(proteinGap) >= 25
+  const needsCarbAdjustment = Math.abs(carbGap) >= 30
+
+  if (!needsProteinAdjustment && !needsCarbAdjustment) {
+    return "Your coach numbers are close to this G7 base package."
+  }
+
+  return [
+    "Custom adjustment needed before PDF delivery:",
+    `Protein target is ${formatGap(proteinGap)}.`,
+    `Carbs target is ${formatGap(carbGap)}.`,
+    "The final PDF will be adjusted by the G7 team before delivery.",
+  ].join("\n")
 }
 
 export default function JoinPage() {
@@ -238,11 +291,16 @@ export default function JoinPage() {
   }, [isAnalyzing])
 
   function buildWhatsappLink(system: G7System) {
-    const enteredProtein = protein || `${system.protein}`
-    const enteredCarbs = carbs || `${system.carbs}`
+    const enteredProtein = Number(protein || `${system.protein}`)
+    const enteredCarbs = Number(carbs || `${system.carbs}`)
+    const customAdjustmentText = buildCustomAdjustmentText(
+      system,
+      enteredProtein,
+      enteredCarbs
+    )
 
     const message = `
-Hello G7 Team 👋
+Hello G7 Team
 
 I tried the G7 Coach Numbers Engine.
 
@@ -250,14 +308,14 @@ Coach numbers entered:
 Protein: ${enteredProtein}g
 Carbs: ${enteredCarbs}g
 
-Closest G7 base package:
+Recommended G7 base package:
 ${system.name} - ${system.subtitle}
 
-Base package target:
+Base package target before custom adjustment:
 ${system.calories} kcal / ${system.protein}g protein / ${system.carbs}g carbs / ${system.fat}g fat
 
-Note:
-My coach numbers may need a custom adjustment.
+Custom adjustment status:
+${customAdjustmentText}
 
 Package price:
 ${system.price} EGP
@@ -831,6 +889,19 @@ I would like to receive my complete G7 food system:
                       <p className="mt-2 text-[13px] font-bold leading-6 text-white/58">
                         {selectedSystem.promise}
                       </p>
+
+                      <div className="mx-auto mt-4 max-w-[520px] rounded-[18px] border border-[#FFB07A]/20 bg-[#FFB07A]/[0.055] p-3">
+                        <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#FFB07A]">
+                          Coach target vs base package
+                        </p>
+
+                        <p className="mt-2 text-[11px] font-bold leading-5 text-white/62">
+                          Your entered numbers stay saved in the WhatsApp lead.
+                          The package below is the recommended G7 base, and the
+                          final PDF can be adjusted by the G7 team before
+                          delivery when your coach numbers are higher or lower.
+                        </p>
+                      </div>
                     </div>
 
                     <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-5">
