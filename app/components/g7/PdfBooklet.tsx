@@ -18,6 +18,7 @@ import {
   translateMealSubtitle,
   translateMealTitle,
 } from "./meal-translations";
+import VisualMealExperienceV21 from "./VisualMealExperienceV21";
 
 export type PdfLanguage = "ar" | "en" | "bg";
 
@@ -170,6 +171,9 @@ function applyEgyptMarketGrocerySubstitutions(items: GrocerySummaryItem[]) {
     if (name.includes("egg whites")) return false;
     if (name.includes("whey protein")) return false;
     if (item.category === "SAUCES") return false;
+    if (name.includes("pickle")) return false;
+if (name.includes("pickles")) return false;
+if (name.includes("مخلل")) return false;
     return true;
   });
 
@@ -4324,6 +4328,13 @@ export default function PdfBooklet({
           </p>
         </div>
       </section>
+
+      <VisualMealExperienceV21
+        foodContainers={foodContainers}
+        language={language}
+        getDayDisplay={getDayDisplay}
+        getRoleDisplay={getRoleDisplay}
+      />
 
       {/* 21-meal overview page hidden in Quick Client PDF to keep the file shorter. */}
 
