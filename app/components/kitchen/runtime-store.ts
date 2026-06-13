@@ -1,9 +1,21 @@
 import {
-  REALTIME_RUNTIME_STAGES,
   getRuntimeEngineSummary,
+  getRuntimeOutputGap,
+  getRuntimeStageCalculatedRisk,
+  getRuntimeStageProgress,
+  getRuntimeTimePressure,
+  type RuntimeRiskLevel,
   type RuntimeStage,
   type RuntimeStageStatus,
 } from "./runtime-engine-data"
+
+import { createRuntimeStagesFromDishes } from "./kitchen-runtime-data"
+
+export type RuntimeLiveStage = RuntimeStage & {
+  pressureScore: number
+  outputGap: number
+  calculatedRisk: RuntimeRiskLevel
+}
 
 export type RuntimeActionType =
   | "START_STAGE"
@@ -14,6 +26,7 @@ export type RuntimeActionType =
   | "INCREASE_OUTPUT"
   | "DECREASE_OUTPUT"
   | "SYNC_RUNTIME"
+  | "RESET_RUNTIME"
 
 export type RuntimeAction = {
   type: RuntimeActionType
@@ -27,8 +40,12 @@ export type RuntimeStoreState = {
   runtimePulse: number
 }
 
+function createInitialRuntimeStages() {
+  return createRuntimeStagesFromDishes()
+}
+
 export const INITIAL_RUNTIME_STATE: RuntimeStoreState = {
-  stages: REALTIME_RUNTIME_STAGES,
+  stages: createInitialRuntimeStages(),
   lastSyncedAt: new Date().toISOString(),
   runtimePulse: 0,
 }
@@ -36,16 +53,27 @@ export const INITIAL_RUNTIME_STATE: RuntimeStoreState = {
 export function createRuntimeSnapshot(
   state: RuntimeStoreState = INITIAL_RUNTIME_STATE
 ) {
-  const summary = getRuntimeEngineSummary(state.stages)
+  const liveStages: RuntimeLiveStage[] = state.stages.map((stage) => {
+    const outputGap = getRuntimeOutputGap(stage)
+    const calculatedRisk = getRuntimeStageCalculatedRisk(stage)
+    const pressureScore = calculateStagePressure(stage)
+
+    return {
+      ...stage,
+      risk: calculatedRisk,
+      aiNote: getAINoteFromRuntime(stage, calculatedRisk),
+      outputGap,
+      calculatedRisk,
+      pressureScore,
+    }
+  })
+
+  const summary = getRuntimeEngineSummary(liveStages)
 
   return {
     ...state,
     summary,
-    liveStages: state.stages.map((stage) => ({
-      ...stage,
-      pressureScore: calculateStagePressure(stage),
-      outputGap: Math.max(stage.capacityTarget - stage.currentOutput, 0),
-    })),
+    liveStages,
   }
 }
 
@@ -76,14 +104,34 @@ export function runtimeReducer(
       return updateStageOutput(state, action.stageId, -(action.amount ?? 10))
 
     case "SYNC_RUNTIME":
+      return syncRuntimeState(state)
+
+    case "RESET_RUNTIME":
       return {
-        ...state,
+        stages: createInitialRuntimeStages(),
         lastSyncedAt: new Date().toISOString(),
         runtimePulse: state.runtimePulse + 1,
       }
 
     default:
       return state
+  }
+}
+
+function syncRuntimeState(state: RuntimeStoreState): RuntimeStoreState {
+  return {
+    ...state,
+    lastSyncedAt: new Date().toISOString(),
+    runtimePulse: state.runtimePulse + 1,
+    stages: state.stages.map((stage) => {
+      const calculatedRisk = getRuntimeStageCalculatedRisk(stage)
+
+      return {
+        ...stage,
+        risk: calculatedRisk,
+        aiNote: getAINoteFromRuntime(stage, calculatedRisk),
+      }
+    }),
   }
 }
 
@@ -98,16 +146,22 @@ function updateStageStatus(
     ...state,
     lastSyncedAt: new Date().toISOString(),
     runtimePulse: state.runtimePulse + 1,
-    stages: state.stages.map((stage) =>
-      stage.id === stageId
-        ? {
-            ...stage,
-            status,
-            risk: getRiskFromStatus(status),
-            aiNote: getAINoteFromStatus(stage.name, status),
-          }
-        : stage
-    ),
+    stages: state.stages.map((stage) => {
+      if (stage.id !== stageId) return stage
+
+      const nextStage: RuntimeStage = {
+        ...stage,
+        status,
+      }
+
+      const calculatedRisk = getRuntimeStageCalculatedRisk(nextStage)
+
+      return {
+        ...nextStage,
+        risk: calculatedRisk,
+        aiNote: getAINoteFromRuntime(nextStage, calculatedRisk),
+      }
+    }),
   }
 }
 
@@ -130,60 +184,75 @@ function updateStageOutput(
         Math.min(stage.capacityTarget, stage.currentOutput + amount)
       )
 
-      return {
+      const nextStage: RuntimeStage = {
         ...stage,
         currentOutput: nextOutput,
+      }
+
+      const calculatedRisk = getRuntimeStageCalculatedRisk(nextStage)
+
+      return {
+        ...nextStage,
+        risk: calculatedRisk,
+        aiNote: getAINoteFromRuntime(nextStage, calculatedRisk),
       }
     }),
   }
 }
 
 function calculateStagePressure(stage: RuntimeStage) {
-  const outputPressure =
-    stage.capacityTarget > 0
-      ? 100 - Math.round((stage.currentOutput / stage.capacityTarget) * 100)
-      : 100
+  const outputProgress = getRuntimeStageProgress(stage)
+  const timePressure = getRuntimeTimePressure(stage)
+  const calculatedRisk = getRuntimeStageCalculatedRisk(stage)
 
-  const timePressure =
-    stage.plannedMinutes > 0
-      ? Math.round((stage.elapsedMinutes / stage.plannedMinutes) * 100)
-      : 0
+  const outputPressure = 100 - outputProgress
 
-  const statusPressure =
-    stage.status === "BLOCKED"
-      ? 40
-      : stage.status === "DELAYED"
+  const riskPressure =
+    calculatedRisk === "CRITICAL"
+      ? 35
+      : calculatedRisk === "HIGH"
         ? 25
-        : stage.status === "WAITING"
-          ? 10
+        : calculatedRisk === "MEDIUM"
+          ? 12
           : 0
 
-  return Math.min(100, Math.max(0, outputPressure + timePressure + statusPressure))
+  return Math.min(
+    100,
+    Math.max(
+      0,
+      Math.round(timePressure * 0.45 + outputPressure * 0.4 + riskPressure)
+    )
+  )
 }
 
-function getRiskFromStatus(status: RuntimeStageStatus) {
-  if (status === "BLOCKED") return "CRITICAL"
-  if (status === "DELAYED") return "HIGH"
-  if (status === "WAITING") return "MEDIUM"
-  return "LOW"
-}
+function getAINoteFromRuntime(stage: RuntimeStage, risk: RuntimeRiskLevel) {
+  const progress = getRuntimeStageProgress(stage)
+  const timePressure = getRuntimeTimePressure(stage)
+  const outputGap = getRuntimeOutputGap(stage)
 
-function getAINoteFromStatus(stageName: string, status: RuntimeStageStatus) {
-  if (status === "ACTIVE") {
-    return `${stageName} is now active. AI supervisor is monitoring output and timing.`
+  if (stage.status === "COMPLETED") {
+    return `${stage.name} completed successfully. Downstream stages can continue.`
   }
 
-  if (status === "WAITING") {
-    return `${stageName} is waiting. Check upstream dependency before starting.`
+  if (risk === "CRITICAL") {
+    return `${stage.name} requires immediate attention. Current progress is ${progress}%, time pressure is ${timePressure}%, and output gap is ${outputGap}.`
   }
 
-  if (status === "DELAYED") {
-    return `${stageName} is delayed. AI recommends adding support or reducing batch load.`
+  if (risk === "HIGH") {
+    return `${stage.name} is under high pressure. Output is behind target and may affect downstream stages.`
   }
 
-  if (status === "BLOCKED") {
-    return `${stageName} is blocked. Immediate supervisor escalation required.`
+  if (risk === "MEDIUM") {
+    return `${stage.name} should be monitored. Dependency or output pressure may increase soon.`
   }
 
-  return `${stageName} completed successfully. Downstream stages can continue.`
+  if (stage.status === "ACTIVE") {
+    return `${stage.name} is active. AI supervisor is monitoring output and timing.`
+  }
+
+  if (stage.status === "WAITING") {
+    return `${stage.name} is waiting. Check upstream dependency before starting.`
+  }
+
+  return stage.aiNote
 }

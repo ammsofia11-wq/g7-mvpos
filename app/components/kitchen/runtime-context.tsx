@@ -16,6 +16,8 @@ import {
   type RuntimeAction,
 } from "./runtime-store"
 
+import { getRuntimeStageCalculatedRisk } from "./runtime-engine-data"
+
 type RuntimeContextValue = {
   runtime: ReturnType<typeof createRuntimeSnapshot>
   dispatch: React.Dispatch<RuntimeAction>
@@ -24,10 +26,7 @@ type RuntimeContextValue = {
 const RuntimeContext = createContext<RuntimeContextValue | null>(null)
 
 export function RuntimeProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(
-    runtimeReducer,
-    INITIAL_RUNTIME_STATE
-  )
+  const [state, dispatch] = useReducer(runtimeReducer, INITIAL_RUNTIME_STATE)
 
   const runtime = useMemo(() => {
     return createRuntimeSnapshot(state)
@@ -48,8 +47,10 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
           })
         }
 
+        const calculatedRisk = getRuntimeStageCalculatedRisk(stage)
+
         if (
-          stage.pressureScore > 85 &&
+          calculatedRisk === "CRITICAL" &&
           stage.status !== "BLOCKED" &&
           stage.status !== "COMPLETED"
         ) {
