@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import {
   RUNTIME_DISHES,
@@ -17,6 +17,19 @@ import {
   type StageWorker,
 } from "./kitchen-runtime-data"
 
+import {
+  finishStage,
+  startStage,
+} from "@/app/ai/runtime-engine"
+
+import {
+  PRODUCTION_RUNTIME_EVENT,
+  getProductionRuntimeDishes,
+  saveProductionRuntimeDishes,
+} from "@/app/ai/production-runtime-store"
+
+import { addProductionTimelineEvent } from "@/app/ai/production-timeline-store"
+
 import { useRuntime } from "./runtime-context"
 
 import type { RuntimeRiskLevel } from "./runtime-engine-data"
@@ -32,65 +45,12 @@ function getRuntimeStageId(dishId: string, stageId: string) {
   return `${dishId}-${stageId}`
 }
 
-function startProductionStage(
-  dish: RuntimeDish,
-  stageId: string,
-  time: string
-): RuntimeDish {
-  const nextStages: ProductionStage[] = dish.stages.map((stage) => {
-    if (stage.id !== stageId) return stage
-
-    return {
-      ...stage,
-      status: "ACTIVE" as ProductionStage["status"],
-      startedAt: stage.startedAt ?? time,
-    }
-  })
+function getStageTimelineWorker(stage: ProductionStage) {
+  const firstWorker = stage.workers[0]
 
   return {
-    ...dish,
-    stages: nextStages,
-  }
-}
-
-function finishProductionStage(
-  dish: RuntimeDish,
-  stageId: string,
-  time: string
-): RuntimeDish {
-  const nextStages: ProductionStage[] = dish.stages.map((stage) => {
-    if (stage.id !== stageId) return stage
-
-    return {
-      ...stage,
-      status: "COMPLETED" as ProductionStage["status"],
-      completedAt: time,
-    }
-  })
-
-  const nextDish: RuntimeDish = {
-    ...dish,
-    stages: nextStages,
-  }
-
-  const progress = calculateDishProgress(nextDish)
-
-  const allCompleted = nextDish.stages.every(
-    (stage) => stage.status === "COMPLETED"
-  )
-
-  const hasWaitingQc = nextDish.stages.some(
-    (stage) => stage.stage === "QC" && stage.status === "WAITING"
-  )
-
-  return {
-    ...nextDish,
-    progress,
-    batchStatus: allCompleted
-      ? "COMPLETED"
-      : hasWaitingQc
-        ? "READY_FOR_QC"
-        : nextDish.batchStatus,
+    employeeId: firstWorker?.id ?? "floor-control",
+    employeeName: firstWorker?.name ?? "Floor Control",
   }
 }
 
@@ -182,13 +142,41 @@ const workerStatusStyles: Record<KitchenRuntimeWorker["status"], string> = {
 export default function WorkerBoard() {
   const { dispatch } = useRuntime()
 
-  const [dishes, setDishes] = useState<RuntimeDish[]>(RUNTIME_DISHES)
+  const [dishes, setDishes] = useState<RuntimeDish[]>(() =>
+    getProductionRuntimeDishes()
+  )
 
   const [openAssignPanel, setOpenAssignPanel] = useState<string | null>(null)
 
   const [expandedDish, setExpandedDish] = useState<string | null>(
     RUNTIME_DISHES[0]?.id || null
   )
+
+  useEffect(() => {
+    function syncProductionRuntime() {
+      const nextDishes = getProductionRuntimeDishes()
+
+      setDishes(nextDishes)
+
+      setExpandedDish((current) => current ?? nextDishes[0]?.id ?? null)
+    }
+
+    syncProductionRuntime()
+
+    window.addEventListener(PRODUCTION_RUNTIME_EVENT, syncProductionRuntime)
+
+    return () => {
+      window.removeEventListener(
+        PRODUCTION_RUNTIME_EVENT,
+        syncProductionRuntime
+      )
+    }
+  }, [])
+
+  function updateDishes(nextDishes: RuntimeDish[]) {
+    setDishes(nextDishes)
+    saveProductionRuntimeDishes(nextDishes)
+  }
 
   const summary = useMemo(() => getKitchenRuntimeSummary(dishes), [dishes])
   const insights = useMemo(() => getDishRuntimeInsights(dishes), [dishes])
@@ -224,11 +212,30 @@ export default function WorkerBoard() {
   function handleStartStage(dishId: string, stageId: string) {
     const time = nowTime()
 
-    setDishes((current) =>
-      current.map((dish) =>
-        dish.id === dishId ? startProductionStage(dish, stageId, time) : dish
-      )
+    const currentDish = dishes.find((dish) => dish.id === dishId)
+    const currentStage = currentDish?.stages.find(
+      (stage) => stage.id === stageId
     )
+
+    if (currentDish && currentStage) {
+      const timelineWorker = getStageTimelineWorker(currentStage)
+
+      addProductionTimelineEvent({
+        time,
+        employeeId: timelineWorker.employeeId,
+        employeeName: timelineWorker.employeeName,
+        dishId: currentDish.id,
+        recipe: currentDish.recipe,
+        stage: currentStage.stage,
+        action: "STARTED",
+      })
+    }
+
+    const nextDishes = dishes.map((dish) =>
+      dish.id === dishId ? startStage(dish, stageId, time) : dish
+    )
+
+    updateDishes(nextDishes)
 
     dispatch({
       type: "START_STAGE",
@@ -239,11 +246,30 @@ export default function WorkerBoard() {
   function handleEndStage(dishId: string, stageId: string) {
     const time = nowTime()
 
-    setDishes((current) =>
-      current.map((dish) =>
-        dish.id === dishId ? finishProductionStage(dish, stageId, time) : dish
-      )
+    const currentDish = dishes.find((dish) => dish.id === dishId)
+    const currentStage = currentDish?.stages.find(
+      (stage) => stage.id === stageId
     )
+
+    if (currentDish && currentStage) {
+      const timelineWorker = getStageTimelineWorker(currentStage)
+
+      addProductionTimelineEvent({
+        time,
+        employeeId: timelineWorker.employeeId,
+        employeeName: timelineWorker.employeeName,
+        dishId: currentDish.id,
+        recipe: currentDish.recipe,
+        stage: currentStage.stage,
+        action: "COMPLETED",
+      })
+    }
+
+    const nextDishes = dishes.map((dish) =>
+      dish.id === dishId ? finishStage(dish, stageId, time) : dish
+    )
+
+    updateDishes(nextDishes)
 
     dispatch({
       type: "COMPLETE_STAGE",
@@ -256,37 +282,37 @@ export default function WorkerBoard() {
     stageId: string,
     worker: KitchenRuntimeWorker
   ) {
-    setDishes((current) =>
-      current.map((dish) =>
-        dish.id !== dishId
-          ? dish
-          : {
-              ...dish,
-              stages: dish.stages.map((stage) =>
-                stage.id === stageId ? assignWorkerToStage(stage, worker) : stage
-              ),
-            }
-      )
+    const nextDishes = dishes.map((dish) =>
+      dish.id !== dishId
+        ? dish
+        : {
+            ...dish,
+            stages: dish.stages.map((stage) =>
+              stage.id === stageId ? assignWorkerToStage(stage, worker) : stage
+            ),
+          }
     )
+
+    updateDishes(nextDishes)
 
     setOpenAssignPanel(null)
   }
 
   function removeWorker(dishId: string, stageId: string, workerId: string) {
-    setDishes((current) =>
-      current.map((dish) =>
-        dish.id !== dishId
-          ? dish
-          : {
-              ...dish,
-              stages: dish.stages.map((stage) =>
-                stage.id === stageId
-                  ? removeWorkerFromStage(stage, workerId)
-                  : stage
-              ),
-            }
-      )
+    const nextDishes = dishes.map((dish) =>
+      dish.id !== dishId
+        ? dish
+        : {
+            ...dish,
+            stages: dish.stages.map((stage) =>
+              stage.id === stageId
+                ? removeWorkerFromStage(stage, workerId)
+                : stage
+            ),
+          }
     )
+
+    updateDishes(nextDishes)
   }
 
   return (
@@ -303,9 +329,9 @@ export default function WorkerBoard() {
           </h2>
 
           <p className="mt-2 max-w-2xl text-[12px] leading-5 text-slate-400">
-            Worker board is now connected to dish batches, stages, positions,
-            runtime progress, next actions, and the global kitchen runtime
-            engine.
+            Worker board is now connected to the production runtime store,
+            persistent stage assignment, production timeline events, and the
+            global kitchen runtime cockpit.
           </p>
         </div>
 

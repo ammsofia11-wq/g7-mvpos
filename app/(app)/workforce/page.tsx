@@ -1,11 +1,12 @@
 "use client"
 
-import { Suspense, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 
 import AIRuntimeSupervisor from "@/app/components/kitchen/AIRuntimeSupervisor"
 import AIKitchenOrchestrator from "@/app/components/kitchen/AIKitchenOrchestrator"
 import ProductionTimeline from "@/app/components/kitchen/ProductionTimeline"
+import { RuntimeProvider } from "@/app/components/kitchen/runtime-context"
 import WorkforceMap from "@/app/components/kitchen/WorkforceMap"
 
 import RuntimeEscalationFeed from "@/app/components/system/runtime/RuntimeEscalationFeed"
@@ -20,6 +21,8 @@ type WorkforceView =
   | "orchestrator"
   | "supervisor"
   | "timeline"
+
+const WORKFORCE_ACTIVE_VIEW_KEY = "g7-workforce-active-view"
 
 const workforceViews: {
   id: WorkforceView
@@ -80,11 +83,22 @@ const AI_RECOMMENDATIONS = [
   },
 ] as const
 
+function isWorkforceView(value: string | null): value is WorkforceView {
+  return (
+    value === "map" ||
+    value === "orchestrator" ||
+    value === "supervisor" ||
+    value === "timeline"
+  )
+}
+
 export default function WorkforcePage() {
   return (
-    <Suspense fallback={<WorkforceLoading />}>
-      <WorkforceRuntime />
-    </Suspense>
+    <RuntimeProvider>
+      <Suspense fallback={<WorkforceLoading />}>
+        <WorkforceRuntime />
+      </Suspense>
+    </RuntimeProvider>
   )
 }
 
@@ -100,6 +114,16 @@ function WorkforceRuntime() {
   const [runtimeRefresh, setRuntimeRefresh] =
     useState(0)
 
+  useEffect(() => {
+    const savedView = window.localStorage.getItem(
+      WORKFORCE_ACTIVE_VIEW_KEY
+    )
+
+    if (isWorkforceView(savedView)) {
+      setActiveView(savedView)
+    }
+  }, [])
+
   const activeEscalations = useMemo(() => {
     return AI_RECOMMENDATIONS.filter(
       (item) =>
@@ -107,6 +131,15 @@ function WorkforceRuntime() {
         item.risk === "HIGH"
     ).length
   }, [runtimeRefresh])
+
+  function changeActiveView(view: WorkforceView) {
+    setActiveView(view)
+
+    window.localStorage.setItem(
+      WORKFORCE_ACTIVE_VIEW_KEY,
+      view
+    )
+  }
 
   function runAIAction(
     action:
@@ -289,7 +322,7 @@ function WorkforceRuntime() {
                   <button
                     key={view.id}
                     onClick={() =>
-                      setActiveView(view.id)
+                      changeActiveView(view.id)
                     }
                     className={`rounded-[18px] border px-4 py-4 text-left transition-all duration-300 ${
                       active
