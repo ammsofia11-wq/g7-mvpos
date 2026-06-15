@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import {
   ProductionTimelineEvent,
@@ -9,7 +9,11 @@ import {
 } from "@/app/ai/production-timeline-store"
 
 import {
-  RUNTIME_DISHES,
+  PRODUCTION_RUNTIME_EVENT,
+  getProductionRuntimeDishes,
+} from "@/app/ai/production-runtime-store"
+
+import {
   calculateDishProgress,
   getCurrentProductionStage,
   getDishRuntimeInsights,
@@ -42,7 +46,9 @@ const riskStyles: Record<RuntimeRiskLevel, string> = {
   CRITICAL: "border-red-400/25 bg-red-400/10 text-red-300",
 }
 
-function getEventColor(action: TimelineAction | ProductionTimelineEvent["action"]) {
+function getEventColor(
+  action: TimelineAction | ProductionTimelineEvent["action"]
+) {
   if (action === "STARTED" || action === "ACTIVE") {
     return {
       dot: "bg-emerald-400",
@@ -88,7 +94,7 @@ function buildDishTimeline(dishes: RuntimeDish[]): DishTimelineItem[] {
     const insight = insights.find((item) => item.dishId === dish.id)
     const currentStage = getCurrentProductionStage(dish)
 
-    return dish.stages.map((stage, index) => {
+    return dish.stages.map((stage) => {
       const isCurrentStage = currentStage?.id === stage.id
 
       return {
@@ -108,32 +114,59 @@ function buildDishTimeline(dishes: RuntimeDish[]): DishTimelineItem[] {
 }
 
 export default function ProductionTimeline() {
-  const [events, setEvents] = useState<ProductionTimelineEvent[]>([])
-
-  const summary = getKitchenRuntimeSummary(RUNTIME_DISHES)
-  const dishTimeline = buildDishTimeline(RUNTIME_DISHES)
-
-  const activeTimeline = dishTimeline.filter(
-    (item) => item.action === "ACTIVE" || item.action === "WAITING"
+  const [dishes, setDishes] = useState<RuntimeDish[]>(() =>
+    getProductionRuntimeDishes()
   )
 
-  const completedTimeline = dishTimeline.filter(
-    (item) => item.action === "COMPLETED"
+  const [events, setEvents] = useState<ProductionTimelineEvent[]>(() =>
+    [...getProductionTimelineEvents()].reverse()
   )
 
   useEffect(() => {
-    function syncTimeline() {
-      setEvents(getProductionTimelineEvents())
+    function syncProductionRuntime() {
+      setDishes(getProductionRuntimeDishes())
     }
 
-    syncTimeline()
+    function syncTimelineEvents() {
+      setEvents([...getProductionTimelineEvents()].reverse())
+    }
 
-    window.addEventListener(PRODUCTION_TIMELINE_EVENT, syncTimeline)
+    function syncAllRuntimeSources() {
+      syncProductionRuntime()
+      syncTimelineEvents()
+    }
+
+    syncAllRuntimeSources()
+
+    window.addEventListener(PRODUCTION_RUNTIME_EVENT, syncProductionRuntime)
+    window.addEventListener(PRODUCTION_TIMELINE_EVENT, syncTimelineEvents)
 
     return () => {
-      window.removeEventListener(PRODUCTION_TIMELINE_EVENT, syncTimeline)
+      window.removeEventListener(
+        PRODUCTION_RUNTIME_EVENT,
+        syncProductionRuntime
+      )
+
+      window.removeEventListener(PRODUCTION_TIMELINE_EVENT, syncTimelineEvents)
     }
   }, [])
+
+  const summary = useMemo(() => getKitchenRuntimeSummary(dishes), [dishes])
+
+  const dishTimeline = useMemo(() => buildDishTimeline(dishes), [dishes])
+
+  const activeTimeline = useMemo(
+    () =>
+      dishTimeline.filter(
+        (item) => item.action === "ACTIVE" || item.action === "WAITING"
+      ),
+    [dishTimeline]
+  )
+
+  const completedTimeline = useMemo(
+    () => dishTimeline.filter((item) => item.action === "COMPLETED"),
+    [dishTimeline]
+  )
 
   return (
     <section className="rounded-[32px] border border-cyan-400/20 bg-white/[0.035] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.28)] md:p-6">
@@ -148,9 +181,9 @@ export default function ProductionTimeline() {
           </h2>
 
           <p className="mt-2 max-w-2xl text-[12px] font-semibold leading-6 text-white/50">
-            Timeline now reads from real dish batches, production stages,
-            assigned workers, portions, progress, target dispatch time, and
-            live production events.
+            Timeline is now locked to production runtime store data, live dish
+            batches, assigned workers, stage movement, and persistent task event
+            logs.
           </p>
         </div>
 
@@ -169,7 +202,8 @@ export default function ProductionTimeline() {
             </p>
 
             <p className="mt-1 text-[12px] font-semibold text-white/45">
-              Current and waiting stages from dish runtime batches.
+              Current and waiting stages from persisted production runtime
+              batches.
             </p>
           </div>
 
@@ -197,7 +231,7 @@ export default function ProductionTimeline() {
             </p>
 
             <p className="mt-1 text-[12px] font-semibold text-white/45">
-              Completed production steps from current dish batches.
+              Completed production steps from persisted runtime batches.
             </p>
           </div>
 
@@ -207,9 +241,15 @@ export default function ProductionTimeline() {
         </div>
 
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {completedTimeline.slice(0, 6).map((item) => (
-            <DishTimelineCard key={item.id} item={item} compact />
-          ))}
+          {completedTimeline.length === 0 ? (
+            <EmptyState message="No completed production stages yet." />
+          ) : (
+            completedTimeline
+              .slice(0, 6)
+              .map((item) => (
+                <DishTimelineCard key={item.id} item={item} compact />
+              ))
+          )}
         </div>
       </div>
 
@@ -221,7 +261,8 @@ export default function ProductionTimeline() {
             </p>
 
             <p className="mt-1 text-[12px] font-semibold text-white/45">
-              Events generated by production task actions.
+              Persistent events generated by production task actions. Newest
+              events appear first.
             </p>
           </div>
 
