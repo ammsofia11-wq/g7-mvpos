@@ -10,9 +10,16 @@ import {
 
 import { ingredientDB } from "../../ai/ingredient-db"
 
+import {
+  RecipeStudioRole,
+  canViewRecipeCosting,
+  getRecipeStudioRoleContract,
+  normalizeRecipeStudioRole,
+} from "../../ai/recipe-studio-permissions"
+
 export const dynamic = "force-dynamic"
 
-type StudioRole = "owner" | "chef" | "qa" | "worker"
+type StudioRole = RecipeStudioRole
 
 type AnyRecord = Record<string, unknown>
 
@@ -62,6 +69,9 @@ type SanitizedRecipe = {
   cooling?: string[]
   allergens?: string[]
   releaseControl?: string[]
+  purchasingControl?: string[]
+  stockControl?: string[]
+  productionControl?: string[]
   approvedTask?: {
     title: string
     station: string
@@ -219,7 +229,7 @@ function sanitizeCostingValue(value: unknown): unknown {
 function buildCostingLayers(
   recipe: AnyRecord,
   recipeId: string,
-  ownerOnly: boolean,
+  role: StudioRole,
 ): {
   costing: CostingLayer
   yield: YieldLayer
@@ -240,25 +250,41 @@ function buildCostingLayers(
     ),
   )
 
+  const isOwner = role === "owner"
+  const isChef = role === "chef"
+  const isPurchasing = role === "purchasing-manager"
+
   return {
     costing: {
       visible: true,
       currencySource: "tenant.settings.currency",
       totalCost,
       costPerYield,
-      marginSignal: ownerOnly
+      marginSignal: isOwner
         ? "Owner commercial layer. Currency, locale, country, units and timezone must come from tenant settings."
-        : "Chef costing layer. Chef can review recipe cost and yield because costing is part of R&D and purchasing coordination.",
-      note: ownerOnly
+        : isChef
+          ? "Chef costing layer. Chef can review recipe cost and yield because costing is part of R&D and purchasing coordination."
+          : isPurchasing
+            ? "Purchasing cost layer. Purchasing Manager can coordinate ingredient price, supplier source and recipe cost inputs with Chef."
+            : "Authorized costing layer. Access is controlled by the Recipe Studio permission contract.",
+      note: isOwner
         ? "Owner can see commercial costing and margin confidence. Production must later authorize this by session permissions, not URL query params."
-        : "Chef can see costing for recipe development, purchasing coordination, yield testing and approval readiness. Worker and QA views do not receive this layer.",
+        : isChef
+          ? "Chef can see costing for recipe development, purchasing coordination, yield testing and approval readiness. Worker and QA views do not receive this layer."
+          : isPurchasing
+            ? "Purchasing Manager can see costing inputs and ingredient cost source without receiving full protected recipe IP."
+            : "Costing visibility is granted only through the centralized Recipe Studio permission contract.",
     },
     yield: {
       yieldSource: "Protected recipe and ingredient asset",
       costPerYield,
-      operationalNote: ownerOnly
+      operationalNote: isOwner
         ? "Use this layer to protect food cost, yield, batch sizing and margin confidence when team members change."
-        : "Chef uses this layer to validate yield, portioning, ingredient usage and purchasing cost before recipe approval.",
+        : isChef
+          ? "Chef uses this layer to validate yield, portioning, ingredient usage and purchasing cost before recipe approval."
+          : isPurchasing
+            ? "Purchasing uses this layer to understand ingredient usage impact on recipe cost and supplier planning."
+            : "Yield visibility is controlled by Recipe Studio permissions.",
     },
   }
 }
@@ -438,13 +464,28 @@ function buildBaseRecipe(recipe: AnyRecord): SanitizedRecipe {
   }
 }
 
+function withCostingIfAllowed(
+  recipe: SanitizedRecipe,
+  sourceRecipe: AnyRecord,
+  role: StudioRole,
+): SanitizedRecipe {
+  if (!canViewRecipeCosting(role)) {
+    return recipe
+  }
+
+  const costingLayers = buildCostingLayers(sourceRecipe, recipe.id, role)
+
+  return {
+    ...recipe,
+    ...costingLayers,
+  }
+}
+
 function buildOwnerRecipe(recipe: AnyRecord): SanitizedRecipe {
-  const base = buildBaseRecipe(recipe)
-  const costingLayers = buildCostingLayers(recipe, base.id, true)
+  const base = withCostingIfAllowed(buildBaseRecipe(recipe), recipe, "owner")
 
   return {
     ...base,
-    ...costingLayers,
     protectedAssetConfidence: [
       "Recipe data stays server-side.",
       "Ingredient database stays server-side.",
@@ -456,12 +497,10 @@ function buildOwnerRecipe(recipe: AnyRecord): SanitizedRecipe {
 }
 
 function buildChefRecipe(recipe: AnyRecord): SanitizedRecipe {
-  const base = buildBaseRecipe(recipe)
-  const costingLayers = buildCostingLayers(recipe, base.id, false)
+  const base = withCostingIfAllowed(buildBaseRecipe(recipe), recipe, "chef")
 
   return {
     ...base,
-    ...costingLayers,
     chefSop: readTextArray(recipe, ["sop", "steps", "recipeSteps", "method"], [
       "Review approved mise en place before production.",
       "Validate cooking method against the current SOP.",
@@ -551,6 +590,7 @@ function buildWorkerRecipe(recipe: AnyRecord): SanitizedRecipe {
       hiddenFromWorker: [
         "Owner costing",
         "Chef costing",
+        "Purchasing cost source",
         "Margin data",
         "R&D notes",
         "Full protected recipe IP",
@@ -560,12 +600,53 @@ function buildWorkerRecipe(recipe: AnyRecord): SanitizedRecipe {
   }
 }
 
-function normalizeRole(value: string | null): StudioRole {
-  if (value === "chef" || value === "qa" || value === "worker") {
-    return value
-  }
+function buildPurchasingManagerRecipe(recipe: AnyRecord): SanitizedRecipe {
+  const base = withCostingIfAllowed(
+    buildBaseRecipe(recipe),
+    recipe,
+    "purchasing-manager",
+  )
 
-  return "owner"
+  return {
+    ...base,
+    ingredientSources: buildIngredientSources(recipe),
+    purchasingControl: [
+      "Review ingredient cost source with Chef.",
+      "Update supplier or price source only through approved purchasing permissions.",
+      "Validate cost impact before recipe approval.",
+      "Coordinate stock availability before production release.",
+    ],
+  }
+}
+
+function buildStorekeeperRecipe(recipe: AnyRecord): SanitizedRecipe {
+  const base = buildBaseRecipe(recipe)
+
+  return {
+    ...base,
+    ingredientSources: buildIngredientSources(recipe),
+    stockControl: [
+      "Check ingredient availability for the batch.",
+      "Confirm issue to production before station start.",
+      "Escalate shortage before production release.",
+      "Do not expose costing or R&D recipe IP in storekeeper view.",
+    ],
+  }
+}
+
+function buildProductionManagerRecipe(recipe: AnyRecord): SanitizedRecipe {
+  const base = buildBaseRecipe(recipe)
+
+  return {
+    ...base,
+    ingredientSources: buildIngredientSources(recipe),
+    productionControl: [
+      "Review recipe readiness before production scheduling.",
+      "Confirm batch runtime link before station assignment.",
+      "Coordinate QA gate status before release.",
+      "Escalate stock or station pressure before batch start.",
+    ],
+  }
 }
 
 function buildRecipesForRole(role: StudioRole) {
@@ -574,37 +655,39 @@ function buildRecipesForRole(role: StudioRole) {
   if (role === "worker") return recipes.map(buildWorkerRecipe)
   if (role === "chef") return recipes.map(buildChefRecipe)
   if (role === "qa") return recipes.map(buildQaRecipe)
+  if (role === "purchasing-manager") {
+    return recipes.map(buildPurchasingManagerRecipe)
+  }
+  if (role === "storekeeper") return recipes.map(buildStorekeeperRecipe)
+  if (role === "production-manager") {
+    return recipes.map(buildProductionManagerRecipe)
+  }
 
   return recipes.map(buildOwnerRecipe)
 }
 
 function getRoleSummary(role: StudioRole) {
-  if (role === "owner") {
-    return "Owner sees cost, yield, batch and protected asset confidence."
-  }
+  const contract = getRecipeStudioRoleContract(role)
 
-  if (role === "chef") {
-    return "Chef sees SOP, testing, approval readiness, ingredient source, costing and yield for purchasing coordination."
-  }
-
-  if (role === "qa") {
-    return "QA sees cooling, allergens, QC gates and release control without costing."
-  }
-
-  return "Worker sees a simple approved task view only, without cost, R&D or full recipe IP."
+  return contract.operationalPurpose
 }
 
 export async function GET(request: NextRequest) {
-  const role = normalizeRole(request.nextUrl.searchParams.get("role"))
+  const role = normalizeRecipeStudioRole(request.nextUrl.searchParams.get("role"))
+  const contract = getRecipeStudioRoleContract(role)
   const recipes = buildRecipesForRole(role)
 
   return NextResponse.json(
     {
-      patch: "RS-2C-FIX2",
+      patch: "RS-2D",
       system: "G7 Kitchen OS — Recipe Studio",
       role,
+      roleLabel: contract.label,
       roleSummary: getRoleSummary(role),
-      costingVisible: role === "owner" || role === "chef",
+      permissions: contract.permissions,
+      allowedDataLayers: contract.allowedDataLayers,
+      blockedDataLayers: contract.blockedDataLayers,
+      costingVisible: contract.permissions.canViewCosting,
       roleSource:
         "Temporary test role from query string. Production must use session / user / tenant permissions.",
       tenantSettings: {
@@ -619,8 +702,19 @@ export async function GET(request: NextRequest) {
         protectedIngredientDataServerSide: true,
         clientReceivesSanitizedPayload: true,
         directClientImportOfProtectedAssets: false,
-        costingAllowedRoles: ["owner", "chef"],
-        costingBlockedRoles: ["qa", "worker"],
+        centralizedPermissionContract: true,
+        permissionContractSource: "app/ai/recipe-studio-permissions.ts",
+        costingAllowedRoles: [
+          "owner",
+          "chef",
+          "purchasing-manager",
+        ],
+        costingBlockedRoles: [
+          "qa",
+          "worker",
+          "storekeeper",
+          "production-manager",
+        ],
       },
       recipes,
     },
