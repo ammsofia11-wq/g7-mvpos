@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 type RecipeStatus =
   | "Draft"
@@ -28,13 +28,55 @@ type StudioTab =
   | "Approval"
   | "Release"
 
-type IngredientPreview = {
+type RecipeStudioRole = "owner" | "chef" | "qa" | "worker"
+
+type SafeIngredientPreview = {
   name: string
   category: string
   unit: string
-  nutrition: string
-  yieldRule: string
-  allergenRule: string
+  nutritionAvailable: boolean
+  yieldAvailable: boolean
+  allergens: string[]
+}
+
+type SafeRecipePreview = {
+  id: string
+  name: string
+  category: string
+  station: string
+  type: string
+  baseYield: number
+  yieldUnit: string
+  estimatedMinutes: number
+  shelfLifeDays: number
+  storageTemp: string
+  batchCode: string
+  expiryDate: string
+  ingredients: SafeIngredientPreview[]
+  sop: {
+    preparation: string[]
+    cooking: string[]
+    storage: string[]
+    packaging: string[]
+  }
+  protection: {
+    role: RecipeStudioRole
+    costingVisible: boolean
+    protectedFields: string[]
+    safeClientView: string[]
+  }
+  costing?: {
+    totalCost: number
+    costPerYield: number
+    note: string
+  }
+}
+
+type RecipeStudioApiResponse = {
+  ok: boolean
+  source?: string
+  recipe?: SafeRecipePreview
+  error?: string
 }
 
 type SopCard = {
@@ -101,6 +143,8 @@ const lifecycleStatuses: RecipeStatus[] = [
   "Production Ready",
 ]
 
+const roleOptions: RecipeStudioRole[] = ["owner", "chef", "qa", "worker"]
+
 const shortStatusLabel: Record<RecipeStatus, string> = {
   Draft: "Draft",
   "Voice Captured": "Voice Captured",
@@ -112,93 +156,6 @@ const shortStatusLabel: Record<RecipeStatus, string> = {
   "Documentation Required": "Docs Required",
   "Production Ready": "Production Ready",
 }
-
-const metrics: MetricCard[] = [
-  {
-    label: "SOURCE",
-    value: "Ready",
-    caption: "Prepared for safe server recipe source",
-    accent: "blue",
-  },
-  {
-    label: "COST",
-    value: "Protected",
-    caption: "Never exposed to worker client view",
-    accent: "copper",
-  },
-  {
-    label: "RELEASE",
-    value: "Gated",
-    caption: "Recipe must pass approval workflow",
-    accent: "lime",
-  },
-]
-
-const ingredientPreview: IngredientPreview[] = [
-  {
-    name: "Chicken Breast",
-    category: "Protein",
-    unit: "g",
-    nutrition: "Nutrition facts available",
-    yieldRule: "Raw-to-cooked yield required",
-    allergenRule: "No declared allergen in seed",
-  },
-  {
-    name: "Rice",
-    category: "Carb",
-    unit: "g",
-    nutrition: "Nutrition facts available",
-    yieldRule: "Cooked yield conversion required",
-    allergenRule: "No declared allergen in seed",
-  },
-  {
-    name: "Tomato Sauce",
-    category: "Sauce",
-    unit: "g",
-    nutrition: "Nutrition facts available",
-    yieldRule: "Batch consistency check required",
-    allergenRule: "Allergen review required before release",
-  },
-  {
-    name: "Greek Yogurt",
-    category: "Dairy",
-    unit: "g",
-    nutrition: "Nutrition facts available",
-    yieldRule: "Stable yield rule",
-    allergenRule: "Contains dairy",
-  },
-]
-
-const sourcePreview: SourcePreview[] = [
-  {
-    label: "Recipe Library",
-    value: "Server Recipe Source",
-    safeClientView: "Recipe name, station, category, SOP status",
-    protectedData: "Cost, margin, R&D notes, unapproved versions",
-    accent: "blue",
-  },
-  {
-    label: "Ingredient Master",
-    value: "Server Ingredient Source",
-    safeClientView: "Name, category, unit, allergen warnings",
-    protectedData: "Supplier price, protected costing fields",
-    accent: "lime",
-  },
-  {
-    label: "Nutrition Facts",
-    value: "Sanitized Nutrition View",
-    safeClientView: "KCAL, protein, carbs, fat, fiber",
-    protectedData: "Commercial costing and supplier-linked data",
-    accent: "amber",
-  },
-  {
-    label: "Cost Engine",
-    value: "Owner-only Access",
-    safeClientView: "Protected label only",
-    protectedData: "Cost per unit, cost per yield, margin",
-    accent: "copper",
-  },
-]
 
 const sopCards: SopCard[] = [
   {
@@ -253,7 +210,7 @@ const sopCards: SopCard[] = [
 
 const tabDescriptions: Record<StudioTab, string> = {
   Basics:
-    "Recipe identity, category, production purpose, kitchen ownership and safe source connection state.",
+    "Recipe identity, category, production purpose, kitchen ownership and server-safe recipe source state.",
   Voice:
     "Chef voice notes are treated as protected R&D input before SOP generation.",
   Ingredients:
@@ -330,11 +287,35 @@ const workerSteps: WorkerStep[] = [
   },
 ]
 
-const nextActions = [
-  "Connect Recipe Studio to a server-safe recipe preview",
-  "Keep costing fields outside the client bundle",
-  "Prepare sanitized Ingredient Master view",
-  "Add role-based API contract before edit actions",
+const sourcePreview: SourcePreview[] = [
+  {
+    label: "Recipe Library",
+    value: "Server Recipe Source",
+    safeClientView: "Recipe name, station, category, SOP status",
+    protectedData: "Cost, margin, R&D notes, unapproved versions",
+    accent: "blue",
+  },
+  {
+    label: "Ingredient Master",
+    value: "Server Ingredient Source",
+    safeClientView: "Name, category, unit, allergen warnings",
+    protectedData: "Supplier price, protected costing fields",
+    accent: "lime",
+  },
+  {
+    label: "Nutrition Facts",
+    value: "Sanitized Nutrition View",
+    safeClientView: "KCAL, protein, carbs, fat, fiber",
+    protectedData: "Commercial costing and supplier-linked data",
+    accent: "amber",
+  },
+  {
+    label: "Cost Engine",
+    value: "Owner-only Access",
+    safeClientView: "Protected label only",
+    protectedData: "Cost per unit, cost per yield, margin",
+    accent: "copper",
+  },
 ]
 
 const coolingSteps = [
@@ -397,9 +378,57 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ")
 }
 
+function formatRoleLabel(role: RecipeStudioRole) {
+  return role.charAt(0).toUpperCase() + role.slice(1)
+}
+
 export default function RecipeStudioPage() {
   const [activeTab, setActiveTab] = useState<StudioTab>("Basics")
   const [recipeStatus, setRecipeStatus] = useState<RecipeStatus>("Chef Review")
+  const [activeRole, setActiveRole] = useState<RecipeStudioRole>("chef")
+  const [recipe, setRecipe] = useState<SafeRecipePreview | null>(null)
+  const [apiStatus, setApiStatus] = useState<"loading" | "ready" | "error">(
+    "loading"
+  )
+  const [apiError, setApiError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadRecipePreview() {
+      setApiStatus("loading")
+      setApiError(null)
+
+      try {
+        const response = await fetch(`/api/recipe-studio?role=${activeRole}`)
+        const data = (await response.json()) as RecipeStudioApiResponse
+
+        if (!response.ok || !data.ok || !data.recipe) {
+          throw new Error(data.error ?? "Recipe Studio API failed")
+        }
+
+        if (isMounted) {
+          setRecipe(data.recipe)
+          setApiStatus("ready")
+        }
+      } catch (error) {
+        if (isMounted) {
+          setApiStatus("error")
+          setApiError(
+            error instanceof Error
+              ? error.message
+              : "Unknown Recipe Studio API error"
+          )
+        }
+      }
+    }
+
+    loadRecipePreview()
+
+    return () => {
+      isMounted = false
+    }
+  }, [activeRole])
 
   const selectedSop = useMemo(() => {
     if (activeTab === "Prep") return sopCards[0]
@@ -411,6 +440,29 @@ export default function RecipeStudioPage() {
   }, [activeTab, recipeStatus])
 
   const activeStepNumber = studioTabs.indexOf(activeTab) + 1
+
+  const metrics: MetricCard[] = [
+    {
+      label: "API",
+      value: apiStatus === "ready" ? "Live" : apiStatus,
+      caption: "Server-safe recipe contract",
+      accent: "blue",
+    },
+    {
+      label: "COST",
+      value: recipe?.protection.costingVisible ? "Visible" : "Protected",
+      caption: recipe?.protection.costingVisible
+        ? "Owner role only"
+        : "Hidden from this role",
+      accent: "copper",
+    },
+    {
+      label: "RELEASE",
+      value: "Gated",
+      caption: "Approval workflow required",
+      accent: "lime",
+    },
+  ]
 
   return (
     <div className="relative isolate min-h-screen overflow-x-hidden bg-[#06101D] text-white">
@@ -426,7 +478,7 @@ export default function RecipeStudioPage() {
                 </div>
 
                 <div className="inline-flex max-w-full items-center rounded-full border border-[#C78A4A]/25 bg-[#C78A4A]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]">
-                  Safe Source Preview
+                  Server-Safe API Contract
                 </div>
               </div>
 
@@ -435,23 +487,23 @@ export default function RecipeStudioPage() {
               </h1>
 
               <p className="mt-2 max-w-3xl text-sm leading-6 text-white/68 sm:text-[15px]">
-                Prepare Recipe Studio for secure server-side connection to the
-                recipe library, ingredient master, nutrition facts, yield rules
-                and protected costing layer.
+                Recipe Studio now reads a sanitized server payload instead of
+                importing protected costing and recipe source files directly
+                into the client.
               </p>
 
               <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
-                {nextActions.slice(0, 2).map((action) => (
-                  <div
-                    key={action}
-                    className="rounded-xl border border-lime-300/18 bg-lime-300/10 px-3 py-2 text-sm text-lime-50"
-                  >
-                    <span className="font-semibold text-lime-100">
-                      Architecture action:
-                    </span>{" "}
-                    {action}
-                  </div>
-                ))}
+                <div className="rounded-xl border border-lime-300/18 bg-lime-300/10 px-3 py-2 text-sm text-lime-50">
+                  <span className="font-semibold text-lime-100">
+                    Server contract:
+                  </span>{" "}
+                  /api/recipe-studio sanitizes recipe data by role.
+                </div>
+
+                <div className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 px-3 py-2 text-sm text-[#FFD8A6]">
+                  <span className="font-semibold">Protection:</span> costing
+                  stays hidden unless owner role requests it.
+                </div>
               </div>
             </div>
 
@@ -502,6 +554,29 @@ export default function RecipeStudioPage() {
               </div>
             </div>
 
+            <div className="mb-3 rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FFD8A6]/70">
+                Role Preview
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {roleOptions.map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => setActiveRole(role)}
+                    className={cn(
+                      "rounded-lg border px-2 py-2 text-xs font-bold capitalize transition",
+                      activeRole === role
+                        ? "border-[#FFD8A6]/50 bg-[#C78A4A]/20 text-[#FFD8A6]"
+                        : "border-white/10 bg-black/15 text-white/55 hover:text-white"
+                    )}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
               {studioTabs.map((tab) => (
                 <button
@@ -526,13 +601,19 @@ export default function RecipeStudioPage() {
                 Client Safety
               </div>
               <p className="mt-2 text-xs leading-5 text-white/60">
-                This screen does not directly import protected cost-bearing
-                source files.
+                This screen fetches a sanitized API payload and does not import
+                protected cost-bearing source files.
               </p>
             </div>
           </aside>
 
           <div className="flex min-w-0 flex-col gap-4">
+            {apiStatus === "error" && (
+              <section className="rounded-2xl border border-red-300/25 bg-red-300/10 p-4 text-sm text-red-100">
+                Recipe Studio API error: {apiError}
+              </section>
+            )}
+
             <section className="min-w-0 rounded-2xl border border-[#76E4FF]/12 bg-[#0B1B2F]/68 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
               <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0">
@@ -563,59 +644,103 @@ export default function RecipeStudioPage() {
                 <div className="mb-3 flex min-w-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#CFF7FF]/60">
-                      Status Lifecycle
+                      Server Recipe Preview
                     </div>
                     <h3 className="mt-1 text-lg font-bold text-white">
-                      Recipe approval path
+                      {recipe?.name ?? "Loading recipe..."}
                     </h3>
                   </div>
                   <p className="text-xs text-white/45">
-                    Click a gate to simulate workflow state
+                    Active role: {formatRoleLabel(activeRole)}
                   </p>
                 </div>
 
-                <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  {lifecycleStatuses.map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => setRecipeStatus(status)}
-                      className={cn(
-                        "min-w-0 rounded-xl border px-3 py-2 text-left text-sm transition",
-                        recipeStatus === status
-                          ? statusStyles[status]
-                          : "border-white/10 bg-white/[0.035] text-white/58 hover:border-[#76E4FF]/25 hover:bg-[#76E4FF]/10 hover:text-white"
-                      )}
-                    >
-                      <span className="block whitespace-normal break-words font-semibold leading-5">
-                        {shortStatusLabel[status]}
-                      </span>
-                    </button>
-                  ))}
+                <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="rounded-xl border border-[#76E4FF]/15 bg-[#76E4FF]/10 p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#CFF7FF]/60">
+                      Station
+                    </div>
+                    <div className="mt-1 text-sm font-bold text-white">
+                      {recipe?.station ?? "Loading"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-lime-300/15 bg-lime-300/10 p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/60">
+                      Yield
+                    </div>
+                    <div className="mt-1 text-sm font-bold text-white">
+                      {recipe
+                        ? `${recipe.baseYield} ${recipe.yieldUnit}`
+                        : "Loading"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-[#C78A4A]/15 bg-[#C78A4A]/10 p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FFD8A6]/60">
+                      Batch
+                    </div>
+                    <div className="mt-1 text-sm font-bold text-white">
+                      {recipe?.batchCode ?? "Loading"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
+                      Storage
+                    </div>
+                    <div className="mt-1 text-sm text-white/75">
+                      {recipe?.storageTemp ?? "Loading"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
+                      Expiry
+                    </div>
+                    <div className="mt-1 text-sm text-white/75">
+                      {recipe?.expiryDate ?? "Loading"}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="min-w-0 rounded-2xl border border-[#C78A4A]/18 bg-[#120F0B]/55 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]/70">
-                  Server Contract
+                  Sanitized Contract
                 </div>
                 <h3 className="mt-1 text-lg font-bold text-white">
-                  Ready for protected API
+                  {recipe?.protection.costingVisible
+                    ? "Owner costing visible"
+                    : "Costing protected"}
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-white/58">
-                  Next real connection should return a sanitized payload by
-                  role, tenant, recipe status and approval state.
+                  Payload is filtered by role before reaching this client page.
                 </p>
 
-                <div className="mt-4 grid gap-2">
-                  {nextActions.slice(2).map((action) => (
-                    <div
-                      key={action}
-                      className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 px-3 py-2 text-sm text-white/72"
-                    >
-                      {action}
+                {recipe?.costing ? (
+                  <div className="mt-4 grid gap-2">
+                    <div className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 px-3 py-2 text-sm text-white/72">
+                      Total cost: {recipe.costing.totalCost}
                     </div>
-                  ))}
-                </div>
+                    <div className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 px-3 py-2 text-sm text-white/72">
+                      Cost per yield: {recipe.costing.costPerYield}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 grid gap-2">
+                    {recipe?.protection.protectedFields.map((field) => (
+                      <div
+                        key={field}
+                        className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 px-3 py-2 text-sm text-white/72"
+                      >
+                        Protected: {field}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
 
@@ -628,8 +753,8 @@ export default function RecipeStudioPage() {
                   Recipe and ingredient data boundaries
                 </h3>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-                  The page is prepared to receive safe read-only data without
-                  exposing cost-bearing or supplier-linked fields to the client.
+                  Recipe Studio is now prepared for server-controlled data
+                  visibility across Owner, Chef, QA and Worker roles.
                 </p>
               </div>
 
@@ -664,6 +789,101 @@ export default function RecipeStudioPage() {
                     </p>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="min-w-0 rounded-2xl border border-[#76E4FF]/12 bg-[#0B1B2F]/68 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
+                <div className="mb-4 flex min-w-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#CFF7FF]/60">
+                      Ingredient Master Preview
+                    </div>
+                    <h3 className="mt-1 text-lg font-bold text-white">
+                      Sanitized ingredient visibility
+                    </h3>
+                  </div>
+                  <p className="text-xs text-white/45">
+                    No supplier price exposed
+                  </p>
+                </div>
+
+                <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
+                  {(recipe?.ingredients ?? []).map((ingredient) => (
+                    <div
+                      key={ingredient.name}
+                      className="min-w-0 rounded-xl border border-white/10 bg-white/[0.035] p-3"
+                    >
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="whitespace-normal break-words text-sm font-bold leading-5 text-white">
+                            {ingredient.name}
+                          </div>
+                          <div className="mt-1 text-xs capitalize leading-5 text-white/48">
+                            {ingredient.category}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 rounded-lg border border-[#76E4FF]/15 bg-[#76E4FF]/10 px-2.5 py-1 text-right">
+                          <div className="text-sm font-bold text-white">
+                            {ingredient.unit}
+                          </div>
+                          <div className="text-[10px] uppercase tracking-wide text-[#CFF7FF]/55">
+                            unit
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-2">
+                        <div className="rounded-lg border border-lime-300/14 bg-lime-300/10 p-2 text-xs leading-5 text-white/62">
+                          {ingredient.nutritionAvailable
+                            ? "Nutrition facts available"
+                            : "Nutrition facts missing"}
+                        </div>
+                        <div className="rounded-lg border border-[#C78A4A]/15 bg-[#C78A4A]/10 p-2 text-xs leading-5 text-white/58">
+                          {ingredient.yieldAvailable
+                            ? "Yield rule available"
+                            : "Yield rule needs review"}
+                        </div>
+                        <div className="rounded-lg border border-amber-300/15 bg-amber-300/10 p-2 text-xs leading-5 text-white/58">
+                          {ingredient.allergens.length > 0
+                            ? `Allergens: ${ingredient.allergens.join(", ")}`
+                            : "No declared allergen in sanitized view"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="min-w-0 rounded-2xl border border-lime-300/18 bg-[#071525]/70 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-lime-100/70">
+                  Cooling Control
+                </div>
+                <h3 className="mt-1 text-lg font-bold text-white">
+                  Cooling SOP
+                </h3>
+
+                <div className="mt-4 space-y-2">
+                  {coolingSteps.map((step, index) => (
+                    <div
+                      key={step.title}
+                      className="rounded-xl border border-lime-300/16 bg-lime-300/10 p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-lime-300/30 bg-lime-300/12 text-xs font-bold text-lime-100">
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0 text-sm font-semibold text-white">
+                          {step.title}
+                        </div>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-white/55">
+                        {step.detail}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </section>
 
@@ -747,95 +967,6 @@ export default function RecipeStudioPage() {
                       </div>
                       <p className="mt-2 text-xs leading-5 text-white/58">
                         {item.support}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="min-w-0 rounded-2xl border border-[#76E4FF]/12 bg-[#0B1B2F]/68 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
-                <div className="mb-4 flex min-w-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#CFF7FF]/60">
-                      Ingredient Master Preview
-                    </div>
-                    <h3 className="mt-1 text-lg font-bold text-white">
-                      Sanitized ingredient visibility
-                    </h3>
-                  </div>
-                  <p className="text-xs text-white/45">
-                    No supplier price exposed
-                  </p>
-                </div>
-
-                <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
-                  {ingredientPreview.map((ingredient) => (
-                    <div
-                      key={ingredient.name}
-                      className="min-w-0 rounded-xl border border-white/10 bg-white/[0.035] p-3"
-                    >
-                      <div className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="whitespace-normal break-words text-sm font-bold leading-5 text-white">
-                            {ingredient.name}
-                          </div>
-                          <div className="mt-1 text-xs leading-5 text-white/48">
-                            {ingredient.category}
-                          </div>
-                        </div>
-
-                        <div className="shrink-0 rounded-lg border border-[#76E4FF]/15 bg-[#76E4FF]/10 px-2.5 py-1 text-right">
-                          <div className="text-sm font-bold text-white">
-                            {ingredient.unit}
-                          </div>
-                          <div className="text-[10px] uppercase tracking-wide text-[#CFF7FF]/55">
-                            unit
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 grid gap-2">
-                        <div className="rounded-lg border border-lime-300/14 bg-lime-300/10 p-2 text-xs leading-5 text-white/62">
-                          {ingredient.nutrition}
-                        </div>
-                        <div className="rounded-lg border border-[#C78A4A]/15 bg-[#C78A4A]/10 p-2 text-xs leading-5 text-white/58">
-                          {ingredient.yieldRule}
-                        </div>
-                        <div className="rounded-lg border border-amber-300/15 bg-amber-300/10 p-2 text-xs leading-5 text-white/58">
-                          {ingredient.allergenRule}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="min-w-0 rounded-2xl border border-lime-300/18 bg-[#071525]/70 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-lime-100/70">
-                  Cooling Control
-                </div>
-                <h3 className="mt-1 text-lg font-bold text-white">
-                  Cooling SOP
-                </h3>
-
-                <div className="mt-4 space-y-2">
-                  {coolingSteps.map((step, index) => (
-                    <div
-                      key={step.title}
-                      className="rounded-xl border border-lime-300/16 bg-lime-300/10 p-3"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-lime-300/30 bg-lime-300/12 text-xs font-bold text-lime-100">
-                          {index + 1}
-                        </div>
-                        <div className="min-w-0 text-sm font-semibold text-white">
-                          {step.title}
-                        </div>
-                      </div>
-                      <p className="mt-2 text-xs leading-5 text-white/55">
-                        {step.detail}
                       </p>
                     </div>
                   ))}
