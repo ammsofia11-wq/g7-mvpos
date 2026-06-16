@@ -16,6 +16,8 @@ const ROLE_OPTIONS = [
 
 type RecipeStudioRole = (typeof ROLE_OPTIONS)[number]["value"]
 
+type RuntimeTone = "neutral" | "success" | "warning" | "danger"
+
 type ProductionRuntimePathStep =
   | string
   | {
@@ -78,6 +80,16 @@ type RecipeStudioApiResponse = {
     contractVersion?: string
   }
   recipes?: RecipeStudioRecipe[]
+}
+
+type RuntimeReadinessSummary = {
+  productionReadiness: string
+  station: string
+  release: string
+  workerTask: string
+  risk: string
+  note: string
+  tone: RuntimeTone
 }
 
 const DEFAULT_RUNTIME_PATH = [
@@ -247,12 +259,96 @@ function getRuntimePath(runtime?: RecipeProductionRuntime) {
   })
 }
 
+function getRuntimeReadinessSummary(
+  runtime?: RecipeProductionRuntime
+): RuntimeReadinessSummary {
+  if (!runtime) {
+    return {
+      productionReadiness: "Runtime missing",
+      station: "—",
+      release: "Cannot evaluate release",
+      workerTask: "No task generated",
+      risk: "Needs review",
+      note: "No production runtime contract was returned for this recipe.",
+      tone: "danger",
+    }
+  }
+
+  const stationTask = runtime.stationTask
+  const qaGate = runtime.qaGate
+  const releaseControl = runtime.releaseControl
+
+  const releaseStatus = formatValue(releaseControl?.releaseStatus)
+  const station = formatValue(stationTask?.station)
+  const hasWorkerTask = Boolean(stationTask?.taskId)
+  const requiresQaGate =
+    stationTask?.requiresQaGate === true ||
+    qaGate?.coolingRequired === true ||
+    qaGate?.allergenCheckRequired === true ||
+    qaGate?.labelCheckRequired === true ||
+    qaGate?.batchCodeCheckRequired === true
+
+  const blockedByDefault = releaseControl?.releaseBlockedByDefault !== false
+  const canReleaseWithoutQa = releaseControl?.canReleaseWithoutQa === true
+  const releaseLooksApproved =
+    releaseStatus.toLowerCase().includes("approved") ||
+    releaseStatus.toLowerCase().includes("released")
+
+  if (blockedByDefault && requiresQaGate) {
+    return {
+      productionReadiness: "QA pending",
+      station,
+      release: "Blocked until QA / authorized manager",
+      workerTask: hasWorkerTask ? "Ready" : "Needs task",
+      risk: "Controlled",
+      note: "Recipe can prepare production runtime, but final release is protected by QA and authorized manager control.",
+      tone: "warning",
+    }
+  }
+
+  if (releaseLooksApproved && !blockedByDefault) {
+    return {
+      productionReadiness: "Ready for release",
+      station,
+      release: "Release available",
+      workerTask: hasWorkerTask ? "Ready" : "Needs task",
+      risk: "Low",
+      note: "Runtime path is clear and release control is not blocking this recipe.",
+      tone: "success",
+    }
+  }
+
+  if (canReleaseWithoutQa) {
+    return {
+      productionReadiness: "Manager review required",
+      station,
+      release: "Release allowed by control setting",
+      workerTask: hasWorkerTask ? "Ready" : "Needs task",
+      risk: "Review",
+      note: "This recipe can move forward only if the authorized role confirms production readiness.",
+      tone: "warning",
+    }
+  }
+
+  return {
+    productionReadiness: releaseStatus === "—" ? "Review required" : releaseStatus,
+    station,
+    release: blockedByDefault ? "Blocked by default" : "Release review required",
+    workerTask: hasWorkerTask ? "Ready" : "Needs task",
+    risk: blockedByDefault ? "Controlled" : "Review",
+    note:
+      releaseControl?.releaseNote ||
+      "Runtime bridge is active, but production release still needs operational review.",
+    tone: blockedByDefault ? "warning" : "neutral",
+  }
+}
+
 function StatusPill({
   children,
   tone = "neutral",
 }: {
   children: ReactNode
-  tone?: "neutral" | "success" | "warning" | "danger"
+  tone?: RuntimeTone
 }) {
   const toneClass =
     tone === "success"
@@ -297,6 +393,76 @@ function InfoRow({
   )
 }
 
+function RuntimeSummaryItem({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone?: RuntimeTone
+}) {
+  const valueClass =
+    tone === "success"
+      ? "text-lime-100"
+      : tone === "warning"
+        ? "text-amber-100"
+        : tone === "danger"
+          ? "text-red-100"
+          : "text-white/85"
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
+        {label}
+      </p>
+      <p className={`mt-2 text-sm font-black ${valueClass}`}>{value}</p>
+    </div>
+  )
+}
+
+function RuntimeReadinessSummaryView({
+  runtime,
+}: {
+  runtime?: RecipeProductionRuntime
+}) {
+  const summary = getRuntimeReadinessSummary(runtime)
+
+  return (
+    <section className="rounded-3xl border border-lime-300/15 bg-lime-300/[0.045] p-5">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-lime-100/80">
+            Runtime Readiness Summary
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            Production decision snapshot
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            {summary.note}
+          </p>
+        </div>
+
+        <StatusPill tone={summary.tone}>
+          Production Readiness: {summary.productionReadiness}
+        </StatusPill>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <RuntimeSummaryItem
+          label="Readiness"
+          value={summary.productionReadiness}
+          tone={summary.tone}
+        />
+        <RuntimeSummaryItem label="Station" value={summary.station} />
+        <RuntimeSummaryItem label="Release" value={summary.release} />
+        <RuntimeSummaryItem label="Worker Task" value={summary.workerTask} />
+        <RuntimeSummaryItem label="Risk" value={summary.risk} tone={summary.tone} />
+      </div>
+    </section>
+  )
+}
+
 function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
   const path = getRuntimePath(runtime)
 
@@ -311,7 +477,7 @@ function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
             Recipe-to-Production Path
           </h3>
         </div>
-        <StatusPill tone="success">RS-3B.1 UI Polish</StatusPill>
+        <StatusPill tone="success">RS-3C Readiness</StatusPill>
       </div>
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -324,7 +490,7 @@ function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
               {index + 1}
             </div>
             <p className="text-sm font-bold text-white">{step.label}</p>
-            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/40">
+            <p className="mt-2 text-xs font-semibold tracking-[0.12em] text-white/40">
               {formatValue(step.status)}
             </p>
             {step.note ? (
@@ -594,6 +760,8 @@ function RecipeRuntimeCard({
 
       {productionRuntime ? (
         <div className="grid gap-5 p-5 md:p-6">
+          <RuntimeReadinessSummaryView runtime={productionRuntime} />
+
           <RuntimePathView runtime={productionRuntime} />
 
           <div className="grid gap-5 xl:grid-cols-2">
@@ -612,12 +780,14 @@ function RecipeRuntimeCard({
         </div>
       ) : (
         <div className="p-5 md:p-6">
-          <div className="rounded-3xl border border-amber-300/20 bg-amber-300/[0.06] p-5">
+          <RuntimeReadinessSummaryView runtime={productionRuntime} />
+
+          <div className="mt-5 rounded-3xl border border-amber-300/20 bg-amber-300/[0.06] p-5">
             <p className="text-sm font-bold text-amber-100">
               No productionRuntime object was returned for this recipe.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3B.1 expects the API to return recipes[n].productionRuntime from
+              RS-3C expects the API to return recipes[n].productionRuntime from
               the RS-3A contract.
             </p>
           </div>
@@ -703,11 +873,10 @@ function RecipeStudioRuntimePageContent() {
                 Production Runtime Bridge
               </h1>
               <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
-                RS-3B.1 keeps the RS-3A recipe-to-production contract visible
-                inside Recipe Studio while making runtime labels easier to read
-                for kitchen teams. The current role is read from query string
-                for testing only; production permissions must come from session,
-                user, and tenant permissions.
+                RS-3C adds a fast production readiness summary above every
+                recipe runtime card, helping kitchen teams understand station
+                readiness, QA blocking, release status, and worker task
+                availability without reading the full contract first.
               </p>
             </div>
 
@@ -822,7 +991,7 @@ function RecipeStudioRuntimePageContent() {
               No recipes returned from the Recipe Studio API.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3B.1 expects recipes to include productionRuntime from the RS-3A
+              RS-3C expects recipes to include productionRuntime from the RS-3A
               API contract.
             </p>
           </section>
