@@ -121,6 +121,18 @@ type RuntimeExceptionResolution = {
   tone: RuntimeTone
 }
 
+type RuntimeHandoffSummary = {
+  runtimeReady: string
+  qaReady: string
+  workerTaskReady: string
+  releaseReady: string
+  blockedBy: string
+  nextOwner: string
+  nextHandoffAction: string
+  note: string
+  tone: RuntimeTone
+}
+
 const DEFAULT_RUNTIME_PATH = [
   "Recipe Approved",
   "Batch Ready",
@@ -1129,6 +1141,251 @@ function RuntimeExceptionResolutionMatrixView({
   )
 }
 
+function getRuntimeHandoffSummary({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}): RuntimeHandoffSummary {
+  const activeRoleLabel = getRoleLabel(activeRole)
+
+  if (!runtime) {
+    return {
+      runtimeReady: "No",
+      qaReady: "Blocked",
+      workerTaskReady: "Unavailable",
+      releaseReady: "No",
+      blockedBy: "Runtime Missing",
+      nextOwner: "Owner / Chef / Engineering",
+      nextHandoffAction:
+        "Restore the productionRuntime contract before scheduling, QA review, worker assignment, or release planning.",
+      note: "No safe production handoff is available without the runtime contract.",
+      tone: "danger",
+    }
+  }
+
+  const summary = getRuntimeReadinessSummary(runtime)
+  const flags = getRuntimeExceptionFlags({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+
+  const visibleBlockers = flags.filter((flag) =>
+    ["Runtime Missing", "QA Gate Pending", "Release Blocked", "Release Blocked By Default"].includes(
+      flag.label
+    )
+  )
+
+  const qaPending = flags.some((flag) => flag.label === "QA Gate Pending")
+  const releaseBlocked = flags.some((flag) =>
+    ["Release Blocked", "Release Blocked By Default"].includes(flag.label)
+  )
+  const hasWorkerTask = Boolean(runtime.stationTask?.taskId)
+  const station = formatValue(runtime.stationTask?.station)
+  const costingHidden = flags.some(
+    (flag) => flag.label === "Costing Hidden For Role"
+  )
+  const noRuntimeExceptions = flags.some(
+    (flag) => flag.label === "No Runtime Exceptions"
+  )
+
+  const runtimeReady =
+    summary.productionReadiness.toLowerCase().includes("runtime missing") ||
+    summary.productionReadiness.toLowerCase().includes("review required")
+      ? "Review"
+      : "Ready"
+
+  const qaReady = qaPending ? "Pending" : "Clear / Policy-based"
+  const workerTaskReady = hasWorkerTask ? "Ready" : "Needs task"
+  const releaseReady = releaseBlocked || qaPending ? "Blocked" : "Reviewable"
+
+  if (qaPending) {
+    return {
+      runtimeReady,
+      qaReady,
+      workerTaskReady,
+      releaseReady,
+      blockedBy: visibleBlockers.map((flag) => flag.label).join(" + "),
+      nextOwner: "QA / Head Chef",
+      nextHandoffAction:
+        "Hand off to QA to complete cooling, allergen, label, and batch code checks before release.",
+      note:
+        "The recipe can remain prepared for runtime, but final release must stay blocked until QA clears the gate.",
+      tone: "warning",
+    }
+  }
+
+  if (releaseBlocked) {
+    return {
+      runtimeReady,
+      qaReady,
+      workerTaskReady,
+      releaseReady,
+      blockedBy: visibleBlockers.map((flag) => flag.label).join(" + "),
+      nextOwner: "Head Chef / Production Manager",
+      nextHandoffAction:
+        "Keep the release hold active and confirm which authority condition must clear the block.",
+      note:
+        "The next handoff is not to workers; it is to the authorized role responsible for release control.",
+      tone: "danger",
+    }
+  }
+
+  if (!hasWorkerTask) {
+    return {
+      runtimeReady,
+      qaReady,
+      workerTaskReady,
+      releaseReady: "Not ready",
+      blockedBy: "Station task missing",
+      nextOwner: "Chef / Production Manager",
+      nextHandoffAction:
+        "Prepare or confirm the approved station task before worker execution starts.",
+      note:
+        "The recipe needs an operational task handoff before it can be safely executed on the production floor.",
+      tone: "warning",
+    }
+  }
+
+  if (costingHidden && activeRole !== "worker") {
+    return {
+      runtimeReady,
+      qaReady,
+      workerTaskReady,
+      releaseReady,
+      blockedBy: "Role costing visibility only",
+      nextOwner: "Owner / Finance / Admin if costing approval is needed",
+      nextHandoffAction:
+        "Continue operational review with role-safe data; request costing authority only if release policy requires it.",
+      note:
+        `${activeRoleLabel} can continue the runtime handoff without exposing protected costing data.`,
+      tone: "neutral",
+    }
+  }
+
+  if (activeRole === "worker") {
+    return {
+      runtimeReady,
+      qaReady,
+      workerTaskReady,
+      releaseReady,
+      blockedBy: noRuntimeExceptions ? "No visible runtime blocker" : "Worker task protection",
+      nextOwner: "Sous Chef / Station Lead",
+      nextHandoffAction:
+        "Worker follows the approved station task only and escalates any mismatch to the supervisor.",
+      note:
+        station === "—"
+          ? "Worker-safe handoff is available, but station identity should still be confirmed."
+          : `Worker-safe handoff is available for ${station}.`,
+      tone: hasWorkerTask ? "success" : "warning",
+    }
+  }
+
+  return {
+    runtimeReady,
+    qaReady,
+    workerTaskReady,
+    releaseReady,
+    blockedBy: noRuntimeExceptions
+      ? "No visible runtime blocker"
+      : flags.map((flag) => flag.label).join(" + "),
+    nextOwner: "Production Manager / Responsible Role",
+    nextHandoffAction:
+      "Proceed with the visible runtime path while confirming tenant permissions, QA policy, and final release authority.",
+    note:
+      "This summary is a handoff snapshot only. It does not approve release or change runtime state.",
+    tone: summary.tone,
+  }
+}
+
+function RuntimeHandoffSummaryView({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}) {
+  const handoff = getRuntimeHandoffSummary({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+
+  return (
+    <section className="rounded-3xl border border-sky-200/15 bg-sky-200/[0.045] p-5">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-sky-100/75">
+            RS-3H Runtime Handoff Summary
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            Next owner and production handoff
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            Executive handoff snapshot showing whether the recipe is ready for
+            runtime, QA, worker task, and release — plus who owns the next safe
+            action. This is UI-only and does not change runtime state.
+          </p>
+        </div>
+
+        <StatusPill tone={handoff.tone}>Next Owner: {handoff.nextOwner}</StatusPill>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <RuntimeSummaryItem
+          label="Runtime"
+          value={handoff.runtimeReady}
+          tone={handoff.tone}
+        />
+        <RuntimeSummaryItem
+          label="QA"
+          value={handoff.qaReady}
+          tone={handoff.qaReady.toLowerCase().includes("pending") ? "warning" : handoff.tone}
+        />
+        <RuntimeSummaryItem
+          label="Worker Task"
+          value={handoff.workerTaskReady}
+          tone={handoff.workerTaskReady.toLowerCase().includes("ready") ? "success" : "warning"}
+        />
+        <RuntimeSummaryItem
+          label="Release"
+          value={handoff.releaseReady}
+          tone={handoff.releaseReady.toLowerCase().includes("blocked") ? "danger" : handoff.tone}
+        />
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">
+            Blocked By
+          </p>
+          <p className="mt-2 text-sm font-black leading-6 text-white">
+            {handoff.blockedBy}
+          </p>
+          <p className="mt-2 text-xs font-semibold leading-5 text-white/50">
+            {handoff.note}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-sky-200/15 bg-sky-200/[0.045] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-100/65">
+            Next Handoff Action
+          </p>
+          <p className="mt-2 text-sm font-bold leading-6 text-sky-50">
+            {handoff.nextHandoffAction}
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function RuntimeReadinessSummaryView({
   runtime,
 }: {
@@ -1723,6 +1980,12 @@ function RecipeRuntimeCard({
         <div className="grid gap-5 p-5 md:p-6">
           <RuntimeReadinessSummaryView runtime={productionRuntime} />
 
+          <RuntimeHandoffSummaryView
+            activeRole={activeRole}
+            runtime={productionRuntime}
+            costingVisible={costingVisible}
+          />
+
           <RuntimeExceptionFlagsView
             activeRole={activeRole}
             runtime={productionRuntime}
@@ -1759,6 +2022,12 @@ function RecipeRuntimeCard({
       ) : (
         <div className="p-5 md:p-6">
           <RuntimeReadinessSummaryView runtime={productionRuntime} />
+
+          <RuntimeHandoffSummaryView
+            activeRole={activeRole}
+            runtime={productionRuntime}
+            costingVisible={costingVisible}
+          />
 
           <RuntimeExceptionFlagsView
             activeRole={activeRole}
@@ -1866,9 +2135,9 @@ function RecipeStudioRuntimePageContent() {
                 Production Runtime Bridge
               </h1>
               <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
-                RS-3G keeps the RS-3F exception flags and adds a resolution
-                matrix so each role can see the owner, required decision, safe
-                next action, and forbidden action for every runtime blocker.
+                RS-3H keeps the RS-3F flags and RS-3G resolution matrix, then
+                adds a handoff summary so each role can see readiness, blockers,
+                next owner, and the next safe production action.
               </p>
             </div>
 
