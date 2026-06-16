@@ -28,12 +28,13 @@ type StudioTab =
   | "Approval"
   | "Release"
 
-type Ingredient = {
+type IngredientPreview = {
   name: string
-  quantity: string
+  category: string
   unit: string
-  prep: string
-  controlPoint: string
+  nutrition: string
+  yieldRule: string
+  allergenRule: string
 }
 
 type SopCard = {
@@ -54,7 +55,7 @@ type MetricCard = {
 type RoleAccess = {
   role: string
   canSee: string
-  protectedFrom: string
+  hidden: string
   accent: "blue" | "copper" | "lime" | "amber"
 }
 
@@ -62,6 +63,14 @@ type WorkerStep = {
   step: string
   action: string
   support: string
+}
+
+type SourcePreview = {
+  label: string
+  value: string
+  safeClientView: string
+  protectedData: string
+  accent: "blue" | "copper" | "lime" | "amber"
 }
 
 const studioTabs: StudioTab[] = [
@@ -104,55 +113,90 @@ const shortStatusLabel: Record<RecipeStatus, string> = {
   "Production Ready": "Production Ready",
 }
 
-const ingredients: Ingredient[] = [
-  {
-    name: "Chicken Breast",
-    quantity: "160",
-    unit: "g raw",
-    prep: "Trimmed, cleaned, marinated",
-    controlPoint: "Raw weight locked before cooking",
-  },
-  {
-    name: "Basmati Rice",
-    quantity: "120",
-    unit: "g cooked",
-    prep: "Steamed batch, cooled correctly",
-    controlPoint: "Cooked portion weight verified",
-  },
-  {
-    name: "Tomato Base Sauce",
-    quantity: "45",
-    unit: "g",
-    prep: "Batch cooked sauce",
-    controlPoint: "Salt, acidity and consistency checked",
-  },
-  {
-    name: "Mixed Vegetables",
-    quantity: "100",
-    unit: "g raw",
-    prep: "Washed, chopped, portioned",
-    controlPoint: "Freshness and color checked",
-  },
-]
-
 const metrics: MetricCard[] = [
   {
-    label: "NUTRITION",
-    value: "620 KCAL",
-    caption: "From recipe nutrition facts",
+    label: "SOURCE",
+    value: "Ready",
+    caption: "Prepared for safe server recipe source",
     accent: "blue",
   },
   {
     label: "COST",
     value: "Protected",
-    caption: "Visible to owner roles only",
+    caption: "Never exposed to worker client view",
     accent: "copper",
   },
   {
-    label: "TESTING",
-    value: "2 / 3",
-    caption: "Kitchen trials passed",
+    label: "RELEASE",
+    value: "Gated",
+    caption: "Recipe must pass approval workflow",
     accent: "lime",
+  },
+]
+
+const ingredientPreview: IngredientPreview[] = [
+  {
+    name: "Chicken Breast",
+    category: "Protein",
+    unit: "g",
+    nutrition: "Nutrition facts available",
+    yieldRule: "Raw-to-cooked yield required",
+    allergenRule: "No declared allergen in seed",
+  },
+  {
+    name: "Rice",
+    category: "Carb",
+    unit: "g",
+    nutrition: "Nutrition facts available",
+    yieldRule: "Cooked yield conversion required",
+    allergenRule: "No declared allergen in seed",
+  },
+  {
+    name: "Tomato Sauce",
+    category: "Sauce",
+    unit: "g",
+    nutrition: "Nutrition facts available",
+    yieldRule: "Batch consistency check required",
+    allergenRule: "Allergen review required before release",
+  },
+  {
+    name: "Greek Yogurt",
+    category: "Dairy",
+    unit: "g",
+    nutrition: "Nutrition facts available",
+    yieldRule: "Stable yield rule",
+    allergenRule: "Contains dairy",
+  },
+]
+
+const sourcePreview: SourcePreview[] = [
+  {
+    label: "Recipe Library",
+    value: "Server Recipe Source",
+    safeClientView: "Recipe name, station, category, SOP status",
+    protectedData: "Cost, margin, R&D notes, unapproved versions",
+    accent: "blue",
+  },
+  {
+    label: "Ingredient Master",
+    value: "Server Ingredient Source",
+    safeClientView: "Name, category, unit, allergen warnings",
+    protectedData: "Supplier price, protected costing fields",
+    accent: "lime",
+  },
+  {
+    label: "Nutrition Facts",
+    value: "Sanitized Nutrition View",
+    safeClientView: "KCAL, protein, carbs, fat, fiber",
+    protectedData: "Commercial costing and supplier-linked data",
+    accent: "amber",
+  },
+  {
+    label: "Cost Engine",
+    value: "Owner-only Access",
+    safeClientView: "Protected label only",
+    protectedData: "Cost per unit, cost per yield, margin",
+    accent: "copper",
   },
 ]
 
@@ -165,7 +209,7 @@ const sopCards: SopCard[] = [
       "Ingredient cleaning, trimming, marination, weighing and mise en place before production release.",
     checks: [
       "Raw weight recorded",
-      "Marination time confirmed",
+      "Ingredient source verified",
       "Allergen notes checked",
     ],
   },
@@ -209,11 +253,11 @@ const sopCards: SopCard[] = [
 
 const tabDescriptions: Record<StudioTab, string> = {
   Basics:
-    "Recipe identity, category, production purpose, kitchen ownership and source library link.",
+    "Recipe identity, category, production purpose, kitchen ownership and safe source connection state.",
   Voice:
-    "Chef voice notes are captured as protected R&D input before SOP generation.",
+    "Chef voice notes are treated as protected R&D input before SOP generation.",
   Ingredients:
-    "Controlled ingredients from the Ingredient Master with quantities, prep rules and control points.",
+    "Controlled ingredients from Ingredient Master with nutrition, yield and allergen visibility rules.",
   "AI SOP":
     "AI-generated SOP draft based on chef input, ingredient rules and kitchen production standards.",
   Prep:
@@ -239,26 +283,26 @@ const tabDescriptions: Record<StudioTab, string> = {
 const roleAccess: RoleAccess[] = [
   {
     role: "Owner",
-    canSee: "Costing, yield, margin, approval history and full recipe asset.",
-    protectedFrom: "Cannot be hidden from ownership authority.",
+    canSee: "Costing, yield, margin, approval history and full protected recipe asset.",
+    hidden: "Nothing hidden from ownership authority.",
     accent: "copper",
   },
   {
     role: "Chef",
     canSee: "Recipe build, SOP, testing notes, ingredients and production method.",
-    protectedFrom: "Cannot release without approval gate.",
+    hidden: "Cannot bypass final approval lock.",
     accent: "blue",
   },
   {
     role: "QA",
     canSee: "Cooling, temperature checks, QC rules, allergens and release gates.",
-    protectedFrom: "Cannot edit costing or commercial data.",
+    hidden: "Costing and commercial margin hidden.",
     accent: "amber",
   },
   {
     role: "Worker",
-    canSee: "Approved step-by-step SOP only when recipe is production ready.",
-    protectedFrom: "No costing, R&D notes or unapproved recipe versions.",
+    canSee: "Approved step-by-step task only after production release.",
+    hidden: "Costing, R&D notes, draft versions and full recipe IP hidden.",
     accent: "lime",
   },
 ]
@@ -266,13 +310,13 @@ const roleAccess: RoleAccess[] = [
 const workerSteps: WorkerStep[] = [
   {
     step: "1",
-    action: "Prepare ingredients",
-    support: "Show exact weight, prep image/video and control point.",
+    action: "Prepare assigned ingredient",
+    support: "Show approved weight, prep instruction and control point only.",
   },
   {
     step: "2",
-    action: "Start assigned SOP",
-    support: "Worker sees only the approved task for the current station.",
+    action: "Start station SOP",
+    support: "Worker sees the live step for the assigned station.",
   },
   {
     step: "3",
@@ -286,38 +330,11 @@ const workerSteps: WorkerStep[] = [
   },
 ]
 
-const sourceState = [
-  {
-    label: "Recipe Source",
-    value: "Imported Recipe Library",
-  },
-  {
-    label: "Ingredient Source",
-    value: "Ingredient Master",
-  },
-  {
-    label: "Nutrition Facts",
-    value: "Available",
-  },
-  {
-    label: "Local Currency",
-    value: "Tenant Settings",
-  },
-  {
-    label: "Units",
-    value: "Metric / Configurable",
-  },
-  {
-    label: "Access",
-    value: "Role-Based",
-  },
-]
-
 const nextActions = [
-  "Complete missing cooling documentation",
-  "Lock nutrition facts before approval",
-  "Review worker-facing SOP preview",
-  "Send final version to Chef Review",
+  "Connect Recipe Studio to a server-safe recipe preview",
+  "Keep costing fields outside the client bundle",
+  "Prepare sanitized Ingredient Master view",
+  "Add role-based API contract before edit actions",
 ]
 
 const coolingSteps = [
@@ -333,6 +350,15 @@ const coolingSteps = [
     title: "Cooling Out",
     detail: "Release only after QA approval before packaging starts.",
   },
+]
+
+const securityRules = [
+  "No direct client import of cost-bearing recipe data",
+  "No worker access to supplier pricing or R&D notes",
+  "Owner-only cost and margin visibility",
+  "Server/API must sanitize recipe payload by role",
+  "Tenant isolation required before real customer data",
+  "Audit log required for recipe edits and approvals",
 ]
 
 const statusStyles: Record<RecipeStatus, string> = {
@@ -354,6 +380,13 @@ const metricAccentStyles: Record<MetricCard["accent"], string> = {
 }
 
 const roleAccentStyles: Record<RoleAccess["accent"], string> = {
+  blue: "border-[#76E4FF]/18 bg-[#76E4FF]/10",
+  copper: "border-[#C78A4A]/20 bg-[#C78A4A]/10",
+  lime: "border-lime-300/18 bg-lime-300/10",
+  amber: "border-amber-300/20 bg-amber-300/10",
+}
+
+const sourceAccentStyles: Record<SourcePreview["accent"], string> = {
   blue: "border-[#76E4FF]/18 bg-[#76E4FF]/10",
   copper: "border-[#C78A4A]/20 bg-[#C78A4A]/10",
   lime: "border-lime-300/18 bg-lime-300/10",
@@ -393,7 +426,7 @@ export default function RecipeStudioPage() {
                 </div>
 
                 <div className="inline-flex max-w-full items-center rounded-full border border-[#C78A4A]/25 bg-[#C78A4A]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]">
-                  Protected Recipe Asset
+                  Safe Source Preview
                 </div>
               </div>
 
@@ -402,9 +435,9 @@ export default function RecipeStudioPage() {
               </h1>
 
               <p className="mt-2 max-w-3xl text-sm leading-6 text-white/68 sm:text-[15px]">
-                Control recipe IP, ingredients, nutrition facts, SOPs, testing,
-                approval gates and production release from one protected
-                workspace.
+                Prepare Recipe Studio for secure server-side connection to the
+                recipe library, ingredient master, nutrition facts, yield rules
+                and protected costing layer.
               </p>
 
               <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
@@ -414,7 +447,7 @@ export default function RecipeStudioPage() {
                     className="rounded-xl border border-lime-300/18 bg-lime-300/10 px-3 py-2 text-sm text-lime-50"
                   >
                     <span className="font-semibold text-lime-100">
-                      Next action:
+                      Architecture action:
                     </span>{" "}
                     {action}
                   </div>
@@ -490,11 +523,11 @@ export default function RecipeStudioPage() {
 
             <div className="mt-4 hidden rounded-xl border border-[#C78A4A]/20 bg-[#C78A4A]/10 p-3 lg:block">
               <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FFD8A6]/70">
-                Asset Guard
+                Client Safety
               </div>
               <p className="mt-2 text-xs leading-5 text-white/60">
-                Costing, R&D notes and unapproved SOP versions are protected by
-                role visibility.
+                This screen does not directly import protected cost-bearing
+                source files.
               </p>
             </div>
           </aside>
@@ -563,31 +596,74 @@ export default function RecipeStudioPage() {
 
               <div className="min-w-0 rounded-2xl border border-[#C78A4A]/18 bg-[#120F0B]/55 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]/70">
-                  Source State
+                  Server Contract
                 </div>
                 <h3 className="mt-1 text-lg font-bold text-white">
-                  Library-connected recipe
+                  Ready for protected API
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-white/58">
-                  This screen is prepared for imported recipes, ingredient
-                  master data and protected nutrition facts.
+                  Next real connection should return a sanitized payload by
+                  role, tenant, recipe status and approval state.
                 </p>
 
                 <div className="mt-4 grid gap-2">
-                  {sourceState.map((item) => (
+                  {nextActions.slice(2).map((action) => (
                     <div
-                      key={item.label}
-                      className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 px-3 py-2"
+                      key={action}
+                      className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 px-3 py-2 text-sm text-white/72"
                     >
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FFD8A6]/65">
-                        {item.label}
-                      </div>
-                      <div className="mt-1 text-sm font-semibold text-white/80">
-                        {item.value}
-                      </div>
+                      {action}
                     </div>
                   ))}
                 </div>
+              </div>
+            </section>
+
+            <section className="min-w-0 rounded-2xl border border-[#76E4FF]/12 bg-[#0B1B2F]/68 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
+              <div className="mb-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#CFF7FF]/60">
+                  Safe Source Preview
+                </div>
+                <h3 className="mt-1 text-lg font-bold text-white">
+                  Recipe and ingredient data boundaries
+                </h3>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+                  The page is prepared to receive safe read-only data without
+                  exposing cost-bearing or supplier-linked fields to the client.
+                </p>
+              </div>
+
+              <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {sourcePreview.map((source) => (
+                  <div
+                    key={source.label}
+                    className={cn(
+                      "min-w-0 rounded-xl border p-3",
+                      sourceAccentStyles[source.accent]
+                    )}
+                  >
+                    <div className="text-sm font-bold text-white">
+                      {source.label}
+                    </div>
+                    <div className="mt-1 text-xs text-white/50">
+                      {source.value}
+                    </div>
+
+                    <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45">
+                      Safe client view
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-white/68">
+                      {source.safeClientView}
+                    </p>
+
+                    <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45">
+                      Protected data
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-white/60">
+                      {source.protectedData}
+                    </p>
+                  </div>
+                ))}
               </div>
             </section>
 
@@ -651,8 +727,8 @@ export default function RecipeStudioPage() {
                   Approved steps only
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-white/58">
-                  Worker screens should show the next action, not hidden recipe
-                  IP, costing or unapproved R&D notes.
+                  Worker screens should receive only the current approved task,
+                  not recipe IP, costing or draft R&D data.
                 </p>
 
                 <div className="mt-4 grid gap-2">
@@ -683,19 +759,19 @@ export default function RecipeStudioPage() {
                 <div className="mb-4 flex min-w-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#CFF7FF]/60">
-                      Ingredients
+                      Ingredient Master Preview
                     </div>
                     <h3 className="mt-1 text-lg font-bold text-white">
-                      Controlled recipe components
+                      Sanitized ingredient visibility
                     </h3>
                   </div>
                   <p className="text-xs text-white/45">
-                    From Ingredient Master
+                    No supplier price exposed
                   </p>
                 </div>
 
                 <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
-                  {ingredients.map((ingredient) => (
+                  {ingredientPreview.map((ingredient) => (
                     <div
                       key={ingredient.name}
                       className="min-w-0 rounded-xl border border-white/10 bg-white/[0.035] p-3"
@@ -706,22 +782,30 @@ export default function RecipeStudioPage() {
                             {ingredient.name}
                           </div>
                           <div className="mt-1 text-xs leading-5 text-white/48">
-                            {ingredient.prep}
+                            {ingredient.category}
                           </div>
                         </div>
 
                         <div className="shrink-0 rounded-lg border border-[#76E4FF]/15 bg-[#76E4FF]/10 px-2.5 py-1 text-right">
                           <div className="text-sm font-bold text-white">
-                            {ingredient.quantity}
+                            {ingredient.unit}
                           </div>
                           <div className="text-[10px] uppercase tracking-wide text-[#CFF7FF]/55">
-                            {ingredient.unit}
+                            unit
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-3 rounded-lg border border-[#C78A4A]/15 bg-[#C78A4A]/10 p-2 text-xs leading-5 text-white/58">
-                        {ingredient.controlPoint}
+                      <div className="mt-3 grid gap-2">
+                        <div className="rounded-lg border border-lime-300/14 bg-lime-300/10 p-2 text-xs leading-5 text-white/62">
+                          {ingredient.nutrition}
+                        </div>
+                        <div className="rounded-lg border border-[#C78A4A]/15 bg-[#C78A4A]/10 p-2 text-xs leading-5 text-white/58">
+                          {ingredient.yieldRule}
+                        </div>
+                        <div className="rounded-lg border border-amber-300/15 bg-amber-300/10 p-2 text-xs leading-5 text-white/58">
+                          {ingredient.allergenRule}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -762,16 +846,38 @@ export default function RecipeStudioPage() {
             <section className="min-w-0 rounded-2xl border border-[#C78A4A]/18 bg-[#0B1B2F]/68 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
               <div className="mb-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]/70">
-                  Security & Role Visibility
+                  Data Protection Layer
                 </div>
                 <h3 className="mt-1 text-lg font-bold text-white">
                   Recipe IP protection model
                 </h3>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-                  UI visibility is only the first layer. Real protection later
-                  must be enforced by auth, database rules, tenant isolation and
-                  audit logs.
+                  UI visibility is only the first layer. Real protection must be
+                  enforced by server auth, database rules, tenant isolation and
+                  audit logs before live customer data.
                 </p>
+              </div>
+
+              <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {securityRules.map((rule) => (
+                  <div
+                    key={rule}
+                    className="rounded-xl border border-[#C78A4A]/16 bg-[#C78A4A]/10 p-3 text-sm leading-6 text-white/70"
+                  >
+                    {rule}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="min-w-0 rounded-2xl border border-[#C78A4A]/18 bg-[#0B1B2F]/68 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
+              <div className="mb-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]/70">
+                  Role Visibility
+                </div>
+                <h3 className="mt-1 text-lg font-bold text-white">
+                  Sanitized access by kitchen role
+                </h3>
               </div>
 
               <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -793,10 +899,10 @@ export default function RecipeStudioPage() {
                       {access.canSee}
                     </p>
                     <div className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-white/45">
-                      Protected rule
+                      Hidden
                     </div>
                     <p className="mt-1 text-xs leading-5 text-white/60">
-                      {access.protectedFrom}
+                      {access.hidden}
                     </p>
                   </div>
                 ))}
