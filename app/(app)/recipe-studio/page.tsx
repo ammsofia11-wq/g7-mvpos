@@ -51,6 +51,19 @@ type MetricCard = {
   accent: "blue" | "copper" | "lime"
 }
 
+type RoleAccess = {
+  role: string
+  canSee: string
+  protectedFrom: string
+  accent: "blue" | "copper" | "lime" | "amber"
+}
+
+type WorkerStep = {
+  step: string
+  action: string
+  support: string
+}
+
 const studioTabs: StudioTab[] = [
   "Basics",
   "Voice",
@@ -78,6 +91,18 @@ const lifecycleStatuses: RecipeStatus[] = [
   "Documentation Required",
   "Production Ready",
 ]
+
+const shortStatusLabel: Record<RecipeStatus, string> = {
+  Draft: "Draft",
+  "Voice Captured": "Voice Captured",
+  "AI SOP Generated": "AI SOP Generated",
+  "Chef Review": "Chef Review",
+  Testing: "Testing",
+  "Needs Changes": "Needs Changes",
+  Approved: "Approved",
+  "Documentation Required": "Docs Required",
+  "Production Ready": "Production Ready",
+}
 
 const ingredients: Ingredient[] = [
   {
@@ -112,20 +137,20 @@ const ingredients: Ingredient[] = [
 
 const metrics: MetricCard[] = [
   {
-    label: "KCAL",
-    value: "620",
-    caption: "Target per portion",
+    label: "NUTRITION",
+    value: "620 KCAL",
+    caption: "From recipe nutrition facts",
     accent: "blue",
   },
   {
-    label: "LOCAL COST",
-    value: "74.00",
-    caption: "Uses tenant currency settings",
+    label: "COST",
+    value: "Protected",
+    caption: "Visible to owner roles only",
     accent: "copper",
   },
   {
-    label: "TEST",
-    value: "2/3",
+    label: "TESTING",
+    value: "2 / 3",
     caption: "Kitchen trials passed",
     accent: "lime",
   },
@@ -149,7 +174,7 @@ const sopCards: SopCard[] = [
     owner: "Hot Kitchen",
     status: "Testing",
     description:
-      "Cooking method, batch size, oven or pan setup, temperature target and chef tasting checkpoint.",
+      "Cooking method, batch size, equipment setup, temperature target, cooking time and chef tasting checkpoint.",
     checks: [
       "Cooking temperature logged",
       "Yield loss reviewed",
@@ -163,9 +188,9 @@ const sopCards: SopCard[] = [
     description:
       "Cooling flow must move through Cooling In, Temperature Check and Cooling Out before packaging.",
     checks: [
-      "Cooling In time recorded",
-      "Temperature Check completed",
-      "Cooling Out released by QA",
+      "Cooling In time and batch code recorded",
+      "Probe temperature entered by QA",
+      "Cooling Out released before packaging",
     ],
   },
   {
@@ -177,20 +202,20 @@ const sopCards: SopCard[] = [
     checks: [
       "Protein portion verified",
       "Carb portion verified",
-      "Label and expiry checked",
+      "Label, expiry and storage route checked",
     ],
   },
 ]
 
 const tabDescriptions: Record<StudioTab, string> = {
   Basics:
-    "Recipe identity, category, production purpose, customer plan link and internal kitchen ownership.",
+    "Recipe identity, category, production purpose, kitchen ownership and source library link.",
   Voice:
-    "Chef voice notes and practical kitchen instructions captured before AI SOP generation.",
+    "Chef voice notes are captured as protected R&D input before SOP generation.",
   Ingredients:
-    "Controlled ingredient list with weight basis, preparation method and operational control points.",
+    "Controlled ingredients from the Ingredient Master with quantities, prep rules and control points.",
   "AI SOP":
-    "AI-generated SOP draft based on chef voice, recipe structure and central kitchen rules.",
+    "AI-generated SOP draft based on chef input, ingredient rules and kitchen production standards.",
   Prep:
     "Mise en place, trimming, marination, batching and station readiness before cooking.",
   Cook:
@@ -211,6 +236,105 @@ const tabDescriptions: Record<StudioTab, string> = {
     "Final production-ready documentation, station instructions and kitchen runtime handoff.",
 }
 
+const roleAccess: RoleAccess[] = [
+  {
+    role: "Owner",
+    canSee: "Costing, yield, margin, approval history and full recipe asset.",
+    protectedFrom: "Cannot be hidden from ownership authority.",
+    accent: "copper",
+  },
+  {
+    role: "Chef",
+    canSee: "Recipe build, SOP, testing notes, ingredients and production method.",
+    protectedFrom: "Cannot release without approval gate.",
+    accent: "blue",
+  },
+  {
+    role: "QA",
+    canSee: "Cooling, temperature checks, QC rules, allergens and release gates.",
+    protectedFrom: "Cannot edit costing or commercial data.",
+    accent: "amber",
+  },
+  {
+    role: "Worker",
+    canSee: "Approved step-by-step SOP only when recipe is production ready.",
+    protectedFrom: "No costing, R&D notes or unapproved recipe versions.",
+    accent: "lime",
+  },
+]
+
+const workerSteps: WorkerStep[] = [
+  {
+    step: "1",
+    action: "Prepare ingredients",
+    support: "Show exact weight, prep image/video and control point.",
+  },
+  {
+    step: "2",
+    action: "Start assigned SOP",
+    support: "Worker sees only the approved task for the current station.",
+  },
+  {
+    step: "3",
+    action: "Record checkpoint",
+    support: "Temperature, weight or completion is logged for fair evaluation.",
+  },
+  {
+    step: "4",
+    action: "Ask for support",
+    support: "Escalation can request help before the station falls behind.",
+  },
+]
+
+const sourceState = [
+  {
+    label: "Recipe Source",
+    value: "Imported Recipe Library",
+  },
+  {
+    label: "Ingredient Source",
+    value: "Ingredient Master",
+  },
+  {
+    label: "Nutrition Facts",
+    value: "Available",
+  },
+  {
+    label: "Local Currency",
+    value: "Tenant Settings",
+  },
+  {
+    label: "Units",
+    value: "Metric / Configurable",
+  },
+  {
+    label: "Access",
+    value: "Role-Based",
+  },
+]
+
+const nextActions = [
+  "Complete missing cooling documentation",
+  "Lock nutrition facts before approval",
+  "Review worker-facing SOP preview",
+  "Send final version to Chef Review",
+]
+
+const coolingSteps = [
+  {
+    title: "Cooling In",
+    detail: "Record tray entry time, batch code and responsible station.",
+  },
+  {
+    title: "Temperature Check",
+    detail: "Enter probe temperature and confirm QA checkpoint.",
+  },
+  {
+    title: "Cooling Out",
+    detail: "Release only after QA approval before packaging starts.",
+  },
+]
+
 const statusStyles: Record<RecipeStatus, string> = {
   Draft: "border-white/10 bg-white/5 text-white/70",
   "Voice Captured": "border-[#76E4FF]/25 bg-[#76E4FF]/10 text-[#CFF7FF]",
@@ -229,19 +353,12 @@ const metricAccentStyles: Record<MetricCard["accent"], string> = {
   lime: "border-lime-300/25 bg-lime-300/10 text-lime-100",
 }
 
-const globalReadiness = [
-  "ISO currency-ready",
-  "Metric / imperial-ready",
-  "Multi-country kitchens",
-  "Tenant local settings",
-]
-
-const workerPromise = [
-  "Clear next action",
-  "Less confusion",
-  "Fair evaluation",
-  "Skill improvement",
-]
+const roleAccentStyles: Record<RoleAccess["accent"], string> = {
+  blue: "border-[#76E4FF]/18 bg-[#76E4FF]/10",
+  copper: "border-[#C78A4A]/20 bg-[#C78A4A]/10",
+  lime: "border-lime-300/18 bg-lime-300/10",
+  amber: "border-amber-300/20 bg-amber-300/10",
+}
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ")
@@ -260,6 +377,8 @@ export default function RecipeStudioPage() {
     return sopCards.find((card) => card.status === recipeStatus) ?? sopCards[0]
   }, [activeTab, recipeStatus])
 
+  const activeStepNumber = studioTabs.indexOf(activeTab) + 1
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#06101D] text-white">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(118,228,255,0.16),transparent_34%),radial-gradient(circle_at_top_right,rgba(199,138,74,0.12),transparent_30%),linear-gradient(180deg,#06101D_0%,#071525_48%,#050914_100%)]" />
@@ -274,7 +393,7 @@ export default function RecipeStudioPage() {
                 </div>
 
                 <div className="inline-flex max-w-full items-center rounded-full border border-[#C78A4A]/25 bg-[#C78A4A]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]">
-                  Global Kitchen OS
+                  Protected Recipe Asset
                 </div>
               </div>
 
@@ -283,21 +402,27 @@ export default function RecipeStudioPage() {
               </h1>
 
               <p className="mt-2 max-w-3xl text-sm leading-6 text-white/68 sm:text-[15px]">
-                Build, test, approve and release central-kitchen recipes with
-                chef voice, AI SOP generation, cooling control, QC gates and
-                production-ready documentation.
+                Control recipe IP, ingredients, nutrition facts, SOPs, testing,
+                approval gates and production release from one protected
+                workspace.
               </p>
 
-              <div className="mt-4 rounded-xl border border-lime-300/20 bg-lime-300/10 p-3 text-sm leading-6 text-lime-50">
-                <span className="font-semibold text-lime-100">
-                  Plan your work, then work your plan.
-                </span>{" "}
-                G7 helps the worker follow the plan clearly, and helps the owner
-                keep the kitchen running even when people change.
+              <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
+                {nextActions.slice(0, 2).map((action) => (
+                  <div
+                    key={action}
+                    className="rounded-xl border border-lime-300/18 bg-lime-300/10 px-3 py-2 text-sm text-lime-50"
+                  >
+                    <span className="font-semibold text-lime-100">
+                      Next action:
+                    </span>{" "}
+                    {action}
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-3 xl:w-[410px]">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-3 xl:w-[430px]">
               {metrics.map((metric) => (
                 <div
                   key={metric.label}
@@ -309,7 +434,7 @@ export default function RecipeStudioPage() {
                   <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">
                     {metric.label}
                   </div>
-                  <div className="mt-1 truncate text-xl font-bold text-white">
+                  <div className="mt-1 break-words text-xl font-bold text-white">
                     {metric.value}
                   </div>
                   <div className="mt-1 text-xs leading-4 text-white/58">
@@ -324,7 +449,24 @@ export default function RecipeStudioPage() {
         <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[236px_minmax(0,1fr)]">
           <aside className="min-w-0 rounded-2xl border border-[#76E4FF]/12 bg-[#0B1B2F]/68 p-3 shadow-xl shadow-black/20 backdrop-blur">
             <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#CFF7FF]/60">
-              Studio Steps
+              Recipe Steps
+            </div>
+
+            <div className="mb-3 rounded-xl border border-[#76E4FF]/16 bg-[#76E4FF]/10 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#CFF7FF]/60">
+                Progress
+              </div>
+              <div className="mt-1 text-sm font-bold text-white">
+                Step {activeStepNumber} of {studioTabs.length}
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-[#76E4FF]"
+                  style={{
+                    width: `${(activeStepNumber / studioTabs.length) * 100}%`,
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
@@ -336,21 +478,23 @@ export default function RecipeStudioPage() {
                     "shrink-0 rounded-xl border px-3 py-2 text-left text-sm transition lg:w-full lg:shrink",
                     activeTab === tab
                       ? "border-[#76E4FF]/40 bg-[#76E4FF]/12 text-[#CFF7FF] shadow-lg shadow-[#76E4FF]/5"
-                      : "border-white/10 bg-white/[0.035] text-white/62 hover:border-[#76E4FF]/25 hover:bg-[#76E4FF]/8 hover:text-white"
+                      : "border-white/10 bg-white/[0.035] text-white/62 hover:border-[#76E4FF]/25 hover:bg-[#76E4FF]/10 hover:text-white"
                   )}
                 >
-                  <span className="block truncate">{tab}</span>
+                  <span className="block whitespace-normal break-words">
+                    {tab}
+                  </span>
                 </button>
               ))}
             </div>
 
             <div className="mt-4 hidden rounded-xl border border-[#C78A4A]/20 bg-[#C78A4A]/10 p-3 lg:block">
               <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FFD8A6]/70">
-                Worker-first
+                Asset Guard
               </div>
-              <p className="mt-2 text-xs leading-5 text-white/58">
-                Every screen should reduce pressure, guide action and make
-                production easier to execute.
+              <p className="mt-2 text-xs leading-5 text-white/60">
+                Costing, R&D notes and unapproved SOP versions are protected by
+                role visibility.
               </p>
             </div>
           </aside>
@@ -393,7 +537,7 @@ export default function RecipeStudioPage() {
                     </h3>
                   </div>
                   <p className="text-xs text-white/45">
-                    Click any status to simulate lifecycle state
+                    Click a gate to simulate workflow state
                   </p>
                 </div>
 
@@ -406,11 +550,11 @@ export default function RecipeStudioPage() {
                         "min-w-0 rounded-xl border px-3 py-2 text-left text-sm transition",
                         recipeStatus === status
                           ? statusStyles[status]
-                          : "border-white/10 bg-white/[0.035] text-white/58 hover:border-[#76E4FF]/25 hover:bg-[#76E4FF]/8 hover:text-white"
+                          : "border-white/10 bg-white/[0.035] text-white/58 hover:border-[#76E4FF]/25 hover:bg-[#76E4FF]/10 hover:text-white"
                       )}
                     >
-                      <span className="block truncate font-semibold">
-                        {status}
+                      <span className="block whitespace-normal break-words font-semibold leading-5">
+                        {shortStatusLabel[status]}
                       </span>
                     </button>
                   ))}
@@ -419,23 +563,28 @@ export default function RecipeStudioPage() {
 
               <div className="min-w-0 rounded-2xl border border-[#C78A4A]/18 bg-[#120F0B]/55 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]/70">
-                  Global Fit
+                  Source State
                 </div>
                 <h3 className="mt-1 text-lg font-bold text-white">
-                  Any market, any kitchen
+                  Library-connected recipe
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-white/58">
-                  Recipe cost must come from tenant settings, not a hard-coded
-                  country or currency.
+                  This screen is prepared for imported recipes, ingredient
+                  master data and protected nutrition facts.
                 </p>
 
                 <div className="mt-4 grid gap-2">
-                  {globalReadiness.map((item) => (
+                  {sourceState.map((item) => (
                     <div
-                      key={item}
-                      className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/8 px-3 py-2 text-sm text-white/70"
+                      key={item.label}
+                      className="rounded-xl border border-[#C78A4A]/18 bg-[#C78A4A]/10 px-3 py-2"
                     >
-                      {item}
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FFD8A6]/65">
+                        {item.label}
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-white/80">
+                        {item.value}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -485,7 +634,7 @@ export default function RecipeStudioPage() {
                   {selectedSop.checks.map((check) => (
                     <div
                       key={check}
-                      className="flex min-w-0 items-start gap-2 rounded-xl border border-lime-300/14 bg-lime-300/8 p-3 text-sm text-white/72"
+                      className="flex min-w-0 items-start gap-2 rounded-xl border border-lime-300/15 bg-lime-300/10 p-3 text-sm text-white/72"
                     >
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-lime-300 shadow-lg shadow-lime-300/30" />
                       <span className="min-w-0">{check}</span>
@@ -494,25 +643,35 @@ export default function RecipeStudioPage() {
                 </div>
               </div>
 
-              <div className="min-w-0 rounded-2xl border border-lime-300/18 bg-lime-300/8 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
+              <div className="min-w-0 rounded-2xl border border-lime-300/18 bg-lime-300/10 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-lime-100/70">
-                  Worker Promise
+                  Worker View Preview
                 </div>
                 <h3 className="mt-1 text-lg font-bold text-white">
-                  Easier work, better execution
+                  Approved steps only
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-white/58">
-                  The system should feel like a calm chef beside the worker, not
-                  another pressure point.
+                  Worker screens should show the next action, not hidden recipe
+                  IP, costing or unapproved R&D notes.
                 </p>
 
                 <div className="mt-4 grid gap-2">
-                  {workerPromise.map((item) => (
+                  {workerSteps.map((item) => (
                     <div
-                      key={item}
-                      className="rounded-xl border border-lime-300/16 bg-black/15 px-3 py-2 text-sm text-white/72"
+                      key={item.step}
+                      className="rounded-xl border border-lime-300/16 bg-black/15 p-3"
                     >
-                      {item}
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-lime-300/30 bg-lime-300/12 text-xs font-bold text-lime-100">
+                          {item.step}
+                        </div>
+                        <div className="text-sm font-semibold text-white">
+                          {item.action}
+                        </div>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-white/58">
+                        {item.support}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -531,7 +690,7 @@ export default function RecipeStudioPage() {
                     </h3>
                   </div>
                   <p className="text-xs text-white/45">
-                    Responsive cards, not a wide table
+                    From Ingredient Master
                   </p>
                 </div>
 
@@ -543,15 +702,15 @@ export default function RecipeStudioPage() {
                     >
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-bold text-white">
+                          <div className="whitespace-normal break-words text-sm font-bold leading-5 text-white">
                             {ingredient.name}
                           </div>
-                          <div className="mt-1 text-xs text-white/48">
+                          <div className="mt-1 text-xs leading-5 text-white/48">
                             {ingredient.prep}
                           </div>
                         </div>
 
-                        <div className="shrink-0 rounded-lg border border-[#76E4FF]/14 bg-[#76E4FF]/8 px-2.5 py-1 text-right">
+                        <div className="shrink-0 rounded-lg border border-[#76E4FF]/15 bg-[#76E4FF]/10 px-2.5 py-1 text-right">
                           <div className="text-sm font-bold text-white">
                             {ingredient.quantity}
                           </div>
@@ -561,7 +720,7 @@ export default function RecipeStudioPage() {
                         </div>
                       </div>
 
-                      <div className="mt-3 rounded-lg border border-[#C78A4A]/14 bg-[#C78A4A]/8 p-2 text-xs leading-5 text-white/58">
+                      <div className="mt-3 rounded-lg border border-[#C78A4A]/15 bg-[#C78A4A]/10 p-2 text-xs leading-5 text-white/58">
                         {ingredient.controlPoint}
                       </div>
                     </div>
@@ -578,60 +737,101 @@ export default function RecipeStudioPage() {
                 </h3>
 
                 <div className="mt-4 space-y-2">
-                  {["Cooling In", "Temperature Check", "Cooling Out"].map(
-                    (step, index) => (
-                      <div
-                        key={step}
-                        className="rounded-xl border border-lime-300/16 bg-lime-300/8 p-3"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-lime-300/30 bg-lime-300/12 text-xs font-bold text-lime-100">
-                            {index + 1}
-                          </div>
-                          <div className="min-w-0 text-sm font-semibold text-white">
-                            {step}
-                          </div>
+                  {coolingSteps.map((step, index) => (
+                    <div
+                      key={step.title}
+                      className="rounded-xl border border-lime-300/16 bg-lime-300/10 p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-lime-300/30 bg-lime-300/12 text-xs font-bold text-lime-100">
+                          {index + 1}
                         </div>
-                        <p className="mt-2 text-xs leading-5 text-white/55">
-                          Required before packaging release and production
-                          handoff.
-                        </p>
+                        <div className="min-w-0 text-sm font-semibold text-white">
+                          {step.title}
+                        </div>
                       </div>
-                    )
-                  )}
+                      <p className="mt-2 text-xs leading-5 text-white/55">
+                        {step.detail}
+                      </p>
+                    </div>
+                  ))}
                 </div>
+              </div>
+            </section>
+
+            <section className="min-w-0 rounded-2xl border border-[#C78A4A]/18 bg-[#0B1B2F]/68 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
+              <div className="mb-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FFD8A6]/70">
+                  Security & Role Visibility
+                </div>
+                <h3 className="mt-1 text-lg font-bold text-white">
+                  Recipe IP protection model
+                </h3>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+                  UI visibility is only the first layer. Real protection later
+                  must be enforced by auth, database rules, tenant isolation and
+                  audit logs.
+                </p>
+              </div>
+
+              <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {roleAccess.map((access) => (
+                  <div
+                    key={access.role}
+                    className={cn(
+                      "min-w-0 rounded-xl border p-3",
+                      roleAccentStyles[access.accent]
+                    )}
+                  >
+                    <div className="text-sm font-bold text-white">
+                      {access.role}
+                    </div>
+                    <div className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/45">
+                      Can see
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-white/65">
+                      {access.canSee}
+                    </p>
+                    <div className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-white/45">
+                      Protected rule
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-white/60">
+                      {access.protectedFrom}
+                    </p>
+                  </div>
+                ))}
               </div>
             </section>
 
             <section className="min-w-0 rounded-2xl border border-[#76E4FF]/12 bg-[#0B1B2F]/68 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
               <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3">
-                <div className="min-w-0 rounded-xl border border-[#76E4FF]/14 bg-[#76E4FF]/8 p-3">
+                <div className="min-w-0 rounded-xl border border-[#76E4FF]/15 bg-[#76E4FF]/10 p-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#CFF7FF]/65">
                     Testing
                   </div>
                   <div className="mt-2 text-sm leading-6 text-white/65">
-                    Kitchen trial, chef feedback, correction notes and retest
-                    cycle before final approval.
+                    Trial results, correction notes and retest cycle before
+                    final approval.
                   </div>
                 </div>
 
-                <div className="min-w-0 rounded-xl border border-[#C78A4A]/16 bg-[#C78A4A]/8 p-3">
+                <div className="min-w-0 rounded-xl border border-[#C78A4A]/16 bg-[#C78A4A]/10 p-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FFD8A6]/70">
                     Approval
                   </div>
                   <div className="mt-2 text-sm leading-6 text-white/65">
-                    Chef approval, QA gate and documentation check before the
-                    recipe becomes production ready.
+                    Chef approval, QA gate and documentation check before
+                    production readiness.
                   </div>
                 </div>
 
-                <div className="min-w-0 rounded-xl border border-lime-300/16 bg-lime-300/8 p-3">
+                <div className="min-w-0 rounded-xl border border-lime-300/16 bg-lime-300/10 p-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.14em] text-lime-100/70">
                     Release
                   </div>
                   <div className="mt-2 text-sm leading-6 text-white/65">
-                    Final handoff to kitchen runtime with SOP, portion,
-                    packaging and QC instructions.
+                    Final handoff to kitchen runtime with protected worker-facing
+                    SOP instructions.
                   </div>
                 </div>
               </div>
