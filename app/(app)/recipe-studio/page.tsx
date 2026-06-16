@@ -88,6 +88,17 @@ const DEFAULT_RUNTIME_PATH = [
   "Release Ready",
 ]
 
+const HUMAN_READABLE_RUNTIME_VALUES: Record<string, string> = {
+  READY: "Ready",
+  PENDING_QA: "Pending QA",
+  NOT_STARTED: "Not started",
+  APPROVED_TASK_ONLY: "Approved task only",
+  QA_OR_AUTHORIZED_MANAGER: "QA or authorized manager",
+  "Controlled by tenant.recipeExpiryPolicy":
+    "Controlled by tenant expiry policy",
+  "tenant.recipeExpiryPolicy": "tenant expiry policy",
+}
+
 const ROLE_DESCRIPTIONS: Record<RecipeStudioRole, string> = {
   owner:
     "Governance view for recipe readiness, costing visibility, yield control, and production release confidence.",
@@ -123,13 +134,78 @@ function formatLabel(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
-function formatValue(value: unknown) {
+function humanizeRuntimeValue(value: string) {
+  const trimmedValue = value.trim()
+
+  if (HUMAN_READABLE_RUNTIME_VALUES[trimmedValue]) {
+    return HUMAN_READABLE_RUNTIME_VALUES[trimmedValue]
+  }
+
+  const matchingRole = ROLE_OPTIONS.find((role) => role.value === trimmedValue)
+
+  if (matchingRole) {
+    return matchingRole.label
+  }
+
+  if (trimmedValue.includes("tenant.recipeExpiryPolicy")) {
+    return trimmedValue.replace(
+      "tenant.recipeExpiryPolicy",
+      "tenant expiry policy"
+    )
+  }
+
+  if (/^[A-Z0-9_]+$/.test(trimmedValue)) {
+    return trimmedValue
+      .split("_")
+      .map((part) => {
+        if (part === "QA") return "QA"
+        if (part === "QC") return "QC"
+        if (part === "IP") return "IP"
+        if (part === "R&D") return "R&D"
+
+        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+      })
+      .join(" ")
+  }
+
+  return trimmedValue
+}
+
+function formatValue(value: unknown): string {
   if (value === true) return "Yes"
   if (value === false) return "No"
   if (value === null || value === undefined || value === "") return "—"
-  if (Array.isArray(value)) return value.join(", ")
-  if (typeof value === "object") return JSON.stringify(value, null, 2)
+
+  if (Array.isArray(value)) {
+    return value.map((item) => formatValue(item)).join(", ")
+  }
+
+  if (typeof value === "string") {
+    return humanizeRuntimeValue(value)
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value, null, 2)
+  }
+
   return String(value)
+}
+
+function compactTaskId(taskId?: string) {
+  if (!taskId) return "—"
+
+  const duplicateRecipeMatch = taskId.match(
+    /^(recipe-[a-z0-9-]+)-\1-(\d{8})$/i
+  )
+
+  if (duplicateRecipeMatch) {
+    const recipeSlug = duplicateRecipeMatch[1].replace(/^recipe-/i, "")
+    const dateCode = duplicateRecipeMatch[2]
+
+    return `${recipeSlug}-${dateCode}`
+  }
+
+  return taskId.replace(/^recipe-/i, "")
 }
 
 function getRecipeTitle(recipe: RecipeStudioRecipe, index: number) {
@@ -235,7 +311,7 @@ function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
             Recipe-to-Production Path
           </h3>
         </div>
-        <StatusPill tone="success">RS-3B UI Bridge</StatusPill>
+        <StatusPill tone="success">RS-3B.1 UI Polish</StatusPill>
       </div>
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -249,7 +325,7 @@ function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
             </div>
             <p className="text-sm font-bold text-white">{step.label}</p>
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/40">
-              {step.status}
+              {formatValue(step.status)}
             </p>
             {step.note ? (
               <p className="mt-2 text-xs leading-5 text-white/55">{step.note}</p>
@@ -278,7 +354,7 @@ function StationTaskView({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <InfoRow label="Task ID" value={stationTask?.taskId} />
+        <InfoRow label="Task ID" value={compactTaskId(stationTask?.taskId)} />
         <InfoRow label="Station" value={stationTask?.station} />
         <InfoRow
           label="Worker Instruction Mode"
@@ -418,7 +494,7 @@ function RoleRuntimeView({
           {activeRoleLabel} Runtime View
         </h3>
         <p className="mt-3 text-sm leading-6 text-white/70">
-          {roleRuntimeView}
+          {formatValue(roleRuntimeView)}
         </p>
       </section>
     )
@@ -541,7 +617,7 @@ function RecipeRuntimeCard({
               No productionRuntime object was returned for this recipe.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3B expects the API to return recipes[n].productionRuntime from
+              RS-3B.1 expects the API to return recipes[n].productionRuntime from
               the RS-3A contract.
             </p>
           </div>
@@ -627,9 +703,10 @@ function RecipeStudioRuntimePageContent() {
                 Production Runtime Bridge
               </h1>
               <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
-                RS-3B displays the RS-3A recipe-to-production contract inside
-                Recipe Studio. The current role is read from query string for
-                testing only; production permissions must come from session,
+                RS-3B.1 keeps the RS-3A recipe-to-production contract visible
+                inside Recipe Studio while making runtime labels easier to read
+                for kitchen teams. The current role is read from query string
+                for testing only; production permissions must come from session,
                 user, and tenant permissions.
               </p>
             </div>
@@ -745,7 +822,7 @@ function RecipeStudioRuntimePageContent() {
               No recipes returned from the Recipe Studio API.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3B expects recipes to include productionRuntime from the RS-3A
+              RS-3B.1 expects recipes to include productionRuntime from the RS-3A
               API contract.
             </p>
           </section>
