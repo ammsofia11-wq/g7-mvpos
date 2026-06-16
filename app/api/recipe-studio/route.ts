@@ -17,6 +17,11 @@ import {
   normalizeRecipeStudioRole,
 } from "../../ai/recipe-studio-permissions"
 
+import {
+  RecipeProductionRuntimeContract,
+  createRecipeProductionRuntimeContract,
+} from "../../ai/recipe-production-runtime-contract"
+
 export const dynamic = "force-dynamic"
 
 type StudioRole = RecipeStudioRole
@@ -52,6 +57,7 @@ type SanitizedRecipe = {
   status: string
   batchCode: unknown
   expiryDate: unknown
+  productionRuntime?: RecipeProductionRuntimeContract
   legacyMetadata: {
     category: unknown
     dietaryPlan: unknown
@@ -413,12 +419,25 @@ function sanitizeExpiryDate(value: unknown) {
   return "Controlled by tenant.recipeExpiryPolicy"
 }
 
-function buildBaseRecipe(recipe: AnyRecord): SanitizedRecipe {
+function buildBaseRecipe(
+  recipe: AnyRecord,
+  role: StudioRole,
+): SanitizedRecipe {
   const id = readString(recipe, ["id", "recipeId", "code", "slug"], "recipe")
   const title = readString(
     recipe,
     ["name", "title", "recipe", "dishName"],
     "Untitled Recipe",
+  )
+  const station = readString(
+    recipe,
+    ["station", "productionStation", "section", "kitchenStation"],
+    "Recipe Studio",
+  )
+  const status = readString(
+    recipe,
+    ["status", "approvalStatus", "recipeStatus"],
+    "APPROVED_RECIPE_ASSET",
   )
 
   const rawBatchCode = safeHelperCall(
@@ -439,18 +458,19 @@ function buildBaseRecipe(recipe: AnyRecord): SanitizedRecipe {
   return {
     id,
     title,
-    station: readString(
-      recipe,
-      ["station", "productionStation", "section", "kitchenStation"],
-      "Recipe Studio",
-    ),
-    status: readString(
-      recipe,
-      ["status", "approvalStatus", "recipeStatus"],
-      "APPROVED_RECIPE_ASSET",
-    ),
+    station,
+    status,
     batchCode,
     expiryDate,
+    productionRuntime: createRecipeProductionRuntimeContract({
+      role,
+      recipeId: id,
+      recipeTitle: title,
+      station,
+      status,
+      batchCode: String(batchCode),
+      expiryDate: String(expiryDate),
+    }),
     legacyMetadata: {
       category: readField(recipe, ["category", "legacyCategory"], null),
       dietaryPlan: readField(
@@ -482,7 +502,11 @@ function withCostingIfAllowed(
 }
 
 function buildOwnerRecipe(recipe: AnyRecord): SanitizedRecipe {
-  const base = withCostingIfAllowed(buildBaseRecipe(recipe), recipe, "owner")
+  const base = withCostingIfAllowed(
+    buildBaseRecipe(recipe, "owner"),
+    recipe,
+    "owner",
+  )
 
   return {
     ...base,
@@ -492,12 +516,17 @@ function buildOwnerRecipe(recipe: AnyRecord): SanitizedRecipe {
       "Client receives only sanitized role payload.",
       "No hard-coded currency is used in the UI contract.",
       "Owner sees commercial cost, yield, batch and margin confidence.",
+      "RS-3A links approved recipe assets to production runtime contract.",
     ],
   }
 }
 
 function buildChefRecipe(recipe: AnyRecord): SanitizedRecipe {
-  const base = withCostingIfAllowed(buildBaseRecipe(recipe), recipe, "chef")
+  const base = withCostingIfAllowed(
+    buildBaseRecipe(recipe, "chef"),
+    recipe,
+    "chef",
+  )
 
   return {
     ...base,
@@ -520,6 +549,7 @@ function buildChefRecipe(recipe: AnyRecord): SanitizedRecipe {
       "Chef can review recipe cost and yield.",
       "Chef can coordinate ingredient cost with Purchasing Manager.",
       "Ingredient source visible to chef role.",
+      "Recipe is now connected to production runtime contract.",
       "Ready for future Chef Signature / approval workflow connection.",
     ],
     ingredientSources: buildIngredientSources(recipe),
@@ -527,7 +557,7 @@ function buildChefRecipe(recipe: AnyRecord): SanitizedRecipe {
 }
 
 function buildQaRecipe(recipe: AnyRecord): SanitizedRecipe {
-  const base = buildBaseRecipe(recipe)
+  const base = buildBaseRecipe(recipe, "qa")
   const ingredientSources = buildIngredientSources(recipe)
 
   const allergens = Array.from(
@@ -560,13 +590,14 @@ function buildQaRecipe(recipe: AnyRecord): SanitizedRecipe {
     releaseControl: [
       "QA can review safety gates without seeing costing.",
       "QA can block release if allergen, cooling, label or batch data is unsafe.",
+      "Recipe runtime cannot be released without QA / authorized manager control.",
       "Release authority should later connect to real approval permissions.",
     ],
   }
 }
 
 function buildWorkerRecipe(recipe: AnyRecord): SanitizedRecipe {
-  const base = buildBaseRecipe(recipe)
+  const base = buildBaseRecipe(recipe, "worker")
 
   return {
     id: base.id,
@@ -575,6 +606,7 @@ function buildWorkerRecipe(recipe: AnyRecord): SanitizedRecipe {
     status: base.status,
     batchCode: base.batchCode,
     expiryDate: base.expiryDate,
+    productionRuntime: base.productionRuntime,
     legacyMetadata: base.legacyMetadata,
     approvedTask: {
       title: base.title,
@@ -595,6 +627,7 @@ function buildWorkerRecipe(recipe: AnyRecord): SanitizedRecipe {
         "R&D notes",
         "Full protected recipe IP",
         "Ingredient database details",
+        "QA release authority",
       ],
     },
   }
@@ -602,7 +635,7 @@ function buildWorkerRecipe(recipe: AnyRecord): SanitizedRecipe {
 
 function buildPurchasingManagerRecipe(recipe: AnyRecord): SanitizedRecipe {
   const base = withCostingIfAllowed(
-    buildBaseRecipe(recipe),
+    buildBaseRecipe(recipe, "purchasing-manager"),
     recipe,
     "purchasing-manager",
   )
@@ -615,12 +648,13 @@ function buildPurchasingManagerRecipe(recipe: AnyRecord): SanitizedRecipe {
       "Update supplier or price source only through approved purchasing permissions.",
       "Validate cost impact before recipe approval.",
       "Coordinate stock availability before production release.",
+      "Confirm purchasing readiness before recipe-to-production release.",
     ],
   }
 }
 
 function buildStorekeeperRecipe(recipe: AnyRecord): SanitizedRecipe {
-  const base = buildBaseRecipe(recipe)
+  const base = buildBaseRecipe(recipe, "storekeeper")
 
   return {
     ...base,
@@ -629,13 +663,14 @@ function buildStorekeeperRecipe(recipe: AnyRecord): SanitizedRecipe {
       "Check ingredient availability for the batch.",
       "Confirm issue to production before station start.",
       "Escalate shortage before production release.",
+      "Confirm batch handover state against runtime contract.",
       "Do not expose costing or R&D recipe IP in storekeeper view.",
     ],
   }
 }
 
 function buildProductionManagerRecipe(recipe: AnyRecord): SanitizedRecipe {
-  const base = buildBaseRecipe(recipe)
+  const base = buildBaseRecipe(recipe, "production-manager")
 
   return {
     ...base,
@@ -645,6 +680,7 @@ function buildProductionManagerRecipe(recipe: AnyRecord): SanitizedRecipe {
       "Confirm batch runtime link before station assignment.",
       "Coordinate QA gate status before release.",
       "Escalate stock or station pressure before batch start.",
+      "Use runtime contract to connect recipe to future production execution.",
     ],
   }
 }
@@ -679,7 +715,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(
     {
-      patch: "RS-2D",
+      patch: "RS-3A",
       system: "G7 Kitchen OS — Recipe Studio",
       role,
       roleLabel: contract.label,
@@ -688,6 +724,13 @@ export async function GET(request: NextRequest) {
       allowedDataLayers: contract.allowedDataLayers,
       blockedDataLayers: contract.blockedDataLayers,
       costingVisible: contract.permissions.canViewCosting,
+      productionRuntimeContract: {
+        enabled: true,
+        contractVersion: "RS-3A",
+        source: "app/ai/recipe-production-runtime-contract.ts",
+        path:
+          "Recipe → Batch Code → Station Task → Worker Runtime → QA Gate → Release Control",
+      },
       roleSource:
         "Temporary test role from query string. Production must use session / user / tenant permissions.",
       tenantSettings: {
@@ -704,11 +747,9 @@ export async function GET(request: NextRequest) {
         directClientImportOfProtectedAssets: false,
         centralizedPermissionContract: true,
         permissionContractSource: "app/ai/recipe-studio-permissions.ts",
-        costingAllowedRoles: [
-          "owner",
-          "chef",
-          "purchasing-manager",
-        ],
+        productionRuntimeContractSource:
+          "app/ai/recipe-production-runtime-contract.ts",
+        costingAllowedRoles: ["owner", "chef", "purchasing-manager"],
         costingBlockedRoles: [
           "qa",
           "worker",
