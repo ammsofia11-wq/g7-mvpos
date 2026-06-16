@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-type StudioRole = "owner" | "chef" | "qa" | "worker"
+type StudioRole =
+  | "owner"
+  | "chef"
+  | "qa"
+  | "worker"
+  | "purchasing-manager"
+  | "storekeeper"
+  | "production-manager"
 
 type IngredientSource = {
   name: string
@@ -10,6 +17,8 @@ type IngredientSource = {
   allergens?: string[]
   rawToCookedYield?: unknown
 }
+
+type StudioPermissions = Record<string, boolean>
 
 type StudioRecipe = {
   id: string
@@ -46,6 +55,9 @@ type StudioRecipe = {
   cooling?: string[]
   allergens?: string[]
   releaseControl?: string[]
+  purchasingControl?: string[]
+  stockControl?: string[]
+  productionControl?: string[]
   approvedTask?: {
     title: string
     station: string
@@ -59,7 +71,11 @@ type RecipeStudioPayload = {
   patch: string
   system: string
   role: StudioRole
+  roleLabel?: string
   roleSummary: string
+  permissions?: StudioPermissions
+  allowedDataLayers?: string[]
+  blockedDataLayers?: string[]
   costingVisible: boolean
   roleSource: string
   tenantSettings: {
@@ -74,6 +90,8 @@ type RecipeStudioPayload = {
     protectedIngredientDataServerSide: boolean
     clientReceivesSanitizedPayload: boolean
     directClientImportOfProtectedAssets: boolean
+    centralizedPermissionContract?: boolean
+    permissionContractSource?: string
     costingAllowedRoles?: string[]
     costingBlockedRoles?: string[]
   }
@@ -88,27 +106,49 @@ const ROLE_OPTIONS: {
   {
     id: "owner",
     label: "Owner",
-    subtitle: "Cost · Yield · Batch · Margin confidence",
+    subtitle: "Cost · Yield · Margin · Governance",
   },
   {
     id: "chef",
     label: "Chef",
-    subtitle: "SOP · Testing · Cost · Purchasing coordination",
+    subtitle: "SOP · Testing · Cost · Purchasing",
   },
   {
     id: "qa",
     label: "QA",
-    subtitle: "Cooling · Allergens · QC gates · Release",
+    subtitle: "Cooling · Allergens · Release",
   },
   {
     id: "worker",
     label: "Worker",
-    subtitle: "Simple approved task view",
+    subtitle: "Approved task only",
+  },
+  {
+    id: "purchasing-manager",
+    label: "Purchasing",
+    subtitle: "Supplier · Cost source · Stock need",
+  },
+  {
+    id: "storekeeper",
+    label: "Storekeeper",
+    subtitle: "Stock issue · Batch handover",
+  },
+  {
+    id: "production-manager",
+    label: "Production",
+    subtitle: "Runtime link · Station readiness",
   },
 ]
 
 function normalizeRole(value: string | null): StudioRole {
-  if (value === "chef" || value === "qa" || value === "worker") {
+  if (
+    value === "chef" ||
+    value === "qa" ||
+    value === "worker" ||
+    value === "purchasing-manager" ||
+    value === "storekeeper" ||
+    value === "production-manager"
+  ) {
     return value
   }
 
@@ -202,19 +242,70 @@ function MetricBox({
   )
 }
 
+function PermissionLayerPanel({
+  allowed,
+  blocked,
+}: {
+  allowed?: string[]
+  blocked?: string[]
+}) {
+  return (
+    <section className="grid gap-4 lg:grid-cols-2">
+      <div className="rounded-2xl border border-lime-300/30 bg-lime-300/10 p-4">
+        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-lime-50">
+          Allowed Data Layers
+        </h3>
+
+        <div className="flex flex-wrap gap-2">
+          {(allowed ?? []).map((item) => (
+            <span
+              key={`allowed-${item}`}
+              className="rounded-full border border-lime-200/25 bg-lime-950/25 px-3 py-1 text-xs font-bold text-lime-50"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-red-300/25 bg-red-300/10 p-4">
+        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-red-50">
+          Blocked Data Layers
+        </h3>
+
+        <div className="flex flex-wrap gap-2">
+          {(blocked ?? []).map((item) => (
+            <span
+              key={`blocked-${item}`}
+              className="rounded-full border border-red-200/25 bg-red-950/25 px-3 py-1 text-xs font-bold text-red-50"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function CostingPanel({
   recipe,
   mode,
 }: {
   recipe: StudioRecipe
-  mode: "owner" | "chef"
+  mode: "owner" | "chef" | "purchasing"
 }) {
-  const isOwner = mode === "owner"
+  const title =
+    mode === "owner"
+      ? "Owner Costing Layer"
+      : mode === "chef"
+        ? "Chef Costing Layer"
+        : "Purchasing Cost Source"
 
   return (
     <section className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4">
       <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-amber-100">
-        {isOwner ? "Owner Costing Layer" : "Chef Costing Layer"}
+        {title}
       </h3>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -237,6 +328,33 @@ function CostingPanel({
       <p className="mt-3 rounded-xl bg-black/20 p-3 text-sm leading-relaxed text-amber-50">
         {recipe.costing?.note}
       </p>
+    </section>
+  )
+}
+
+function IngredientSourcePanel({ recipe }: { recipe: StudioRecipe }) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+      <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200">
+        Ingredient Source
+      </h3>
+
+      <div className="space-y-3">
+        {(recipe.ingredientSources ?? []).map((source) => (
+          <div
+            key={`${recipe.id}-${source.name}`}
+            className="rounded-xl border border-white/10 bg-slate-950/35 p-3"
+          >
+            <p className="font-bold text-white">{source.name}</p>
+            <p className="mt-1 text-xs text-slate-300">
+              {source.sourceStatus}
+            </p>
+            <p className="mt-2 text-xs text-slate-400">
+              Yield: {stringifyValue(source.rawToCookedYield)}
+            </p>
+          </div>
+        ))}
+      </div>
     </section>
   )
 }
@@ -271,28 +389,7 @@ function ChefRecipeView({ recipe }: { recipe: StudioRecipe }) {
           />
         </div>
 
-        <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-          <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200">
-            Ingredient Source
-          </h3>
-
-          <div className="space-y-3">
-            {(recipe.ingredientSources ?? []).map((source) => (
-              <div
-                key={`${recipe.id}-${source.name}`}
-                className="rounded-xl border border-white/10 bg-slate-950/35 p-3"
-              >
-                <p className="font-bold text-white">{source.name}</p>
-                <p className="mt-1 text-xs text-slate-300">
-                  {source.sourceStatus}
-                </p>
-                <p className="mt-2 text-xs text-slate-400">
-                  Yield: {stringifyValue(source.rawToCookedYield)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <IngredientSourcePanel recipe={recipe} />
       </div>
     </div>
   )
@@ -387,6 +484,63 @@ function WorkerRecipeView({ recipe }: { recipe: StudioRecipe }) {
   )
 }
 
+function PurchasingRecipeView({ recipe }: { recipe: StudioRecipe }) {
+  return (
+    <div className="grid gap-4 xl:grid-cols-[1fr_0.8fr]">
+      <div className="space-y-4">
+        <CostingPanel recipe={recipe} mode="purchasing" />
+        <InfoList
+          title="Purchasing Control"
+          items={recipe.purchasingControl}
+          tone="amber"
+        />
+      </div>
+
+      <IngredientSourcePanel recipe={recipe} />
+    </div>
+  )
+}
+
+function StorekeeperRecipeView({ recipe }: { recipe: StudioRecipe }) {
+  return (
+    <div className="grid gap-4 xl:grid-cols-[1fr_0.8fr]">
+      <InfoList
+        title="Stock Control"
+        items={recipe.stockControl}
+        tone="green"
+      />
+
+      <IngredientSourcePanel recipe={recipe} />
+    </div>
+  )
+}
+
+function ProductionManagerRecipeView({ recipe }: { recipe: StudioRecipe }) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <InfoList
+        title="Production Control"
+        items={recipe.productionControl}
+        tone="blue"
+      />
+
+      <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200">
+          Runtime Readiness
+        </h3>
+
+        <div className="space-y-3">
+          <MetricBox label="Batch code" value={recipe.batchCode} />
+          <MetricBox label="Station" value={recipe.station} />
+          <MetricBox label="Status" value={recipe.status} />
+        </div>
+      </section>
+
+      <IngredientSourcePanel recipe={recipe} />
+    </div>
+  )
+}
+
 function RecipeRoleView({
   role,
   recipe,
@@ -397,6 +551,15 @@ function RecipeRoleView({
   if (role === "worker") return <WorkerRecipeView recipe={recipe} />
   if (role === "chef") return <ChefRecipeView recipe={recipe} />
   if (role === "qa") return <QaRecipeView recipe={recipe} />
+  if (role === "purchasing-manager") {
+    return <PurchasingRecipeView recipe={recipe} />
+  }
+  if (role === "storekeeper") {
+    return <StorekeeperRecipeView recipe={recipe} />
+  }
+  if (role === "production-manager") {
+    return <ProductionManagerRecipeView recipe={recipe} />
+  }
 
   return <OwnerRecipeView recipe={recipe} />
 }
@@ -515,7 +678,7 @@ export default function RecipeStudioPage() {
           <div className="relative z-10 grid gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-end">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-200">
-                RS-2C-FIX1 · Chef Costing Permission
+                RS-2E · Expanded Role Views
               </p>
 
               <h1 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">
@@ -524,8 +687,9 @@ export default function RecipeStudioPage() {
 
               <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-300">
                 Server-safe recipe interface for central kitchen operations.
-                Owner and Chef can see costing. QA and Worker receive sanitized
-                operational payloads without costing.
+                Owner, Chef, QA, Worker, Purchasing, Storekeeper and Production
+                roles now receive dedicated operational views from the same
+                permission contract.
               </p>
             </div>
 
@@ -550,7 +714,7 @@ export default function RecipeStudioPage() {
           </div>
         </section>
 
-        <section className="grid gap-3 md:grid-cols-4">
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           {ROLE_OPTIONS.map((role) => {
             const isActive = role.id === activeRole
 
@@ -565,8 +729,8 @@ export default function RecipeStudioPage() {
                     : "border-white/10 bg-white/[0.05] hover:border-white/25 hover:bg-white/[0.08]"
                 }`}
               >
-                <p className="text-lg font-black text-white">{role.label}</p>
-                <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                <p className="text-base font-black text-white">{role.label}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-300">
                   {role.subtitle}
                 </p>
               </button>
@@ -593,7 +757,7 @@ export default function RecipeStudioPage() {
                 payload?.costingVisible ? "text-amber-200" : "text-lime-200"
               }`}
             >
-              {payload?.costingVisible ? "Yes — Owner / Chef" : "No"}
+              {payload?.costingVisible ? "Yes" : "No"}
             </p>
           </div>
 
@@ -614,6 +778,13 @@ export default function RecipeStudioPage() {
             </div>
           </div>
         </section>
+
+        {payload && (
+          <PermissionLayerPanel
+            allowed={payload.allowedDataLayers}
+            blocked={payload.blockedDataLayers}
+          />
+        )}
 
         {error && (
           <section className="rounded-3xl border border-red-300/30 bg-red-300/10 p-5 text-red-50">
