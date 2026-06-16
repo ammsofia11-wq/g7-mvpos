@@ -1,818 +1,787 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
+import type { ReactNode } from "react"
+import { useSearchParams } from "next/navigation"
 
-type StudioRole =
-  | "owner"
-  | "chef"
-  | "qa"
-  | "worker"
-  | "purchasing-manager"
-  | "storekeeper"
-  | "production-manager"
+const ROLE_OPTIONS = [
+  { value: "owner", label: "Owner" },
+  { value: "chef", label: "Chef" },
+  { value: "qa", label: "QA" },
+  { value: "worker", label: "Worker" },
+  { value: "purchasing-manager", label: "Purchasing" },
+  { value: "storekeeper", label: "Storekeeper" },
+  { value: "production-manager", label: "Production" },
+] as const
 
-type IngredientSource = {
-  name: string
-  sourceStatus: string
-  allergens?: string[]
-  rawToCookedYield?: unknown
+type RecipeStudioRole = (typeof ROLE_OPTIONS)[number]["value"]
+
+type ProductionRuntimePathStep =
+  | string
+  | {
+      label?: string
+      name?: string
+      status?: string
+      note?: string
+    }
+
+type ProductionRuntimeStationTask = {
+  taskId?: string
+  station?: string
+  workerInstructionMode?: string
+  requiresSupervisorCheck?: boolean
+  requiresQaGate?: boolean
 }
 
-type StudioPermissions = Record<string, boolean>
-
-type StudioRecipe = {
-  id: string
-  title: string
-  station: string
-  status: string
-  batchCode?: unknown
-  expiryDate?: unknown
-  legacyMetadata?: {
-    category?: unknown
-    dietaryPlan?: unknown
-    cuisine?: unknown
-    tags?: unknown
-  }
-  costing?: {
-    visible: true
-    currencySource: string
-    totalCost: unknown
-    costPerYield: unknown
-    marginSignal: string
-    note: string
-  }
-  yield?: {
-    yieldSource: string
-    costPerYield: unknown
-    operationalNote: string
-  }
-  protectedAssetConfidence?: string[]
-  chefSop?: string[]
-  testing?: string[]
-  approvalReadiness?: string[]
-  ingredientSources?: IngredientSource[]
-  qaGates?: string[]
-  cooling?: string[]
-  allergens?: string[]
-  releaseControl?: string[]
-  purchasingControl?: string[]
-  stockControl?: string[]
-  productionControl?: string[]
-  approvedTask?: {
-    title: string
-    station: string
-    comfortNote: string
-    visibleInstructions: string[]
-    hiddenFromWorker: string[]
-  }
+type ProductionRuntimeQaGate = {
+  coolingRequired?: boolean
+  allergenCheckRequired?: boolean
+  labelCheckRequired?: boolean
+  batchCodeCheckRequired?: boolean
+  releaseAuthority?: string
 }
 
-type RecipeStudioPayload = {
-  patch: string
-  system: string
-  role: StudioRole
-  roleLabel?: string
-  roleSummary: string
-  permissions?: StudioPermissions
+type ProductionRuntimeReleaseControl = {
+  canReleaseWithoutQa?: boolean
+  releaseStatus?: string
+  releaseBlockedByDefault?: boolean
+  releaseNote?: string
+}
+
+type RecipeProductionRuntime = {
+  runtimePath?: ProductionRuntimePathStep[]
+  stationTask?: ProductionRuntimeStationTask
+  qaGate?: ProductionRuntimeQaGate
+  releaseControl?: ProductionRuntimeReleaseControl
+  roleRuntimeView?: unknown
+}
+
+type RecipeStudioRecipe = {
+  id?: string
+  recipeId?: string
+  name?: string
+  recipeName?: string
+  title?: string
+  batchCode?: string
+  expiryDate?: string
+  productionRuntime?: RecipeProductionRuntime
+}
+
+type RecipeStudioApiResponse = {
+  patch?: string
+  permissions?: Record<string, unknown>
   allowedDataLayers?: string[]
   blockedDataLayers?: string[]
-  costingVisible: boolean
-  roleSource: string
-  tenantSettings: {
-    currency: string
-    locale: string
-    country: string
-    timezone: string
-    units: string
+  costingVisible?: boolean
+  productionRuntimeContract?: {
+    enabled?: boolean
+    contractVersion?: string
   }
-  security: {
-    protectedRecipeDataServerSide: boolean
-    protectedIngredientDataServerSide: boolean
-    clientReceivesSanitizedPayload: boolean
-    directClientImportOfProtectedAssets: boolean
-    centralizedPermissionContract?: boolean
-    permissionContractSource?: string
-    costingAllowedRoles?: string[]
-    costingBlockedRoles?: string[]
-  }
-  recipes: StudioRecipe[]
+  recipes?: RecipeStudioRecipe[]
 }
 
-const ROLE_OPTIONS: {
-  id: StudioRole
-  label: string
-  subtitle: string
-}[] = [
-  {
-    id: "owner",
-    label: "Owner",
-    subtitle: "Cost · Yield · Margin · Governance",
-  },
-  {
-    id: "chef",
-    label: "Chef",
-    subtitle: "SOP · Testing · Cost · Purchasing",
-  },
-  {
-    id: "qa",
-    label: "QA",
-    subtitle: "Cooling · Allergens · Release",
-  },
-  {
-    id: "worker",
-    label: "Worker",
-    subtitle: "Approved task only",
-  },
-  {
-    id: "purchasing-manager",
-    label: "Purchasing",
-    subtitle: "Supplier · Cost source · Stock need",
-  },
-  {
-    id: "storekeeper",
-    label: "Storekeeper",
-    subtitle: "Stock issue · Batch handover",
-  },
-  {
-    id: "production-manager",
-    label: "Production",
-    subtitle: "Runtime link · Station readiness",
-  },
+const DEFAULT_RUNTIME_PATH = [
+  "Recipe Approved",
+  "Batch Ready",
+  "Station Task Ready",
+  "QA Gate Pending",
+  "Release Ready",
 ]
 
-function normalizeRole(value: string | null): StudioRole {
-  if (
-    value === "chef" ||
-    value === "qa" ||
-    value === "worker" ||
-    value === "purchasing-manager" ||
-    value === "storekeeper" ||
-    value === "production-manager"
-  ) {
-    return value
-  }
+const ROLE_DESCRIPTIONS: Record<RecipeStudioRole, string> = {
+  owner:
+    "Governance view for recipe readiness, costing visibility, yield control, and production release confidence.",
+  chef:
+    "Chef view for SOP execution, testing feedback, costing coordination, and production handoff readiness.",
+  qa:
+    "QA view for allergen checks, cooling control, label verification, batch code checks, and release authority.",
+  worker:
+    "Worker-safe view showing only approved station task instructions required for production execution.",
+  "purchasing-manager":
+    "Purchasing view for supplier source, cost source, ingredient readiness, and recipe purchasing control.",
+  storekeeper:
+    "Storekeeper view for stock issue, batch handover, ingredient movement, and protected storage control.",
+  "production-manager":
+    "Production view for runtime readiness, station readiness, batch movement, and release blocking visibility.",
+}
 
+function isRecipeStudioRole(value: string | null): value is RecipeStudioRole {
+  return ROLE_OPTIONS.some((role) => role.value === value)
+}
+
+function getActiveRole(value: string | null): RecipeStudioRole {
+  if (isRecipeStudioRole(value)) return value
   return "owner"
 }
 
-function stringifyValue(value: unknown) {
-  if (value === undefined || value === null || value === "") return "—"
-
-  if (typeof value === "string" || typeof value === "number") {
-    return String(value)
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "Yes" : "No"
-  }
-
-  try {
-    return JSON.stringify(value, null, 2)
-  } catch {
-    return String(value)
-  }
+function formatLabel(value: string) {
+  return value
+    .replace(/([A-Z])/g, " $1")
+    .replace(/-/g, " ")
+    .replace(/_/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
-function CompactValue({ value }: { value: unknown }) {
-  const text = stringifyValue(value)
+function formatValue(value: unknown) {
+  if (value === true) return "Yes"
+  if (value === false) return "No"
+  if (value === null || value === undefined || value === "") return "—"
+  if (Array.isArray(value)) return value.join(", ")
+  if (typeof value === "object") return JSON.stringify(value, null, 2)
+  return String(value)
+}
+
+function getRecipeTitle(recipe: RecipeStudioRecipe, index: number) {
+  return (
+    recipe.name ||
+    recipe.recipeName ||
+    recipe.title ||
+    recipe.recipeId ||
+    recipe.id ||
+    `Recipe ${index + 1}`
+  )
+}
+
+function getRuntimePath(runtime?: RecipeProductionRuntime) {
+  const runtimePath = runtime?.runtimePath
+
+  if (!runtimePath || runtimePath.length === 0) {
+    return DEFAULT_RUNTIME_PATH.map((label) => ({
+      label,
+      status: "Contract Step",
+      note: "",
+    }))
+  }
+
+  return runtimePath.map((step) => {
+    if (typeof step === "string") {
+      return {
+        label: step,
+        status: "Runtime Step",
+        note: "",
+      }
+    }
+
+    return {
+      label: step.label || step.name || "Runtime Step",
+      status: step.status || "Runtime Step",
+      note: step.note || "",
+    }
+  })
+}
+
+function StatusPill({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode
+  tone?: "neutral" | "success" | "warning" | "danger"
+}) {
+  const toneClass =
+    tone === "success"
+      ? "border-lime-400/40 bg-lime-400/10 text-lime-200"
+      : tone === "warning"
+        ? "border-amber-300/40 bg-amber-300/10 text-amber-100"
+        : tone === "danger"
+          ? "border-red-400/40 bg-red-400/10 text-red-100"
+          : "border-white/15 bg-white/[0.08] text-white/75"
 
   return (
-    <span className="break-words text-sm font-semibold text-slate-100">
-      {text}
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${toneClass}`}
+    >
+      {children}
     </span>
   )
 }
 
-function InfoList({
-  title,
-  items,
-  tone = "blue",
-}: {
-  title: string
-  items?: string[]
-  tone?: "blue" | "green" | "amber" | "red"
-}) {
-  const safeItems = items?.filter(Boolean) ?? []
-
-  if (!safeItems.length) return null
-
-  const toneClass =
-    tone === "green"
-      ? "border-lime-300/40 bg-lime-300/10 text-lime-50"
-      : tone === "amber"
-        ? "border-amber-300/40 bg-amber-300/10 text-amber-50"
-        : tone === "red"
-          ? "border-red-300/40 bg-red-300/10 text-red-50"
-          : "border-sky-300/40 bg-sky-300/10 text-sky-50"
-
-  return (
-    <section className={`rounded-2xl border p-4 ${toneClass}`}>
-      <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em]">
-        {title}
-      </h3>
-
-      <div className="space-y-2">
-        {safeItems.map((item, index) => (
-          <div
-            key={`${title}-${index}-${item}`}
-            className="rounded-xl bg-white/8 px-3 py-2 text-sm leading-relaxed"
-          >
-            {item}
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function MetricBox({
+function InfoRow({
   label,
   value,
+  important,
 }: {
   label: string
   value: unknown
+  important?: boolean
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-      <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
         {label}
       </p>
-      <CompactValue value={value} />
-    </div>
-  )
-}
-
-function PermissionLayerPanel({
-  allowed,
-  blocked,
-}: {
-  allowed?: string[]
-  blocked?: string[]
-}) {
-  return (
-    <section className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded-2xl border border-lime-300/30 bg-lime-300/10 p-4">
-        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-lime-50">
-          Allowed Data Layers
-        </h3>
-
-        <div className="flex flex-wrap gap-2">
-          {(allowed ?? []).map((item) => (
-            <span
-              key={`allowed-${item}`}
-              className="rounded-full border border-lime-200/25 bg-lime-950/25 px-3 py-1 text-xs font-bold text-lime-50"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-red-300/25 bg-red-300/10 p-4">
-        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-red-50">
-          Blocked Data Layers
-        </h3>
-
-        <div className="flex flex-wrap gap-2">
-          {(blocked ?? []).map((item) => (
-            <span
-              key={`blocked-${item}`}
-              className="rounded-full border border-red-200/25 bg-red-950/25 px-3 py-1 text-xs font-bold text-red-50"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function CostingPanel({
-  recipe,
-  mode,
-}: {
-  recipe: StudioRecipe
-  mode: "owner" | "chef" | "purchasing"
-}) {
-  const title =
-    mode === "owner"
-      ? "Owner Costing Layer"
-      : mode === "chef"
-        ? "Chef Costing Layer"
-        : "Purchasing Cost Source"
-
-  return (
-    <section className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4">
-      <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-amber-100">
-        {title}
-      </h3>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <MetricBox
-          label="Currency source"
-          value={recipe.costing?.currencySource}
-        />
-        <MetricBox label="Total cost" value={recipe.costing?.totalCost} />
-        <MetricBox
-          label="Cost per yield"
-          value={recipe.costing?.costPerYield}
-        />
-        <MetricBox label="Yield source" value={recipe.yield?.yieldSource} />
-      </div>
-
-      <p className="mt-4 rounded-xl bg-black/20 p-3 text-sm leading-relaxed text-amber-50">
-        {recipe.costing?.marginSignal}
+      <p
+        className={`mt-2 text-sm font-semibold ${
+          important ? "text-amber-100" : "text-white/85"
+        }`}
+      >
+        {formatValue(value)}
       </p>
-
-      <p className="mt-3 rounded-xl bg-black/20 p-3 text-sm leading-relaxed text-amber-50">
-        {recipe.costing?.note}
-      </p>
-    </section>
-  )
-}
-
-function IngredientSourcePanel({ recipe }: { recipe: StudioRecipe }) {
-  return (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-      <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200">
-        Ingredient Source
-      </h3>
-
-      <div className="space-y-3">
-        {(recipe.ingredientSources ?? []).map((source) => (
-          <div
-            key={`${recipe.id}-${source.name}`}
-            className="rounded-xl border border-white/10 bg-slate-950/35 p-3"
-          >
-            <p className="font-bold text-white">{source.name}</p>
-            <p className="mt-1 text-xs text-slate-300">
-              {source.sourceStatus}
-            </p>
-            <p className="mt-2 text-xs text-slate-400">
-              Yield: {stringifyValue(source.rawToCookedYield)}
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function OwnerRecipeView({ recipe }: { recipe: StudioRecipe }) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <CostingPanel recipe={recipe} mode="owner" />
-
-      <InfoList
-        title="Protected Asset Confidence"
-        items={recipe.protectedAssetConfidence}
-        tone="green"
-      />
     </div>
   )
 }
 
-function ChefRecipeView({ recipe }: { recipe: StudioRecipe }) {
+function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
+  const path = getRuntimePath(runtime)
+
   return (
-    <div className="space-y-4">
-      <CostingPanel recipe={recipe} mode="chef" />
-
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-4">
-          <InfoList title="Recipe SOP" items={recipe.chefSop} tone="blue" />
-          <InfoList title="Testing Notes" items={recipe.testing} tone="amber" />
-          <InfoList
-            title="Approval Readiness"
-            items={recipe.approvalReadiness}
-            tone="green"
-          />
-        </div>
-
-        <IngredientSourcePanel recipe={recipe} />
-      </div>
-    </div>
-  )
-}
-
-function QaRecipeView({ recipe }: { recipe: StudioRecipe }) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <InfoList title="Cooling Control" items={recipe.cooling} tone="blue" />
-      <InfoList title="QC Gates" items={recipe.qaGates} tone="amber" />
-      <InfoList
-        title="Release Control"
-        items={recipe.releaseControl}
-        tone="green"
-      />
-
-      <section className="rounded-2xl border border-red-300/30 bg-red-300/10 p-4 lg:col-span-3">
-        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-red-50">
-          Allergen Visibility
-        </h3>
-
-        {recipe.allergens?.length ? (
-          <div className="flex flex-wrap gap-2">
-            {recipe.allergens.map((allergen) => (
-              <span
-                key={`${recipe.id}-${allergen}`}
-                className="rounded-full border border-red-200/30 bg-red-950/30 px-3 py-1 text-xs font-bold text-red-50"
-              >
-                {allergen}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-red-50">
-            No allergen flags returned in the sanitized QA payload.
+    <section className="rounded-3xl border border-white/10 bg-[#071827]/80 p-5 shadow-2xl shadow-black/20">
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-lime-200/80">
+            Runtime Bridge
           </p>
-        )}
-      </section>
-    </div>
-  )
-}
-
-function WorkerRecipeView({ recipe }: { recipe: StudioRecipe }) {
-  return (
-    <section className="rounded-[2rem] border border-lime-300/30 bg-lime-300/10 p-5">
-      <div className="mb-4 rounded-2xl bg-slate-950/40 p-4">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-lime-200">
-          Approved Station Task
-        </p>
-        <h3 className="mt-2 text-2xl font-black text-white">
-          {recipe.approvedTask?.title ?? recipe.title}
-        </h3>
-        <p className="mt-1 text-sm text-lime-50">
-          Station: {recipe.approvedTask?.station ?? recipe.station}
-        </p>
+          <h3 className="mt-1 text-xl font-bold text-white">
+            Recipe-to-Production Path
+          </h3>
+        </div>
+        <StatusPill tone="success">RS-3B UI Bridge</StatusPill>
       </div>
 
-      <p className="mb-4 rounded-2xl border border-lime-200/20 bg-lime-950/20 p-4 text-base leading-relaxed text-lime-50">
-        {recipe.approvedTask?.comfortNote}
-      </p>
-
-      <div className="space-y-3">
-        {(recipe.approvedTask?.visibleInstructions ?? []).map((step, index) => (
+      <div className="grid gap-3 md:grid-cols-5">
+        {path.map((step, index) => (
           <div
-            key={`${recipe.id}-worker-step-${index}`}
-            className="flex gap-3 rounded-2xl bg-white/10 p-4 text-white"
+            key={`${step.label}-${index}`}
+            className="relative rounded-2xl border border-white/10 bg-white/[0.045] p-4"
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-lime-300 text-sm font-black text-slate-950">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-lime-300/30 bg-lime-300/10 text-sm font-black text-lime-100">
               {index + 1}
             </div>
-            <p className="text-base font-semibold leading-relaxed">{step}</p>
+            <p className="text-sm font-bold text-white">{step.label}</p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/40">
+              {step.status}
+            </p>
+            {step.note ? (
+              <p className="mt-2 text-xs leading-5 text-white/55">{step.note}</p>
+            ) : null}
           </div>
         ))}
-      </div>
-
-      <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-300">
-          Hidden from worker
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {(recipe.approvedTask?.hiddenFromWorker ?? []).map((item) => (
-            <span
-              key={`${recipe.id}-${item}`}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-slate-300"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
       </div>
     </section>
   )
 }
 
-function PurchasingRecipeView({ recipe }: { recipe: StudioRecipe }) {
+function StationTaskView({
+  stationTask,
+}: {
+  stationTask?: ProductionRuntimeStationTask
+}) {
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_0.8fr]">
-      <div className="space-y-4">
-        <CostingPanel recipe={recipe} mode="purchasing" />
-        <InfoList
-          title="Purchasing Control"
-          items={recipe.purchasingControl}
-          tone="amber"
+    <section className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
+      <div className="mb-4">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-200/80">
+          Station Task
+        </p>
+        <h3 className="mt-1 text-lg font-bold text-white">
+          Approved Station Execution
+        </h3>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <InfoRow label="Task ID" value={stationTask?.taskId} />
+        <InfoRow label="Station" value={stationTask?.station} />
+        <InfoRow
+          label="Worker Instruction Mode"
+          value={stationTask?.workerInstructionMode}
+        />
+        <InfoRow
+          label="Supervisor Check"
+          value={stationTask?.requiresSupervisorCheck}
+          important={stationTask?.requiresSupervisorCheck}
+        />
+        <InfoRow
+          label="QA Gate Required"
+          value={stationTask?.requiresQaGate}
+          important={stationTask?.requiresQaGate}
         />
       </div>
-
-      <IngredientSourcePanel recipe={recipe} />
-    </div>
+    </section>
   )
 }
 
-function StorekeeperRecipeView({ recipe }: { recipe: StudioRecipe }) {
+function QaGateView({ qaGate }: { qaGate?: ProductionRuntimeQaGate }) {
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_0.8fr]">
-      <InfoList
-        title="Stock Control"
-        items={recipe.stockControl}
-        tone="green"
-      />
-
-      <IngredientSourcePanel recipe={recipe} />
-    </div>
-  )
-}
-
-function ProductionManagerRecipeView({ recipe }: { recipe: StudioRecipe }) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <InfoList
-        title="Production Control"
-        items={recipe.productionControl}
-        tone="blue"
-      />
-
-      <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200">
-          Runtime Readiness
+    <section className="rounded-3xl border border-amber-200/15 bg-amber-200/[0.055] p-5">
+      <div className="mb-4">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-100/80">
+          QA Gate
+        </p>
+        <h3 className="mt-1 text-lg font-bold text-white">
+          Batch Safety & Release Checks
         </h3>
+      </div>
 
-        <div className="space-y-3">
-          <MetricBox label="Batch code" value={recipe.batchCode} />
-          <MetricBox label="Station" value={recipe.station} />
-          <MetricBox label="Status" value={recipe.status} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <InfoRow
+          label="Cooling Required"
+          value={qaGate?.coolingRequired}
+          important={qaGate?.coolingRequired}
+        />
+        <InfoRow
+          label="Allergen Check"
+          value={qaGate?.allergenCheckRequired}
+          important={qaGate?.allergenCheckRequired}
+        />
+        <InfoRow
+          label="Label Check"
+          value={qaGate?.labelCheckRequired}
+          important={qaGate?.labelCheckRequired}
+        />
+        <InfoRow
+          label="Batch Code Check"
+          value={qaGate?.batchCodeCheckRequired}
+          important={qaGate?.batchCodeCheckRequired}
+        />
+        <InfoRow label="Release Authority" value={qaGate?.releaseAuthority} />
+      </div>
+    </section>
+  )
+}
+
+function ReleaseControlView({
+  releaseControl,
+}: {
+  releaseControl?: ProductionRuntimeReleaseControl
+}) {
+  const blockedByDefault = releaseControl?.releaseBlockedByDefault !== false
+  const canReleaseWithoutQa = releaseControl?.canReleaseWithoutQa === true
+
+  return (
+    <section className="rounded-3xl border border-red-300/15 bg-red-300/[0.045] p-5">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-red-100/80">
+            Release Control
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            Protected Production Release
+          </h3>
+        </div>
+
+        <StatusPill tone={blockedByDefault ? "danger" : "warning"}>
+          {blockedByDefault ? "Blocked by Default" : "Review Required"}
+        </StatusPill>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <InfoRow
+          label="Can Release Without QA"
+          value={canReleaseWithoutQa}
+          important={!canReleaseWithoutQa}
+        />
+        <InfoRow label="Release Status" value={releaseControl?.releaseStatus} />
+        <InfoRow
+          label="Release Blocked by Default"
+          value={blockedByDefault}
+          important={blockedByDefault}
+        />
+        <InfoRow label="Release Note" value={releaseControl?.releaseNote} />
+      </div>
+    </section>
+  )
+}
+
+function RoleRuntimeView({
+  roleRuntimeView,
+  activeRole,
+}: {
+  roleRuntimeView: unknown
+  activeRole: RecipeStudioRole
+}) {
+  const activeRoleLabel =
+    ROLE_OPTIONS.find((role) => role.value === activeRole)?.label || "Role"
+
+  if (!roleRuntimeView) {
+    return (
+      <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/45">
+          Role Runtime View
+        </p>
+        <h3 className="mt-1 text-lg font-bold text-white">
+          {activeRoleLabel} Runtime View
+        </h3>
+        <p className="mt-3 text-sm leading-6 text-white/60">
+          No dedicated roleRuntimeView was returned for this role. The runtime
+          bridge is still displayed using the shared production contract.
+        </p>
+      </section>
+    )
+  }
+
+  if (typeof roleRuntimeView === "string") {
+    return (
+      <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/45">
+          Role Runtime View
+        </p>
+        <h3 className="mt-1 text-lg font-bold text-white">
+          {activeRoleLabel} Runtime View
+        </h3>
+        <p className="mt-3 text-sm leading-6 text-white/70">
+          {roleRuntimeView}
+        </p>
+      </section>
+    )
+  }
+
+  if (Array.isArray(roleRuntimeView)) {
+    return (
+      <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/45">
+          Role Runtime View
+        </p>
+        <h3 className="mt-1 text-lg font-bold text-white">
+          {activeRoleLabel} Runtime View
+        </h3>
+        <div className="mt-4 grid gap-3">
+          {roleRuntimeView.map((item, index) => (
+            <div
+              key={`${String(item)}-${index}`}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/70"
+            >
+              {formatValue(item)}
+            </div>
+          ))}
         </div>
       </section>
+    )
+  }
 
-      <IngredientSourcePanel recipe={recipe} />
-    </div>
-  )
+  if (typeof roleRuntimeView === "object") {
+    return (
+      <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/45">
+          Role Runtime View
+        </p>
+        <h3 className="mt-1 text-lg font-bold text-white">
+          {activeRoleLabel} Runtime View
+        </h3>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {Object.entries(roleRuntimeView as Record<string, unknown>).map(
+            ([key, value]) => (
+              <InfoRow key={key} label={formatLabel(key)} value={value} />
+            )
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  return null
 }
 
-function RecipeRoleView({
-  role,
+function RecipeRuntimeCard({
   recipe,
+  index,
+  activeRole,
 }: {
-  role: StudioRole
-  recipe: StudioRecipe
+  recipe: RecipeStudioRecipe
+  index: number
+  activeRole: RecipeStudioRole
 }) {
-  if (role === "worker") return <WorkerRecipeView recipe={recipe} />
-  if (role === "chef") return <ChefRecipeView recipe={recipe} />
-  if (role === "qa") return <QaRecipeView recipe={recipe} />
-  if (role === "purchasing-manager") {
-    return <PurchasingRecipeView recipe={recipe} />
-  }
-  if (role === "storekeeper") {
-    return <StorekeeperRecipeView recipe={recipe} />
-  }
-  if (role === "production-manager") {
-    return <ProductionManagerRecipeView recipe={recipe} />
-  }
+  const productionRuntime = recipe.productionRuntime
 
-  return <OwnerRecipeView recipe={recipe} />
-}
-
-function RecipeCard({
-  role,
-  recipe,
-}: {
-  role: StudioRole
-  recipe: StudioRecipe
-}) {
   return (
-    <article className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/55 shadow-2xl shadow-slate-950/30">
-      <div className="border-b border-white/10 bg-white/[0.06] p-5">
+    <article className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#081421]/90 shadow-2xl shadow-black/25">
+      <div className="border-b border-white/10 bg-white/[0.04] p-5 md:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-200">
-              {recipe.station}
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-lime-200/75">
+              Approved Recipe Runtime
             </p>
             <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
-              {recipe.title}
+              {getRecipeTitle(recipe, index)}
             </h2>
-            <p className="mt-2 text-sm text-slate-300">
-              Recipe ID: {recipe.id}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <StatusPill tone="success">Approved Recipe</StatusPill>
+              <StatusPill tone="warning">QA Protected</StatusPill>
+              <StatusPill>Role: {formatLabel(activeRole)}</StatusPill>
+            </div>
+          </div>
+
+          <div className="grid gap-2 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+            <div>
+              <span className="text-white/45">Batch Code: </span>
+              <span className="font-bold text-white/85">
+                {formatValue(recipe.batchCode)}
+              </span>
+            </div>
+            <div>
+              <span className="text-white/45">Expiry Date: </span>
+              <span className="font-bold text-white/85">
+                {formatValue(recipe.expiryDate)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {productionRuntime ? (
+        <div className="grid gap-5 p-5 md:p-6">
+          <RuntimePathView runtime={productionRuntime} />
+
+          <div className="grid gap-5 xl:grid-cols-2">
+            <StationTaskView stationTask={productionRuntime.stationTask} />
+            <QaGateView qaGate={productionRuntime.qaGate} />
+          </div>
+
+          <ReleaseControlView
+            releaseControl={productionRuntime.releaseControl}
+          />
+
+          <RoleRuntimeView
+            roleRuntimeView={productionRuntime.roleRuntimeView}
+            activeRole={activeRole}
+          />
+        </div>
+      ) : (
+        <div className="p-5 md:p-6">
+          <div className="rounded-3xl border border-amber-300/20 bg-amber-300/[0.06] p-5">
+            <p className="text-sm font-bold text-amber-100">
+              No productionRuntime object was returned for this recipe.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-white/60">
+              RS-3B expects the API to return recipes[n].productionRuntime from
+              the RS-3A contract.
             </p>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-lime-300/30 bg-lime-300/10 px-3 py-1 text-xs font-black text-lime-100">
-              {recipe.status}
-            </span>
-            <span className="rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1 text-xs font-black text-sky-100">
-              {role.toUpperCase()}
-            </span>
-          </div>
         </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricBox label="Batch code" value={recipe.batchCode} />
-          <MetricBox label="Expiry" value={recipe.expiryDate} />
-          <MetricBox
-            label="Legacy category"
-            value={recipe.legacyMetadata?.category}
-          />
-          <MetricBox
-            label="Legacy plan metadata"
-            value={recipe.legacyMetadata?.dietaryPlan}
-          />
-        </div>
-      </div>
-
-      <div className="p-5">
-        <RecipeRoleView role={role} recipe={recipe} />
-      </div>
+      )}
     </article>
   )
 }
 
-export default function RecipeStudioPage() {
-  const [activeRole, setActiveRole] = useState<StudioRole>("owner")
-  const [payload, setPayload] = useState<RecipeStudioPayload | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+function RecipeStudioRuntimePageContent() {
+  const searchParams = useSearchParams()
+  const activeRole = getActiveRole(searchParams.get("role"))
+
+  const [data, setData] = useState<RecipeStudioApiResponse | null>(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const activeRoleOption = useMemo(() => {
-    return ROLE_OPTIONS.find((role) => role.id === activeRole) ?? ROLE_OPTIONS[0]
-  }, [activeRole])
-
-  const loadRole = useCallback(async (nextRole: StudioRole) => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch(`/api/recipe-studio?role=${nextRole}`, {
-        cache: "no-store",
-      })
-
-      if (!response.ok) {
-        throw new Error(`Recipe Studio API failed: ${response.status}`)
-      }
-
-      const data = (await response.json()) as RecipeStudioPayload
-
-      setPayload(data)
-      setActiveRole(data.role)
-
-      const params = new URLSearchParams(window.location.search)
-      params.set("role", data.role)
-
-      window.history.replaceState(null, "", `?${params.toString()}`)
-    } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Recipe Studio failed to load.",
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  const activeRoleLabel = useMemo(
+    () => ROLE_OPTIONS.find((role) => role.value === activeRole)?.label,
+    [activeRole]
+  )
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const roleFromUrl = normalizeRole(params.get("role"))
+    let cancelled = false
 
-    void loadRole(roleFromUrl)
-  }, [loadRole])
+    async function loadRecipeStudioData() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const response = await fetch(
+          `/api/recipe-studio?role=${encodeURIComponent(activeRole)}`,
+          {
+            cache: "no-store",
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error(`Recipe Studio API failed: ${response.status}`)
+        }
+
+        const payload = (await response.json()) as RecipeStudioApiResponse
+
+        if (!cancelled) {
+          setData(payload)
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Recipe Studio API failed."
+          )
+          setData(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadRecipeStudioData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeRole])
+
+  const recipes = data?.recipes || []
+  const runtimeContractEnabled = data?.productionRuntimeContract?.enabled === true
 
   return (
-    <main className="min-h-full overflow-x-hidden bg-slate-950 px-4 py-6 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-6 shadow-2xl shadow-slate-950/30">
-          <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-sky-400/15 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-0 left-0 h-64 w-64 rounded-full bg-lime-300/10 blur-3xl" />
-
-          <div className="relative z-10 grid gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-end">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-200">
-                RS-2E · Expanded Role Views
+    <main className="min-h-screen bg-[#050B13] text-white">
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <header className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#071827] via-[#09111d] to-[#0d1b2a] p-5 shadow-2xl shadow-black/30 md:p-8">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-lime-200/80">
+                G7 Kitchen OS · Recipe Studio
               </p>
-
-              <h1 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">
-                G7 Recipe Studio
+              <h1 className="mt-3 text-3xl font-black tracking-tight text-white md:text-5xl">
+                Production Runtime Bridge
               </h1>
-
-              <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-300">
-                Server-safe recipe interface for central kitchen operations.
-                Owner, Chef, QA, Worker, Purchasing, Storekeeper and Production
-                roles now receive dedicated operational views from the same
-                permission contract.
+              <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
+                RS-3B displays the RS-3A recipe-to-production contract inside
+                Recipe Studio. The current role is read from query string for
+                testing only; production permissions must come from session,
+                user, and tenant permissions.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/[0.07] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-300">
-                Active View
-              </p>
-
-              <h2 className="mt-2 text-2xl font-black text-white">
-                {activeRoleOption.label}
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-300">
-                {activeRoleOption.subtitle}
-              </p>
-
-              <div className="mt-4 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-3 text-sm leading-relaxed text-amber-50">
-                Role is currently read from query string for testing only.
-                Production must use session / user / tenant permissions.
+            <div className="grid gap-3 rounded-3xl border border-white/10 bg-black/20 p-4">
+              <StatusPill tone={runtimeContractEnabled ? "success" : "danger"}>
+                Runtime Contract{" "}
+                {runtimeContractEnabled ? "Enabled" : "Unavailable"}
+              </StatusPill>
+              <div className="text-sm text-white/60">
+                Contract Version:{" "}
+                <span className="font-bold text-white">
+                  {data?.productionRuntimeContract?.contractVersion || "—"}
+                </span>
+              </div>
+              <div className="text-sm text-white/60">
+                API Patch:{" "}
+                <span className="font-bold text-white">
+                  {data?.patch || "—"}
+                </span>
               </div>
             </div>
           </div>
-        </section>
+        </header>
 
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-          {ROLE_OPTIONS.map((role) => {
-            const isActive = role.id === activeRole
-
-            return (
-              <button
-                key={role.id}
-                type="button"
-                onClick={() => void loadRole(role.id)}
-                className={`rounded-3xl border p-4 text-left transition ${
-                  isActive
-                    ? "border-sky-300/50 bg-sky-300/15 shadow-lg shadow-sky-950/30"
-                    : "border-white/10 bg-white/[0.05] hover:border-white/25 hover:bg-white/[0.08]"
-                }`}
-              >
-                <p className="text-base font-black text-white">{role.label}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-300">
-                  {role.subtitle}
-                </p>
-              </button>
-            )
-          })}
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
-              Role Summary
+        <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-4 md:p-5">
+          <div className="mb-4">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/40">
+              Testing Role
             </p>
-            <p className="mt-2 text-base font-semibold leading-relaxed text-white">
-              {payload?.roleSummary ?? "Loading role summary..."}
+            <h2 className="mt-1 text-xl font-black text-white">
+              {activeRoleLabel} View
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-white/60">
+              {ROLE_DESCRIPTIONS[activeRole]}
             </p>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {ROLE_OPTIONS.map((role) => {
+              const active = role.value === activeRole
+
+              return (
+                <a
+                  key={role.value}
+                  href={`/recipe-studio?role=${role.value}`}
+                  className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-bold transition ${
+                    active
+                      ? "border-lime-300/50 bg-lime-300/15 text-lime-100"
+                      : "border-white/10 bg-white/[0.04] text-white/60 hover:border-white/25 hover:text-white"
+                  }`}
+                >
+                  {role.label}
+                </a>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
               Costing Visible
             </p>
-            <p
-              className={`mt-2 text-2xl font-black ${
-                payload?.costingVisible ? "text-amber-200" : "text-lime-200"
-              }`}
-            >
-              {payload?.costingVisible ? "Yes" : "No"}
+            <p className="mt-2 text-2xl font-black text-white">
+              {data?.costingVisible ? "Yes" : "No"}
             </p>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
-              Tenant Settings
+          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
+              Allowed Layers
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {payload &&
-                Object.entries(payload.tenantSettings).map(([key, value]) => (
-                  <span
-                    key={key}
-                    className="rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-bold text-slate-200"
-                  >
-                    {key}: {value}
-                  </span>
-                ))}
-            </div>
+            <p className="mt-2 text-sm font-semibold leading-6 text-white/70">
+              {data?.allowedDataLayers?.length
+                ? data.allowedDataLayers.join(", ")
+                : "—"}
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
+              Blocked Layers
+            </p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-white/70">
+              {data?.blockedDataLayers?.length
+                ? data.blockedDataLayers.join(", ")
+                : "—"}
+            </p>
           </div>
         </section>
 
-        {payload && (
-          <PermissionLayerPanel
-            allowed={payload.allowedDataLayers}
-            blocked={payload.blockedDataLayers}
-          />
-        )}
-
-        {error && (
-          <section className="rounded-3xl border border-red-300/30 bg-red-300/10 p-5 text-red-50">
-            <p className="font-black">Recipe Studio error</p>
-            <p className="mt-2 text-sm">{error}</p>
-          </section>
-        )}
-
-        {isLoading && (
-          <section className="rounded-3xl border border-white/10 bg-white/[0.06] p-8 text-center">
-            <p className="text-lg font-black text-white">
-              Loading sanitized Recipe Studio payload...
+        {loading ? (
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-8 text-center">
+            <p className="text-sm font-bold text-white/70">
+              Loading Recipe Studio runtime bridge...
             </p>
           </section>
-        )}
+        ) : null}
 
-        {!isLoading && payload && (
-          <section className="space-y-5">
-            {payload.recipes.map((recipe) => (
-              <RecipeCard
-                key={`${payload.role}-${recipe.id}`}
-                role={payload.role}
+        {error ? (
+          <section className="rounded-[2rem] border border-red-300/20 bg-red-300/[0.06] p-6">
+            <p className="text-sm font-bold text-red-100">
+              Recipe Studio could not load.
+            </p>
+            <p className="mt-2 text-sm text-white/60">{error}</p>
+          </section>
+        ) : null}
+
+        {!loading && !error && recipes.length === 0 ? (
+          <section className="rounded-[2rem] border border-amber-300/20 bg-amber-300/[0.06] p-6">
+            <p className="text-sm font-bold text-amber-100">
+              No recipes returned from the Recipe Studio API.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-white/60">
+              RS-3B expects recipes to include productionRuntime from the RS-3A
+              API contract.
+            </p>
+          </section>
+        ) : null}
+
+        {!loading && !error && recipes.length > 0 ? (
+          <section className="grid gap-6">
+            {recipes.map((recipe, index) => (
+              <RecipeRuntimeCard
+                key={recipe.id || recipe.recipeId || `${index}`}
                 recipe={recipe}
+                index={index}
+                activeRole={activeRole}
               />
             ))}
           </section>
-        )}
-      </div>
+        ) : null}
+      </section>
     </main>
+  )
+}
+
+export default function RecipeStudioRuntimePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#050B13] p-6 text-white">
+          <div className="mx-auto max-w-7xl rounded-[2rem] border border-white/10 bg-white/[0.035] p-8 text-center">
+            <p className="text-sm font-bold text-white/70">
+              Loading Recipe Studio...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <RecipeStudioRuntimePageContent />
+    </Suspense>
   )
 }
