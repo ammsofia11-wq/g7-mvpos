@@ -101,6 +101,26 @@ type RuntimeDecisionGuidance = {
   tone: RuntimeTone
 }
 
+type RuntimeExceptionFlag = {
+  label: string
+  detail: string
+  tone: RuntimeTone
+}
+
+type RuntimeExceptionResolution = {
+  label: string
+  owner: string
+  runtimeImpact: string
+  requiredDecision: string
+  safeNextAction: string
+  doNotAction: string
+  releaseEffect: string
+  workerTaskEffect: string
+  qaEffect: string
+  chefApprovalEffect: string
+  tone: RuntimeTone
+}
+
 const DEFAULT_RUNTIME_PATH = [
   "Recipe Approved",
   "Batch Ready",
@@ -355,6 +375,94 @@ function getRuntimeReadinessSummary(
   }
 }
 
+function getRuntimeExceptionFlags({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}): RuntimeExceptionFlag[] {
+  if (!runtime) {
+    return [
+      {
+        label: "Runtime Missing",
+        detail: "No production runtime contract was returned.",
+        tone: "danger",
+      },
+    ]
+  }
+
+  const summary = getRuntimeReadinessSummary(runtime)
+  const flags: RuntimeExceptionFlag[] = []
+
+  const qaPending = summary.productionReadiness.toLowerCase().includes("qa")
+  const releaseBlocked = summary.release.toLowerCase().includes("blocked")
+  const hasStationTask = Boolean(runtime.stationTask?.taskId)
+  const instructionMode = formatValue(runtime.stationTask?.workerInstructionMode)
+  const releaseBlockedByDefault =
+    runtime.releaseControl?.releaseBlockedByDefault !== false
+
+  if (qaPending) {
+    flags.push({
+      label: "QA Gate Pending",
+      detail: "Final release is waiting for QA or authorized manager control.",
+      tone: "warning",
+    })
+  }
+
+  if (releaseBlocked) {
+    flags.push({
+      label: "Release Blocked",
+      detail: "Batch cannot be released until the runtime gate is cleared.",
+      tone: "danger",
+    })
+  }
+
+  if (hasStationTask) {
+    flags.push({
+      label: "Station Task Ready",
+      detail: `Task is available for ${formatValue(runtime.stationTask?.station)}.`,
+      tone: "success",
+    })
+  }
+
+  if (instructionMode.toLowerCase().includes("approved task")) {
+    flags.push({
+      label: "Worker Task Protected",
+      detail: "Worker view is limited to approved station execution.",
+      tone: "success",
+    })
+  }
+
+  if (!costingVisible) {
+    flags.push({
+      label: "Costing Hidden For Role",
+      detail: `${getRoleLabel(activeRole)} cannot view costing data in this view.`,
+      tone: "neutral",
+    })
+  }
+
+  if (releaseBlockedByDefault) {
+    flags.push({
+      label: "Release Blocked By Default",
+      detail: "Tenant release policy protects the batch until approval.",
+      tone: "warning",
+    })
+  }
+
+  if (flags.length === 0) {
+    flags.push({
+      label: "No Runtime Exceptions",
+      detail: "No active blockers are visible from this runtime state.",
+      tone: "success",
+    })
+  }
+
+  return flags
+}
+
 function getRoleDecisionGuidance(
   activeRole: RecipeStudioRole,
   runtime?: RecipeProductionRuntime
@@ -523,6 +631,22 @@ function getRoleDecisionGuidance(
   }
 }
 
+function getToneClasses(tone: RuntimeTone) {
+  if (tone === "success") {
+    return "border-lime-400/40 bg-lime-400/10 text-lime-200"
+  }
+
+  if (tone === "warning") {
+    return "border-amber-300/40 bg-amber-300/10 text-amber-100"
+  }
+
+  if (tone === "danger") {
+    return "border-red-400/40 bg-red-400/10 text-red-100"
+  }
+
+  return "border-white/15 bg-white/[0.08] text-white/75"
+}
+
 function StatusPill({
   children,
   tone = "neutral",
@@ -530,21 +654,29 @@ function StatusPill({
   children: ReactNode
   tone?: RuntimeTone
 }) {
-  const toneClass =
-    tone === "success"
-      ? "border-lime-400/40 bg-lime-400/10 text-lime-200"
-      : tone === "warning"
-        ? "border-amber-300/40 bg-amber-300/10 text-amber-100"
-        : tone === "danger"
-          ? "border-red-400/40 bg-red-400/10 text-red-100"
-          : "border-white/15 bg-white/[0.08] text-white/75"
-
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${toneClass}`}
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getToneClasses(
+        tone
+      )}`}
     >
       {children}
     </span>
+  )
+}
+
+function ExceptionFlagChip({ flag }: { flag: RuntimeExceptionFlag }) {
+  return (
+    <div
+      className={`rounded-2xl border p-4 ${getToneClasses(flag.tone)}`}
+    >
+      <p className="text-xs font-black uppercase tracking-[0.16em]">
+        {flag.label}
+      </p>
+      <p className="mt-2 text-sm font-semibold leading-6 opacity-85">
+        {flag.detail}
+      </p>
+    </div>
   )
 }
 
@@ -598,6 +730,402 @@ function RuntimeSummaryItem({
       </p>
       <p className={`mt-2 text-sm font-black ${valueClass}`}>{value}</p>
     </div>
+  )
+}
+
+function RuntimeExceptionFlagsView({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}) {
+  const flags = getRuntimeExceptionFlags({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+
+  const dangerCount = flags.filter((flag) => flag.tone === "danger").length
+  const warningCount = flags.filter((flag) => flag.tone === "warning").length
+
+  return (
+    <section className="rounded-3xl border border-orange-200/15 bg-orange-200/[0.04] p-5">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-orange-100/75">
+            RS-3F Exception Flags
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            Runtime blockers and protected signals
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            Fast flags showing QA dependency, release blocking, station task
+            readiness, worker protection, and role-limited costing visibility.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <StatusPill tone={dangerCount > 0 ? "danger" : "neutral"}>
+            Critical Flags: {dangerCount}
+          </StatusPill>
+          <StatusPill tone={warningCount > 0 ? "warning" : "neutral"}>
+            Warnings: {warningCount}
+          </StatusPill>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {flags.map((flag) => (
+          <ExceptionFlagChip key={`${flag.label}-${flag.detail}`} flag={flag} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+
+function getRuntimeExceptionResolution({
+  flag,
+  activeRole,
+  runtime,
+}: {
+  flag: RuntimeExceptionFlag
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+}): RuntimeExceptionResolution {
+  const roleLabel = getRoleLabel(activeRole)
+  const station = formatValue(runtime?.stationTask?.station)
+
+  switch (flag.label) {
+    case "Runtime Missing":
+      return {
+        label: flag.label,
+        owner: "Owner / Chef / Engineering",
+        runtimeImpact:
+          "Recipe Studio cannot connect this recipe to production runtime until the contract is returned by the API.",
+        requiredDecision:
+          "Stop release planning and verify why productionRuntime is missing from the sanitized recipe payload.",
+        safeNextAction:
+          "Keep the recipe outside active production scheduling until the runtime contract is restored.",
+        doNotAction:
+          "Do not create station tasks manually from protected recipe data.",
+        releaseEffect: "Release blocked",
+        workerTaskEffect: "Worker task unavailable",
+        qaEffect: "QA cannot evaluate runtime gate",
+        chefApprovalEffect: "Chef review required",
+        tone: "danger",
+      }
+
+    case "QA Gate Pending":
+      return {
+        label: flag.label,
+        owner: "QA / Head Chef",
+        runtimeImpact:
+          "The recipe can prepare production runtime, but final release is waiting for QA or authorized manager control.",
+        requiredDecision:
+          "QA must approve, hold, reject, or escalate the gate before production release.",
+        safeNextAction:
+          "Keep the batch under QA hold and complete cooling, allergen, label, and batch code checks.",
+        doNotAction:
+          "Do not release to packaging, dispatch, or customer-facing flow before QA clearance.",
+        releaseEffect: "Blocks release",
+        workerTaskEffect: "Worker task may stay prepared but not finally released",
+        qaEffect: "QA action required",
+        chefApprovalEffect: "Chef supports QA if SOP or batch evidence is unclear",
+        tone: "warning",
+      }
+
+    case "Release Blocked":
+      return {
+        label: flag.label,
+        owner: "Head Chef / Production Manager",
+        runtimeImpact:
+          "The batch cannot move into final production release until the blocking condition is cleared.",
+        requiredDecision:
+          "Confirm whether the block is caused by QA, release policy, station readiness, or missing authority.",
+        safeNextAction:
+          "Hold release and route the decision to the authorized role shown in the runtime contract.",
+        doNotAction:
+          "Do not bypass release control or manually push the recipe into live execution.",
+        releaseEffect: "Blocks release",
+        workerTaskEffect: "Worker execution must remain supervisor-controlled",
+        qaEffect: "QA check may be required before release",
+        chefApprovalEffect: "Chef or production authority must confirm clearance",
+        tone: "danger",
+      }
+
+    case "Station Task Ready":
+      return {
+        label: flag.label,
+        owner: "Station Lead / Production Manager",
+        runtimeImpact:
+          `The recipe has enough runtime structure to become an approved station task${station !== "—" ? ` for ${station}` : ""}.`,
+        requiredDecision:
+          "Confirm station owner, worker assignment, batch timing, and handoff point.",
+        safeNextAction:
+          "Prepare the station task and keep execution aligned with QA and release control.",
+        doNotAction:
+          "Do not start execution if QA or release control is still blocking runtime.",
+        releaseEffect: "Does not release by itself",
+        workerTaskEffect: "Task guidance available",
+        qaEffect: "QA dependency still applies if required",
+        chefApprovalEffect: "Chef confirms SOP accuracy when needed",
+        tone: "success",
+      }
+
+    case "Worker Task Protected":
+      return {
+        label: flag.label,
+        owner: "Sous Chef / Station Lead",
+        runtimeImpact:
+          "Worker view is limited to approved station execution and cannot alter recipe, costing, QA, or release data.",
+        requiredDecision:
+          "Authorized role must assign, adjust, approve, or release the task.",
+        safeNextAction:
+          "Show worker-safe SOP, station steps, safety notes, and task status only.",
+        doNotAction:
+          "Do not expose editing, costing, approval, or release controls to worker roles.",
+        releaseEffect: "No release authority",
+        workerTaskEffect: "Worker-safe execution only",
+        qaEffect: "QA gates remain protected",
+        chefApprovalEffect: "Chef or supervisor controls changes",
+        tone: "success",
+      }
+
+    case "Costing Hidden For Role":
+      return {
+        label: flag.label,
+        owner: "Owner / Finance / Admin",
+        runtimeImpact:
+          `${roleLabel} can continue operational review without seeing protected costing data.`,
+        requiredDecision:
+          "No runtime action is needed unless cost approval is required for this recipe release.",
+        safeNextAction:
+          "Continue with role-safe operational information only.",
+        doNotAction:
+          "Do not reveal ingredient cost, margin, supplier cost, or protected financial data.",
+        releaseEffect: "Release unaffected unless cost approval is required",
+        workerTaskEffect: "Worker task unaffected",
+        qaEffect: "QA unaffected",
+        chefApprovalEffect: "Chef sees only what the role allows",
+        tone: "neutral",
+      }
+
+    case "Release Blocked By Default":
+      return {
+        label: flag.label,
+        owner: "Owner / Head Chef",
+        runtimeImpact:
+          "Tenant release policy protects the recipe by default until an authorized release decision is made.",
+        requiredDecision:
+          "Confirm the recipe is approved for the tenant, station, batch window, QA rule set, and release authority.",
+        safeNextAction:
+          "Keep default protection active until the authorized role clears the release path.",
+        doNotAction:
+          "Do not treat the default blocked state as an error or auto-release it in the UI.",
+        releaseEffect: "Blocks release by default",
+        workerTaskEffect: "Worker task can remain prepared but protected",
+        qaEffect: "QA or authority clearance required",
+        chefApprovalEffect: "Chef approval required when policy requires it",
+        tone: "warning",
+      }
+
+    case "No Runtime Exceptions":
+      return {
+        label: flag.label,
+        owner: "Production Manager / Responsible Role",
+        runtimeImpact:
+          "No active blocker is visible from the current runtime state.",
+        requiredDecision:
+          "Continue normal readiness monitoring and confirm final authority before release.",
+        safeNextAction:
+          "Proceed with the visible runtime path while respecting tenant permissions and QA policy.",
+        doNotAction:
+          "Do not assume UI visibility equals final production authorization.",
+        releaseEffect: "No visible release blocker",
+        workerTaskEffect: "Follow assigned task state",
+        qaEffect: "Follow tenant QA policy",
+        chefApprovalEffect: "Chef approval follows role policy",
+        tone: "success",
+      }
+
+    default:
+      return {
+        label: flag.label,
+        owner: "Responsible Runtime Role",
+        runtimeImpact: flag.detail,
+        requiredDecision:
+          "Review this runtime signal and route it to the responsible operational owner.",
+        safeNextAction:
+          "Keep the recipe inside its permitted runtime path until the signal is understood.",
+        doNotAction:
+          "Do not bypass permissions, QA gates, or release control.",
+        releaseEffect: "Review required",
+        workerTaskEffect: "Review required",
+        qaEffect: "Review required",
+        chefApprovalEffect: "Review required",
+        tone: flag.tone,
+      }
+  }
+}
+
+function ResolutionInfoRow({
+  label,
+  value,
+  danger,
+}: {
+  label: string
+  value: string
+  danger?: boolean
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-4 ${
+        danger
+          ? "border-red-300/15 bg-red-300/[0.045]"
+          : "border-white/10 bg-black/20"
+      }`}
+    >
+      <p
+        className={`text-xs font-bold uppercase tracking-[0.18em] ${
+          danger ? "text-red-100/65" : "text-white/40"
+        }`}
+      >
+        {label}
+      </p>
+      <p
+        className={`mt-2 text-sm font-semibold leading-6 ${
+          danger ? "text-red-50" : "text-white/75"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function RuntimeExceptionResolutionMatrixView({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}) {
+  const flags = getRuntimeExceptionFlags({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+
+  const resolutions = flags.map((flag) =>
+    getRuntimeExceptionResolution({
+      flag,
+      activeRole,
+      runtime,
+    })
+  )
+
+  const releaseBlockCount = resolutions.filter((resolution) =>
+    resolution.releaseEffect.toLowerCase().includes("block")
+  ).length
+
+  const qaActionCount = resolutions.filter((resolution) =>
+    resolution.qaEffect.toLowerCase().includes("required")
+  ).length
+
+  return (
+    <section className="rounded-3xl border border-violet-200/15 bg-violet-200/[0.045] p-5">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-violet-100/75">
+            RS-3G Exception Resolution Matrix
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            Exception owner, decision, and safe action
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            Converts each RS-3F flag into an operational decision layer: who owns
+            the issue, what is blocked, what action is safe, and what must not
+            happen. This is UI-only and does not change runtime state.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <StatusPill tone={releaseBlockCount > 0 ? "danger" : "neutral"}>
+            Release Blocks: {releaseBlockCount}
+          </StatusPill>
+          <StatusPill tone={qaActionCount > 0 ? "warning" : "neutral"}>
+            QA Actions: {qaActionCount}
+          </StatusPill>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        {resolutions.map((resolution) => (
+          <article
+            key={`${resolution.label}-${resolution.owner}`}
+            className={`rounded-3xl border p-5 ${getToneClasses(
+              resolution.tone
+            )}`}
+          >
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] opacity-80">
+                  {resolution.label}
+                </p>
+                <h4 className="mt-1 text-lg font-black text-white">
+                  Owner: {resolution.owner}
+                </h4>
+              </div>
+              <StatusPill tone={resolution.tone}>{resolution.releaseEffect}</StatusPill>
+            </div>
+
+            <div className="grid gap-3">
+              <ResolutionInfoRow
+                label="Runtime Impact"
+                value={resolution.runtimeImpact}
+              />
+              <ResolutionInfoRow
+                label="Required Decision"
+                value={resolution.requiredDecision}
+              />
+              <ResolutionInfoRow
+                label="Safe Next Action"
+                value={resolution.safeNextAction}
+              />
+              <ResolutionInfoRow
+                label="Do Not"
+                value={resolution.doNotAction}
+                danger
+              />
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <RuntimeSummaryItem
+                label="Worker Task"
+                value={resolution.workerTaskEffect}
+                tone={resolution.tone}
+              />
+              <RuntimeSummaryItem
+                label="QA"
+                value={resolution.qaEffect}
+                tone={resolution.tone}
+              />
+              <RuntimeSummaryItem
+                label="Chef Approval"
+                value={resolution.chefApprovalEffect}
+                tone={resolution.tone}
+              />
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -729,19 +1257,27 @@ function RuntimeDecisionGuidanceView({
 function RuntimeOverviewBoard({
   recipes,
   activeRole,
+  costingVisible,
 }: {
   recipes: RecipeStudioRecipe[]
   activeRole: RecipeStudioRole
+  costingVisible: boolean
 }) {
   const activeRoleLabel = getRoleLabel(activeRole)
 
   const summaries = recipes.map((recipe, index) => {
     const summary = getRuntimeReadinessSummary(recipe.productionRuntime)
+    const flags = getRuntimeExceptionFlags({
+      activeRole,
+      runtime: recipe.productionRuntime,
+      costingVisible,
+    })
 
     return {
       recipe,
       index,
       summary,
+      flags,
       title: getRecipeTitle(recipe, index),
       stationTaskId: compactTaskId(recipe.productionRuntime?.stationTask?.taskId),
     }
@@ -759,24 +1295,33 @@ function RuntimeOverviewBoard({
     item.summary.release.toLowerCase().includes("blocked")
   ).length
 
+  const totalExceptionFlags = summaries.reduce(
+    (total, item) =>
+      total +
+      item.flags.filter(
+        (flag) => flag.tone === "danger" || flag.tone === "warning"
+      ).length,
+    0
+  )
+
   return (
     <section className="rounded-[2rem] border border-cyan-200/10 bg-cyan-200/[0.035] p-5 md:p-6">
       <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-100/70">
-            RS-3D Runtime Overview Board
+            RS-3F Runtime Overview Board
           </p>
           <h2 className="mt-2 text-2xl font-black text-white">
             Recipe runtime overview
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
             Fast cross-recipe board for the {activeRoleLabel} view. It summarizes
-            readiness, station assignment, worker task state, and release
-            blocking before opening each full recipe runtime card.
+            readiness, station assignment, worker task state, release blocking,
+            and active runtime exception flags.
           </p>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-4">
           <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">
               QA Pending
@@ -801,6 +1346,15 @@ function RuntimeOverviewBoard({
             </p>
             <p className="mt-1 text-xl font-black text-red-100">
               {blockedCount}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">
+              Exception Flags
+            </p>
+            <p className="mt-1 text-xl font-black text-orange-100">
+              {totalExceptionFlags}
             </p>
           </div>
         </div>
@@ -833,6 +1387,14 @@ function RuntimeOverviewBoard({
               <StatusPill tone={item.summary.tone}>
                 {item.summary.productionReadiness}
               </StatusPill>
+            </div>
+
+            <div className="mb-4 flex flex-wrap gap-2">
+              {item.flags.slice(0, 4).map((flag) => (
+                <StatusPill key={`${item.title}-${flag.label}`} tone={flag.tone}>
+                  {flag.label}
+                </StatusPill>
+              ))}
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -875,7 +1437,7 @@ function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
             Recipe-to-Production Path
           </h3>
         </div>
-        <StatusPill tone="success">RS-3E Guidance</StatusPill>
+        <StatusPill tone="success">RS-3F Flags</StatusPill>
       </div>
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -1113,10 +1675,12 @@ function RecipeRuntimeCard({
   recipe,
   index,
   activeRole,
+  costingVisible,
 }: {
   recipe: RecipeStudioRecipe
   index: number
   activeRole: RecipeStudioRole
+  costingVisible: boolean
 }) {
   const productionRuntime = recipe.productionRuntime
 
@@ -1159,6 +1723,18 @@ function RecipeRuntimeCard({
         <div className="grid gap-5 p-5 md:p-6">
           <RuntimeReadinessSummaryView runtime={productionRuntime} />
 
+          <RuntimeExceptionFlagsView
+            activeRole={activeRole}
+            runtime={productionRuntime}
+            costingVisible={costingVisible}
+          />
+
+          <RuntimeExceptionResolutionMatrixView
+            activeRole={activeRole}
+            runtime={productionRuntime}
+            costingVisible={costingVisible}
+          />
+
           <RuntimeDecisionGuidanceView
             activeRole={activeRole}
             runtime={productionRuntime}
@@ -1184,6 +1760,18 @@ function RecipeRuntimeCard({
         <div className="p-5 md:p-6">
           <RuntimeReadinessSummaryView runtime={productionRuntime} />
 
+          <RuntimeExceptionFlagsView
+            activeRole={activeRole}
+            runtime={productionRuntime}
+            costingVisible={costingVisible}
+          />
+
+          <RuntimeExceptionResolutionMatrixView
+            activeRole={activeRole}
+            runtime={productionRuntime}
+            costingVisible={costingVisible}
+          />
+
           <RuntimeDecisionGuidanceView
             activeRole={activeRole}
             runtime={productionRuntime}
@@ -1194,7 +1782,7 @@ function RecipeRuntimeCard({
               No productionRuntime object was returned for this recipe.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3E expects the API to return recipes[n].productionRuntime from
+              RS-3F expects the API to return recipes[n].productionRuntime from
               the RS-3A contract.
             </p>
           </div>
@@ -1263,6 +1851,7 @@ function RecipeStudioRuntimePageContent() {
 
   const recipes = data?.recipes || []
   const runtimeContractEnabled = data?.productionRuntimeContract?.enabled === true
+  const costingVisible = data?.costingVisible === true
 
   return (
     <main className="min-h-screen bg-[#050B13] text-white">
@@ -1277,9 +1866,9 @@ function RecipeStudioRuntimePageContent() {
                 Production Runtime Bridge
               </h1>
               <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
-                RS-3E adds role-specific runtime decision guidance so each role
-                can understand the next safe action from the same protected
-                recipe runtime contract.
+                RS-3G keeps the RS-3F exception flags and adds a resolution
+                matrix so each role can see the owner, required decision, safe
+                next action, and forbidden action for every runtime blocker.
               </p>
             </div>
 
@@ -1344,7 +1933,7 @@ function RecipeStudioRuntimePageContent() {
               Costing Visible
             </p>
             <p className="mt-2 text-2xl font-black text-white">
-              {data?.costingVisible ? "Yes" : "No"}
+              {costingVisible ? "Yes" : "No"}
             </p>
           </div>
 
@@ -1394,14 +1983,18 @@ function RecipeStudioRuntimePageContent() {
               No recipes returned from the Recipe Studio API.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3E expects recipes to include productionRuntime from the RS-3A
+              RS-3F expects recipes to include productionRuntime from the RS-3A
               API contract.
             </p>
           </section>
         ) : null}
 
         {!loading && !error && recipes.length > 0 ? (
-          <RuntimeOverviewBoard recipes={recipes} activeRole={activeRole} />
+          <RuntimeOverviewBoard
+            recipes={recipes}
+            activeRole={activeRole}
+            costingVisible={costingVisible}
+          />
         ) : null}
 
         {!loading && !error && recipes.length > 0 ? (
@@ -1412,6 +2005,7 @@ function RecipeStudioRuntimePageContent() {
                 recipe={recipe}
                 index={index}
                 activeRole={activeRole}
+                costingVisible={costingVisible}
               />
             ))}
           </section>
