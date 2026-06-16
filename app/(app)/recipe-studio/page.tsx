@@ -463,6 +463,142 @@ function RuntimeReadinessSummaryView({
   )
 }
 
+function RuntimeOverviewBoard({
+  recipes,
+  activeRole,
+}: {
+  recipes: RecipeStudioRecipe[]
+  activeRole: RecipeStudioRole
+}) {
+  const activeRoleLabel =
+    ROLE_OPTIONS.find((role) => role.value === activeRole)?.label || "Role"
+
+  const summaries = recipes.map((recipe, index) => {
+    const summary = getRuntimeReadinessSummary(recipe.productionRuntime)
+
+    return {
+      recipe,
+      index,
+      summary,
+      title: getRecipeTitle(recipe, index),
+      stationTaskId: compactTaskId(recipe.productionRuntime?.stationTask?.taskId),
+    }
+  })
+
+  const qaPendingCount = summaries.filter(
+    (item) => item.summary.productionReadiness.toLowerCase() === "qa pending"
+  ).length
+
+  const readyTaskCount = summaries.filter(
+    (item) => item.summary.workerTask.toLowerCase() === "ready"
+  ).length
+
+  const blockedCount = summaries.filter((item) =>
+    item.summary.release.toLowerCase().includes("blocked")
+  ).length
+
+  return (
+    <section className="rounded-[2rem] border border-cyan-200/10 bg-cyan-200/[0.035] p-5 md:p-6">
+      <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-100/70">
+            RS-3D Runtime Overview Board
+          </p>
+          <h2 className="mt-2 text-2xl font-black text-white">
+            Recipe runtime overview
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            Fast cross-recipe board for the {activeRoleLabel} view. It summarizes
+            readiness, station assignment, worker task state, and release
+            blocking before opening each full recipe runtime card.
+          </p>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">
+              QA Pending
+            </p>
+            <p className="mt-1 text-xl font-black text-amber-100">
+              {qaPendingCount}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">
+              Tasks Ready
+            </p>
+            <p className="mt-1 text-xl font-black text-lime-100">
+              {readyTaskCount}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">
+              Blocked
+            </p>
+            <p className="mt-1 text-xl font-black text-red-100">
+              {blockedCount}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        {summaries.map((item) => (
+          <article
+            key={
+              item.recipe.id ||
+              item.recipe.recipeId ||
+              `${item.title}-${item.index}`
+            }
+            className="rounded-3xl border border-white/10 bg-[#071421]/90 p-5"
+          >
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-lime-100/70">
+                  Approved Runtime
+                </p>
+                <h3 className="mt-1 text-xl font-black text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-xs font-semibold text-white/45">
+                  Task:{" "}
+                  <span className="text-white/75">{item.stationTaskId}</span>
+                </p>
+              </div>
+
+              <StatusPill tone={item.summary.tone}>
+                {item.summary.productionReadiness}
+              </StatusPill>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <RuntimeSummaryItem
+                label="Station"
+                value={item.summary.station}
+              />
+              <RuntimeSummaryItem
+                label="Release"
+                value={item.summary.release}
+              />
+              <RuntimeSummaryItem
+                label="Worker Task"
+                value={item.summary.workerTask}
+              />
+              <RuntimeSummaryItem
+                label="Risk"
+                value={item.summary.risk}
+                tone={item.summary.tone}
+              />
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
   const path = getRuntimePath(runtime)
 
@@ -477,7 +613,7 @@ function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
             Recipe-to-Production Path
           </h3>
         </div>
-        <StatusPill tone="success">RS-3C Readiness</StatusPill>
+        <StatusPill tone="success">RS-3D Overview</StatusPill>
       </div>
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -787,7 +923,7 @@ function RecipeRuntimeCard({
               No productionRuntime object was returned for this recipe.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3C expects the API to return recipes[n].productionRuntime from
+              RS-3D expects the API to return recipes[n].productionRuntime from
               the RS-3A contract.
             </p>
           </div>
@@ -873,10 +1009,9 @@ function RecipeStudioRuntimePageContent() {
                 Production Runtime Bridge
               </h1>
               <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
-                RS-3C adds a fast production readiness summary above every
-                recipe runtime card, helping kitchen teams understand station
-                readiness, QA blocking, release status, and worker task
-                availability without reading the full contract first.
+                RS-3D adds a cross-recipe runtime overview board above the
+                detailed cards, helping kitchen leaders scan all approved recipe
+                runtime states before opening each production contract.
               </p>
             </div>
 
@@ -991,10 +1126,14 @@ function RecipeStudioRuntimePageContent() {
               No recipes returned from the Recipe Studio API.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3C expects recipes to include productionRuntime from the RS-3A
+              RS-3D expects recipes to include productionRuntime from the RS-3A
               API contract.
             </p>
           </section>
+        ) : null}
+
+        {!loading && !error && recipes.length > 0 ? (
+          <RuntimeOverviewBoard recipes={recipes} activeRole={activeRole} />
         ) : null}
 
         {!loading && !error && recipes.length > 0 ? (
