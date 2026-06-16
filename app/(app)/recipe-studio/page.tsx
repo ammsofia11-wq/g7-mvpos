@@ -92,6 +92,15 @@ type RuntimeReadinessSummary = {
   tone: RuntimeTone
 }
 
+type RuntimeDecisionGuidance = {
+  title: string
+  nextAction: string
+  supportingActions: string[]
+  doNotAction: string
+  escalation: string
+  tone: RuntimeTone
+}
+
 const DEFAULT_RUNTIME_PATH = [
   "Recipe Approved",
   "Batch Ready",
@@ -137,6 +146,10 @@ function getActiveRole(value: string | null): RecipeStudioRole {
   return "owner"
 }
 
+function getRoleLabel(roleValue: RecipeStudioRole) {
+  return ROLE_OPTIONS.find((role) => role.value === roleValue)?.label || "Role"
+}
+
 function formatLabel(value: string) {
   return value
     .replace(/([A-Z])/g, " $1")
@@ -173,7 +186,6 @@ function humanizeRuntimeValue(value: string) {
         if (part === "QA") return "QA"
         if (part === "QC") return "QC"
         if (part === "IP") return "IP"
-        if (part === "R&D") return "R&D"
 
         return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
       })
@@ -343,6 +355,174 @@ function getRuntimeReadinessSummary(
   }
 }
 
+function getRoleDecisionGuidance(
+  activeRole: RecipeStudioRole,
+  runtime?: RecipeProductionRuntime
+): RuntimeDecisionGuidance {
+  const summary = getRuntimeReadinessSummary(runtime)
+  const qaPending = summary.productionReadiness.toLowerCase().includes("qa")
+  const releaseBlocked = summary.release.toLowerCase().includes("blocked")
+  const hasWorkerTask = summary.workerTask.toLowerCase() === "ready"
+
+  if (!runtime) {
+    return {
+      title: "Runtime contract missing",
+      nextAction:
+        "Stop release planning until the recipe runtime contract is available.",
+      supportingActions: [
+        "Ask the responsible manager to verify Recipe Studio API output.",
+        "Do not create production tasks manually from protected recipe data.",
+        "Keep the recipe outside active production scheduling.",
+      ],
+      doNotAction:
+        "Do not release or assign production work without a runtime contract.",
+      escalation:
+        "Escalate to Owner or Chef if the runtime contract remains missing.",
+      tone: "danger",
+    }
+  }
+
+  const sharedQaBlockAction = qaPending
+    ? "Final release must stay blocked until QA or an authorized manager clears the gate."
+    : "Confirm final release authority before moving the batch forward."
+
+  switch (activeRole) {
+    case "owner":
+      return {
+        title: "Owner decision guidance",
+        nextAction: releaseBlocked
+          ? "Keep release governance active and verify that QA control is not bypassed."
+          : "Review release readiness and confirm the recipe can move through production governance.",
+        supportingActions: [
+          "Check that station readiness, QA dependency, and release control are aligned.",
+          "Use costing visibility only for business governance, not worker-facing execution.",
+          "Confirm that tenant policy controls remain respected before production release.",
+        ],
+        doNotAction: "Do not allow final release if QA dependency is still pending.",
+        escalation:
+          "Escalate to Chef, QA, or Production Manager if readiness and release status disagree.",
+        tone: summary.tone,
+      }
+
+    case "chef":
+      return {
+        title: "Chef decision guidance",
+        nextAction: hasWorkerTask
+          ? "Confirm the approved station task is operationally correct before production handoff."
+          : "Prepare or review the station task before production starts.",
+        supportingActions: [
+          "Check SOP readiness and make sure worker-facing instructions are clear.",
+          "Coordinate with Purchasing if ingredient source or production quantity affects execution.",
+          sharedQaBlockAction,
+        ],
+        doNotAction:
+          "Do not expose full recipe IP or R&D notes to worker-facing execution screens.",
+        escalation:
+          "Escalate to QA if the batch cannot pass cooling, allergen, label, or batch code checks.",
+        tone: summary.tone,
+      }
+
+    case "qa":
+      return {
+        title: "QA decision guidance",
+        nextAction:
+          "Verify cooling, allergen, label, and batch code checks before any release decision.",
+        supportingActions: [
+          "Keep the release blocked while QA checks are incomplete.",
+          "Confirm the release authority matches QA or authorized manager control.",
+          "Record any blocker before the batch moves to packaging or dispatch.",
+        ],
+        doNotAction:
+          "Do not approve release if any QA gate is incomplete or uncertain.",
+        escalation:
+          "Escalate to Chef or Production Manager if production pressure attempts to bypass QA.",
+        tone: qaPending ? "warning" : summary.tone,
+      }
+
+    case "worker":
+      return {
+        title: "Worker decision guidance",
+        nextAction:
+          "Follow only the approved station task shown for this recipe and station.",
+        supportingActions: [
+          "Use the worker instruction mode exactly as provided.",
+          "Ask the supervisor before changing method, quantity, timing, or station flow.",
+          "Wait for QA or supervisor clearance where the task requires it.",
+        ],
+        doNotAction:
+          "Do not use costing, R&D notes, or full recipe IP to make production decisions.",
+        escalation:
+          "Escalate to the supervisor if the task is unclear, blocked, or different from the station setup.",
+        tone: hasWorkerTask ? "success" : "warning",
+      }
+
+    case "purchasing-manager":
+      return {
+        title: "Purchasing decision guidance",
+        nextAction:
+          "Confirm ingredient source, cost source, and supply readiness for production demand.",
+        supportingActions: [
+          "Check whether the recipe needs supplier confirmation before batch planning.",
+          "Coordinate with Chef if ingredient substitution affects SOP or yield.",
+          "Coordinate with Storekeeper if stock issue or handover is not ready.",
+        ],
+        doNotAction:
+          "Do not approve operational release; release remains under QA or authorized manager control.",
+        escalation:
+          "Escalate shortage, supplier delay, or cost-source conflict before production starts.",
+        tone: summary.tone,
+      }
+
+    case "storekeeper":
+      return {
+        title: "Storekeeper decision guidance",
+        nextAction:
+          "Confirm stock issue to production and prepare the batch handover path.",
+        supportingActions: [
+          "Check ingredient need, stock link, and issue-to-production readiness.",
+          "Confirm batch handover state before the station starts execution.",
+          "Escalate stock shortage or missing batch identity immediately.",
+        ],
+        doNotAction:
+          "Do not release QA gate, view costing, or expose protected recipe IP.",
+        escalation:
+          "Escalate to Purchasing Manager or Production Manager if stock issue cannot be completed.",
+        tone: summary.tone,
+      }
+
+    case "production-manager":
+      return {
+        title: "Production decision guidance",
+        nextAction:
+          "Coordinate station readiness and keep release blocked until QA or authorized manager approval.",
+        supportingActions: [
+          "Confirm the station can execute the approved task now.",
+          "Track QA dependency before moving the batch to final release.",
+          "Escalate if QA gate remains pending while production capacity is waiting.",
+        ],
+        doNotAction: "Do not bypass QA gate or release blocked batches.",
+        escalation:
+          "Escalate to QA, Chef, or Owner if station readiness and release control conflict.",
+        tone: qaPending || releaseBlocked ? "warning" : summary.tone,
+      }
+
+    default:
+      return {
+        title: "Runtime decision guidance",
+        nextAction:
+          "Review recipe runtime readiness before taking any production action.",
+        supportingActions: [
+          "Check station assignment.",
+          "Check worker task readiness.",
+          "Check QA and release control.",
+        ],
+        doNotAction: "Do not move the recipe outside its permitted runtime path.",
+        escalation: "Escalate blocked runtime states to the responsible manager.",
+        tone: summary.tone,
+      }
+  }
+}
+
 function StatusPill({
   children,
   tone = "neutral",
@@ -463,6 +643,89 @@ function RuntimeReadinessSummaryView({
   )
 }
 
+function RuntimeDecisionGuidanceView({
+  activeRole,
+  runtime,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+}) {
+  const guidance = getRoleDecisionGuidance(activeRole, runtime)
+
+  return (
+    <section className="rounded-3xl border border-cyan-200/15 bg-cyan-200/[0.045] p-5">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-100/75">
+            RS-3E Decision Guidance
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            {guidance.title}
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            Role-specific next action generated from the visible runtime state,
+            QA dependency, station readiness, and release control.
+          </p>
+        </div>
+
+        <StatusPill tone={guidance.tone}>Next action required</StatusPill>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr]">
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">
+            Next Action
+          </p>
+          <p className="mt-2 text-base font-black leading-7 text-white">
+            {guidance.nextAction}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-red-300/15 bg-red-300/[0.045] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-100/65">
+            Do Not
+          </p>
+          <p className="mt-2 text-sm font-bold leading-6 text-red-50">
+            {guidance.doNotAction}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_1fr]">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">
+            Supporting Actions
+          </p>
+          <div className="mt-3 grid gap-2">
+            {guidance.supportingActions.map((action, index) => (
+              <div
+                key={`${action}-${index}`}
+                className="flex gap-3 rounded-xl border border-white/10 bg-black/15 p-3"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-lime-300/30 bg-lime-300/10 text-xs font-black text-lime-100">
+                  {index + 1}
+                </span>
+                <p className="text-sm font-semibold leading-6 text-white/75">
+                  {action}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-amber-300/15 bg-amber-300/[0.045] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-100/65">
+            Escalation
+          </p>
+          <p className="mt-2 text-sm font-bold leading-6 text-amber-50">
+            {guidance.escalation}
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function RuntimeOverviewBoard({
   recipes,
   activeRole,
@@ -470,8 +733,7 @@ function RuntimeOverviewBoard({
   recipes: RecipeStudioRecipe[]
   activeRole: RecipeStudioRole
 }) {
-  const activeRoleLabel =
-    ROLE_OPTIONS.find((role) => role.value === activeRole)?.label || "Role"
+  const activeRoleLabel = getRoleLabel(activeRole)
 
   const summaries = recipes.map((recipe, index) => {
     const summary = getRuntimeReadinessSummary(recipe.productionRuntime)
@@ -613,7 +875,7 @@ function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
             Recipe-to-Production Path
           </h3>
         </div>
-        <StatusPill tone="success">RS-3D Overview</StatusPill>
+        <StatusPill tone="success">RS-3E Guidance</StatusPill>
       </div>
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -766,8 +1028,7 @@ function RoleRuntimeView({
   roleRuntimeView: unknown
   activeRole: RecipeStudioRole
 }) {
-  const activeRoleLabel =
-    ROLE_OPTIONS.find((role) => role.value === activeRole)?.label || "Role"
+  const activeRoleLabel = getRoleLabel(activeRole)
 
   if (!roleRuntimeView) {
     return (
@@ -898,6 +1159,11 @@ function RecipeRuntimeCard({
         <div className="grid gap-5 p-5 md:p-6">
           <RuntimeReadinessSummaryView runtime={productionRuntime} />
 
+          <RuntimeDecisionGuidanceView
+            activeRole={activeRole}
+            runtime={productionRuntime}
+          />
+
           <RuntimePathView runtime={productionRuntime} />
 
           <div className="grid gap-5 xl:grid-cols-2">
@@ -918,12 +1184,17 @@ function RecipeRuntimeCard({
         <div className="p-5 md:p-6">
           <RuntimeReadinessSummaryView runtime={productionRuntime} />
 
+          <RuntimeDecisionGuidanceView
+            activeRole={activeRole}
+            runtime={productionRuntime}
+          />
+
           <div className="mt-5 rounded-3xl border border-amber-300/20 bg-amber-300/[0.06] p-5">
             <p className="text-sm font-bold text-amber-100">
               No productionRuntime object was returned for this recipe.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3D expects the API to return recipes[n].productionRuntime from
+              RS-3E expects the API to return recipes[n].productionRuntime from
               the RS-3A contract.
             </p>
           </div>
@@ -941,10 +1212,7 @@ function RecipeStudioRuntimePageContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const activeRoleLabel = useMemo(
-    () => ROLE_OPTIONS.find((role) => role.value === activeRole)?.label,
-    [activeRole]
-  )
+  const activeRoleLabel = useMemo(() => getRoleLabel(activeRole), [activeRole])
 
   useEffect(() => {
     let cancelled = false
@@ -1009,9 +1277,9 @@ function RecipeStudioRuntimePageContent() {
                 Production Runtime Bridge
               </h1>
               <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
-                RS-3D adds a cross-recipe runtime overview board above the
-                detailed cards, helping kitchen leaders scan all approved recipe
-                runtime states before opening each production contract.
+                RS-3E adds role-specific runtime decision guidance so each role
+                can understand the next safe action from the same protected
+                recipe runtime contract.
               </p>
             </div>
 
@@ -1126,7 +1394,7 @@ function RecipeStudioRuntimePageContent() {
               No recipes returned from the Recipe Studio API.
             </p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3D expects recipes to include productionRuntime from the RS-3A
+              RS-3E expects recipes to include productionRuntime from the RS-3A
               API contract.
             </p>
           </section>
