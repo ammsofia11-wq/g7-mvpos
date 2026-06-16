@@ -11,6 +11,12 @@ const navItems = [
     description: "System overview",
   },
   {
+    label: "Recipe Studio",
+    href: "/recipe-studio",
+    icon: "◬",
+    description: "Protected recipe lifecycle",
+  },
+  {
     label: "AI Chef",
     href: "/generate",
     icon: "⚡",
@@ -117,13 +123,14 @@ export default function AppLayout({
 
                 <p className="mt-3 text-[11px] leading-5 text-slate-400">
                   Intelligent kitchen operations built around supplier control,
-                  recipe creation, visual SOPs, production runtime, cold chain,
-                  inventory, workforce, approval governance, QC, dispatch, and
-                  delivery.
+                  protected recipe lifecycle, visual SOPs, production runtime,
+                  cold chain, inventory, workforce, approval governance, QC,
+                  dispatch, and delivery.
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {[
+                    "Recipe Studio",
                     "AI Chef",
                     "I Chef",
                     "Approval OS",
@@ -203,33 +210,55 @@ export default function AppLayout({
         </main>
       </div>
 
-      <div className="sticky top-0 z-50 flex items-center justify-between border-b border-white/10 bg-[#050814]/92 px-4 py-3 backdrop-blur-xl lg:hidden">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-[52px] w-[64px] items-center justify-center">
-            <img
-              src="/images/g7-logo-clean.png"
-              alt="G7 Culinary Intelligence"
-              className="h-full w-full object-contain"
-            />
-          </div>
+      <div className="sticky top-0 z-50 border-b border-white/10 bg-[#050814]/92 backdrop-blur-xl lg:hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            <div className="flex h-[52px] w-[64px] shrink-0 items-center justify-center">
+              <img
+                src="/images/g7-logo-clean.png"
+                alt="G7 Culinary Intelligence"
+                className="h-full w-full object-contain"
+              />
+            </div>
 
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-300">
-              Culinary Intelligence
-            </p>
+            <div className="min-w-0">
+              <p className="truncate text-[11px] font-black uppercase tracking-[0.18em] text-cyan-300">
+                Culinary Intelligence
+              </p>
 
-            <p className="mt-1 text-[9px] text-white/80">
-              Kitchen Operations OS
-            </p>
-          </div>
-        </Link>
+              <p className="mt-1 truncate text-[9px] text-white/80">
+                Kitchen Operations OS
+              </p>
+            </div>
+          </Link>
 
-        <Link
-          href="/approval"
-          className="rounded-full bg-cyan-300 px-4 py-2 text-xs font-black text-[#001018]"
-        >
-          Approval OS
-        </Link>
+          <Link
+            href="/recipe-studio"
+            className="shrink-0 rounded-full bg-cyan-300 px-4 py-2 text-xs font-black text-[#001018]"
+          >
+            Recipe Studio
+          </Link>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto px-4 pb-3">
+          {navItems.map((item) => {
+            const active = pathname === item.href
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`shrink-0 rounded-full border px-3 py-2 text-[11px] font-black transition ${
+                  active
+                    ? "border-cyan-300 bg-cyan-300 text-[#001018]"
+                    : "border-white/10 bg-white/[0.03] text-slate-300"
+                }`}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
+        </div>
       </div>
 
       <main className="min-w-0 overflow-x-hidden lg:hidden">
