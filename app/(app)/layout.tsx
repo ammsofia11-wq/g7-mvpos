@@ -14,7 +14,7 @@ const navItems = [
     label: "AI Chef",
     href: "/generate",
     icon: "⚡",
-    description: "Meal intelligence",
+    description: "Culinary intelligence",
   },
   {
     label: "I Chef",
@@ -56,7 +56,7 @@ const navItems = [
     label: "Systems",
     href: "/plans",
     icon: "◇",
-    description: "Nutrition systems",
+    description: "Operating systems",
   },
   {
     label: "Settings",
@@ -83,10 +83,12 @@ export default function AppLayout({
                 href="/"
                 className="group flex items-center gap-3 rounded-[22px] border border-white/5 bg-white/[0.02] p-2.5 transition hover:border-cyan-300/20 hover:bg-cyan-300/[0.04]"
               >
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-cyan-300 shadow-[0_0_34px_rgba(34,211,238,0.22)] transition group-hover:scale-[1.03]">
-                  <span className="text-[28px] font-black tracking-[-0.08em] text-[#020617]">
-                    G7
-                  </span>
+                <div className="flex h-14 w-16 shrink-0 items-center justify-center transition group-hover:scale-[1.03]">
+                  <img
+                    src="/images/g7-logo-clean.png"
+                    alt="G7 Culinary Intelligence"
+                    className="h-full w-full object-contain"
+                  />
                 </div>
 
                 <div className="min-w-0">
@@ -97,7 +99,7 @@ export default function AppLayout({
                   </p>
 
                   <p className="mt-1 truncate text-[9px] uppercase tracking-[0.14em] text-white/75">
-                    Chef-Based Nutrition OS
+                    Kitchen Operations OS
                   </p>
                 </div>
               </Link>
@@ -114,9 +116,10 @@ export default function AppLayout({
                 </h3>
 
                 <p className="mt-3 text-[11px] leading-5 text-slate-400">
-                  Nutrition intelligence built around flavor, identity,
-                  kitchen execution, inventory control, procurement, workforce,
-                  approval governance, and recipe documentation.
+                  Intelligent kitchen operations built around supplier control,
+                  recipe creation, visual SOPs, production runtime, cold chain,
+                  inventory, workforce, approval governance, QC, dispatch, and
+                  delivery.
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -202,19 +205,21 @@ export default function AppLayout({
 
       <div className="sticky top-0 z-50 flex items-center justify-between border-b border-white/10 bg-[#050814]/92 px-4 py-3 backdrop-blur-xl lg:hidden">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[18px] bg-cyan-300 shadow-[0_0_26px_rgba(34,211,238,0.22)]">
-            <span className="text-[24px] font-black tracking-[-0.08em] text-[#020617]">
-              G7
-            </span>
+          <div className="flex h-[52px] w-[64px] items-center justify-center">
+            <img
+              src="/images/g7-logo-clean.png"
+              alt="G7 Culinary Intelligence"
+              className="h-full w-full object-contain"
+            />
           </div>
 
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-300">
-              Culinary OS
+              Culinary Intelligence
             </p>
 
             <p className="mt-1 text-[9px] text-white/80">
-              Chef-Based Nutrition OS
+              Kitchen Operations OS
             </p>
           </div>
         </Link>

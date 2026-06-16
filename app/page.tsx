@@ -7,10 +7,12 @@ export default function Home() {
         <div className="grid w-full items-center gap-10 lg:grid-cols-[0.95fr_0.85fr]">
           <div className="max-w-xl">
             <div className="mb-8 flex items-center gap-5">
-              <div className="flex h-[92px] w-[92px] items-center justify-center rounded-[28px] bg-cyan-300 shadow-[0_0_45px_rgba(34,211,238,0.28)]">
-                <span className="text-[42px] font-black tracking-[-0.08em] text-[#020617]">
-                  G7
-                </span>
+              <div className="flex h-[92px] w-[112px] items-center justify-center">
+                <img
+                  src="/images/g7-logo-clean.png"
+                  alt="G7 Culinary Intelligence"
+                  className="h-full w-full object-contain"
+                />
               </div>
 
               <div>
@@ -19,7 +21,7 @@ export default function Home() {
                 </p>
 
                 <p className="mt-2 text-[12px] uppercase tracking-[0.28em] text-slate-500">
-                  Chef-Based Nutrition OS
+                  Kitchen Operations OS
                 </p>
               </div>
             </div>
@@ -29,35 +31,36 @@ export default function Home() {
               className="text-right text-[34px] font-black leading-[1.2] tracking-[-0.02em] text-white sm:text-[44px] lg:text-[58px]"
             >
               <span className="bg-gradient-to-l from-[#FFD86B] via-[#FFF1B8] to-white bg-clip-text text-transparent drop-shadow-[0_0_14px_rgba(255,214,107,0.55)]">
-                اختار النظام اللي شبهك
+                نظام تشغيل ذكي للمطابخ المركزية
               </span>
             </h1>
 
             <p className="mt-4 text-[20px] font-black leading-7 text-white">
-              Choose the system that feels like you.
+              From supplier to customer, every batch under control.
             </p>
 
             <p className="mt-5 max-w-lg text-[15px] leading-7 text-slate-300">
-              Chef-crafted AI nutrition designed around identity, flavor
-              intelligence, real-life ingredients, kitchen execution, inventory
-              control, and your own operating system.
+              G7 is an intelligent kitchen operations system built for central
+              kitchens: supplier control, recipe creation, visual SOPs,
+              workforce runtime, cold chain, inventory, QC, dispatch, and
+              delivery.
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
               <a href="/dashboard" className="g7-button-primary">
-                Enter Your System
+                Enter Kitchen OS
               </a>
 
-              <a href="/generate" className="g7-button-secondary">
-                Start AI Chef
+              <a href="/kitchen" className="g7-button-secondary">
+                Open Runtime Floor
               </a>
             </div>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              <MiniCard title="AI Chef" text="Personalized meal intelligence." />
-              <MiniCard title="Weekly OS" text="7-day orchestration system." />
-              <MiniCard title="Kitchen OS" text="Chef execution & batch control." />
-              <MiniCard title="Inventory OS" text="Procurement & stock intelligence." />
+              <MiniCard title="Recipe Studio" text="R&D, SOPs, and dish approval." />
+              <MiniCard title="Kitchen OS" text="Production runtime and batch control." />
+              <MiniCard title="Workforce OS" text="Station pressure and worker intelligence." />
+              <MiniCard title="Inventory OS" text="Procurement, stock, and supplier logic." />
             </div>
           </div>
 
@@ -66,7 +69,7 @@ export default function Home() {
               <div className="relative">
                 <img
                   src="/images/keto Fettuccini Beef Bolognese.png"
-                  alt="Keto Fettuccini Beef Bolognese"
+                  alt="Kitchen operations dish standard"
                   className="h-[340px] w-full object-cover brightness-[1.08] contrast-[1.06] saturate-[1.08]"
                 />
 
@@ -74,26 +77,27 @@ export default function Home() {
 
                 <div className="absolute left-0 top-0 p-6">
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300 drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]">
-                    Today’s AI Culinary System
+                    Today’s Kitchen Runtime Standard
                   </p>
                 </div>
               </div>
 
               <div className="p-6">
                 <h2 className="text-[30px] font-black leading-[1] tracking-[-0.04em] text-white">
-                  Keto Fettuccini
-                  <span className="block text-cyan-300">Beef Bolognese</span>
+                  Central Kitchen
+                  <span className="block text-cyan-300">Operating Brain</span>
                 </h2>
 
                 <p className="mt-4 max-w-md text-[14px] leading-6 text-slate-300">
-                  Rich, savory beef bolognese over keto fettuccini. High
-                  protein, low carb, built for real-life kitchen execution.
+                  Control recipes, batches, workers, cold chain, quality,
+                  packaging, dispatch, and delivery from one intelligent
+                  operating system.
                 </p>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  <Metric label="Energy" value="540" note="kcal" />
-                  <Metric label="Protein" value="45g" note="fuel" />
-                  <Metric label="Mood" value="Savory" note="bold" />
+                  <Metric label="Runtime" value="Live" note="control" />
+                  <Metric label="Scope" value="360°" note="operation" />
+                  <Metric label="Chain" value="Cold" note="tracked" />
                 </div>
 
                 <div className="mt-6 rounded-[24px] border border-white/10 bg-black/20 p-4">
@@ -102,8 +106,9 @@ export default function Home() {
                   </p>
 
                   <p className="mt-2 text-[13px] leading-6 text-slate-300">
-                    A chef-based nutrition operating system built for real
-                    humans, real kitchens, and repeatable healthy behavior.
+                    Not a restaurant POS. A kitchen operations OS designed to
+                    make central kitchen execution repeatable, intelligent, and
+                    scalable in any city.
                   </p>
                 </div>
               </div>
