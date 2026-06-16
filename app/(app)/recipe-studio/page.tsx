@@ -413,10 +413,10 @@ export default function RecipeStudioPage() {
   const activeStepNumber = studioTabs.indexOf(activeTab) + 1
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#06101D] text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(118,228,255,0.16),transparent_34%),radial-gradient(circle_at_top_right,rgba(199,138,74,0.12),transparent_30%),linear-gradient(180deg,#06101D_0%,#071525_48%,#050914_100%)]" />
+    <div className="relative isolate min-h-screen overflow-x-hidden bg-[#06101D] text-white">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_top_left,rgba(118,228,255,0.16),transparent_34%),radial-gradient(circle_at_top_right,rgba(199,138,74,0.12),transparent_30%),linear-gradient(180deg,#06101D_0%,#071525_48%,#050914_100%)]" />
 
-      <main className="relative mx-auto flex w-full max-w-[1180px] flex-col gap-4 px-3 py-4 sm:px-4 lg:px-5 lg:py-5">
+      <main className="relative z-10 mx-auto flex w-full max-w-[1180px] flex-col gap-4 px-3 py-4 sm:px-4 lg:px-5 lg:py-5">
         <section className="min-w-0 rounded-2xl border border-[#76E4FF]/15 bg-[#0B1B2F]/75 p-4 shadow-2xl shadow-black/30 backdrop-blur sm:p-5">
           <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0 flex-1">
