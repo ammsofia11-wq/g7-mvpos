@@ -11,6 +11,12 @@ const navItems = [
     description: "System overview",
   },
   {
+    label: "Command OS",
+    href: "/command",
+    icon: "⬡",
+    description: "Executive command center",
+  },
+  {
     label: "Recipe Studio",
     href: "/recipe-studio",
     icon: "◬",
@@ -228,10 +234,10 @@ export default function AppLayout({
           </Link>
 
           <Link
-            href="/recipe-studio"
+            href="/command"
             className="shrink-0 rounded-full bg-cyan-300 px-4 py-2 text-xs font-black text-[#001018]"
           >
-            Recipe Studio
+            Command OS
           </Link>
         </div>
 
