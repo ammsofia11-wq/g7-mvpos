@@ -133,6 +133,27 @@ type RuntimeHandoffSummary = {
   tone: RuntimeTone
 }
 
+type RuntimeWorkPacket = {
+  roleLabel: string
+  packetTitle: string
+  primaryFocus: string
+  whatToKnow: string
+  myActions: string[]
+  doNot: string[]
+  escalation: string
+  handoffTo: string
+  visibleData: string[]
+  protectedData: string[]
+  tone: RuntimeTone
+}
+
+type DecisionCenterTab =
+  | "handoff"
+  | "flags"
+  | "resolution"
+  | "guidance"
+  | "details"
+
 const DEFAULT_RUNTIME_PATH = [
   "Recipe Approved",
   "Batch Ready",
@@ -273,6 +294,23 @@ function getRecipeTitle(recipe: RecipeStudioRecipe, index: number) {
     recipe.id ||
     `Recipe ${index + 1}`
   )
+}
+
+function getRecipeAnchorId(recipe: RecipeStudioRecipe, index: number) {
+  const rawId =
+    recipe.id ||
+    recipe.recipeId ||
+    recipe.name ||
+    recipe.recipeName ||
+    recipe.title ||
+    `recipe-${index + 1}`
+
+  const safeId = rawId
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+
+  return `recipe-runtime-${safeId || index + 1}`
 }
 
 function getRuntimePath(runtime?: RecipeProductionRuntime) {
@@ -1386,6 +1424,901 @@ function RuntimeHandoffSummaryView({
   )
 }
 
+
+function getRoleWorkPacket({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}): RuntimeWorkPacket {
+  const roleLabel = getRoleLabel(activeRole)
+  const handoff = getRuntimeHandoffSummary({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+  const guidance = getRoleDecisionGuidance(activeRole, runtime)
+  const station = formatValue(runtime?.stationTask?.station)
+  const taskId = compactTaskId(runtime?.stationTask?.taskId)
+  const releaseStatus = formatValue(runtime?.releaseControl?.releaseStatus)
+  const qaAuthority = formatValue(runtime?.qaGate?.releaseAuthority)
+
+  if (!runtime) {
+    return {
+      roleLabel,
+      packetTitle: `${roleLabel} Runtime Packet`,
+      primaryFocus: "Restore runtime contract before any production handoff.",
+      whatToKnow:
+        "This recipe does not have a productionRuntime contract, so it cannot safely become a station task, QA gate, or release decision.",
+      myActions: [
+        "Keep this recipe outside active production scheduling.",
+        "Escalate the missing runtime contract to the responsible owner.",
+        "Wait for the API contract before assigning workers or QA checks.",
+      ],
+      doNot: [
+        "Do not create production tasks manually.",
+        "Do not release the recipe.",
+        "Do not expose protected recipe data to fill missing runtime fields.",
+      ],
+      escalation: "Owner / Chef / Engineering must restore the runtime contract.",
+      handoffTo: handoff.nextOwner,
+      visibleData: ["Runtime missing", "No safe handoff available"],
+      protectedData: ["Recipe IP", "Costing", "Release controls"],
+      tone: "danger",
+    }
+  }
+
+  const commonProtectedData = costingVisible
+    ? ["Worker-facing recipe IP", "Release authority controls"]
+    : ["Costing", "Margin", "Supplier cost", "Recipe IP", "Release controls"]
+
+  switch (activeRole) {
+    case "owner":
+      return {
+        roleLabel,
+        packetTitle: "Owner Governance Packet",
+        primaryFocus: handoff.nextHandoffAction,
+        whatToKnow:
+          "Owner sees the control picture: runtime readiness, QA dependency, protected release, costing visibility, and governance risk.",
+        myActions: [
+          "Review release governance before production movement.",
+          "Confirm QA and chef authority are not bypassed.",
+          "Use costing visibility for business control only, not worker execution.",
+        ],
+        doNot: [
+          "Do not approve release while QA is pending.",
+          "Do not allow protected costing or margin data into worker views.",
+          "Do not treat readiness visibility as final production authorization.",
+        ],
+        escalation: "Escalate conflicts to Chef, QA, or Production Manager.",
+        handoffTo: handoff.nextOwner,
+        visibleData: [
+          `Station: ${station}`,
+          `Release: ${handoff.releaseReady}`,
+          `Blocked by: ${handoff.blockedBy}`,
+          `Costing visible: ${costingVisible ? "Yes" : "No"}`,
+        ],
+        protectedData: commonProtectedData,
+        tone: handoff.tone,
+      }
+
+    case "chef":
+      return {
+        roleLabel,
+        packetTitle: "Chef Production Packet",
+        primaryFocus: guidance.nextAction,
+        whatToKnow:
+          "Chef owns recipe execution quality, station task accuracy, SOP readiness, and QA handoff support.",
+        myActions: [
+          "Confirm the approved station task is operationally correct.",
+          "Check worker-facing SOP clarity before handoff.",
+          "Coordinate with QA if cooling, allergen, label, or batch code evidence is unclear.",
+        ],
+        doNot: [
+          "Do not expose full R&D notes or protected recipe IP to workers.",
+          "Do not bypass QA release protection.",
+          "Do not let station execution start if the task conflicts with SOP.",
+        ],
+        escalation: guidance.escalation,
+        handoffTo: handoff.nextOwner,
+        visibleData: [
+          `Station: ${station}`,
+          `Task: ${taskId}`,
+          `QA: ${handoff.qaReady}`,
+          `Release: ${releaseStatus}`,
+        ],
+        protectedData: commonProtectedData,
+        tone: handoff.tone,
+      }
+
+    case "qa":
+      return {
+        roleLabel,
+        packetTitle: "QA Gate Packet",
+        primaryFocus:
+          "Clear, hold, reject, or escalate the QA gate before release.",
+        whatToKnow:
+          "QA sees only the safety and release gate evidence needed to protect the batch before packaging, dispatch, or customer handoff.",
+        myActions: [
+          "Verify cooling, allergen, label, and batch code checks.",
+          "Keep release blocked while any QA check is incomplete.",
+          "Record the blocker and escalate pressure to bypass QA.",
+        ],
+        doNot: [
+          "Do not approve release if any gate is uncertain.",
+          "Do not use costing or recipe IP to make QA decisions.",
+          "Do not let production pressure override food safety gates.",
+        ],
+        escalation: guidance.escalation,
+        handoffTo: handoff.nextOwner,
+        visibleData: [
+          `Release authority: ${qaAuthority}`,
+          `QA status: ${handoff.qaReady}`,
+          `Blocked by: ${handoff.blockedBy}`,
+          `Release: ${handoff.releaseReady}`,
+        ],
+        protectedData: ["Costing", "Margin", "Supplier cost", "Owner governance"],
+        tone: handoff.tone,
+      }
+
+    case "worker":
+      return {
+        roleLabel,
+        packetTitle: "Worker Station Packet",
+        primaryFocus:
+          "Follow only the approved station task and ask the supervisor before any change.",
+        whatToKnow:
+          "Worker sees the task packet only: station, task identity, instruction mode, supervisor check, and safe execution limits.",
+        myActions: [
+          "Follow the approved station task exactly.",
+          "Use the worker instruction mode shown for this station.",
+          "Ask the supervisor if method, timing, quantity, or setup is unclear.",
+        ],
+        doNot: [
+          "Do not edit recipe, costing, QA, release, or batch policy data.",
+          "Do not start if station setup does not match the task.",
+          "Do not make substitutions or process changes without supervisor approval.",
+        ],
+        escalation: guidance.escalation,
+        handoffTo: "Sous Chef / Station Lead",
+        visibleData: [
+          `Station: ${station}`,
+          `Task: ${taskId}`,
+          `Instruction: ${formatValue(runtime.stationTask?.workerInstructionMode)}`,
+          `Supervisor check: ${formatValue(runtime.stationTask?.requiresSupervisorCheck)}`,
+        ],
+        protectedData: [
+          "Costing",
+          "Margin",
+          "Full recipe IP",
+          "QA approval controls",
+          "Release controls",
+        ],
+        tone: runtime.stationTask?.taskId ? "success" : "warning",
+      }
+
+    case "purchasing-manager":
+      return {
+        roleLabel,
+        packetTitle: "Purchasing Readiness Packet",
+        primaryFocus:
+          "Confirm ingredient source, cost source, and supply readiness before production demand.",
+        whatToKnow:
+          "Purchasing sees the supply side of the recipe handoff, not QA release authority or worker execution controls.",
+        myActions: [
+          "Confirm supplier readiness for required ingredients.",
+          "Escalate shortage, substitution, or cost-source conflict.",
+          "Coordinate with Chef if ingredient change affects SOP or yield.",
+        ],
+        doNot: [
+          "Do not approve operational release.",
+          "Do not change SOP or worker task flow.",
+          "Do not expose supplier cost where the role is not allowed.",
+        ],
+        escalation: guidance.escalation,
+        handoffTo: "Chef / Storekeeper / Production Manager",
+        visibleData: [
+          `Station demand: ${station}`,
+          `Task readiness: ${handoff.workerTaskReady}`,
+          `Release state: ${handoff.releaseReady}`,
+        ],
+        protectedData: costingVisible
+          ? ["Release controls", "Worker task editing"]
+          : commonProtectedData,
+        tone: handoff.tone,
+      }
+
+    case "storekeeper":
+      return {
+        roleLabel,
+        packetTitle: "Storekeeper Issue Packet",
+        primaryFocus:
+          "Confirm stock issue, batch handover, and storage movement readiness.",
+        whatToKnow:
+          "Storekeeper sees the stock and batch movement packet needed to prepare production without touching recipe IP or release authority.",
+        myActions: [
+          "Prepare stock issue to production.",
+          "Confirm batch handover identity and storage readiness.",
+          "Escalate missing stock or unclear batch identity immediately.",
+        ],
+        doNot: [
+          "Do not release QA gates.",
+          "Do not view or expose protected costing.",
+          "Do not alter recipe or station task instructions.",
+        ],
+        escalation: guidance.escalation,
+        handoffTo: "Purchasing Manager / Production Manager",
+        visibleData: [
+          `Station: ${station}`,
+          `Batch task: ${taskId}`,
+          `Worker task: ${handoff.workerTaskReady}`,
+        ],
+        protectedData: commonProtectedData,
+        tone: handoff.tone,
+      }
+
+    case "production-manager":
+      return {
+        roleLabel,
+        packetTitle: "Production Handoff Packet",
+        primaryFocus:
+          "Coordinate station readiness while keeping release blocked until QA or authorized manager approval.",
+        whatToKnow:
+          "Production sees the runtime movement picture: station, task readiness, QA blocker, release hold, and next owner.",
+        myActions: [
+          "Confirm the station can execute the approved task now.",
+          "Track QA dependency before final release.",
+          "Escalate if QA hold blocks capacity or schedule.",
+        ],
+        doNot: [
+          "Do not bypass QA gate.",
+          "Do not release blocked batches.",
+          "Do not assign worker execution outside the approved task packet.",
+        ],
+        escalation: guidance.escalation,
+        handoffTo: handoff.nextOwner,
+        visibleData: [
+          `Station: ${station}`,
+          `Task: ${taskId}`,
+          `Blocked by: ${handoff.blockedBy}`,
+          `Release: ${handoff.releaseReady}`,
+        ],
+        protectedData: commonProtectedData,
+        tone: handoff.tone,
+      }
+
+    default:
+      return {
+        roleLabel,
+        packetTitle: `${roleLabel} Runtime Packet`,
+        primaryFocus: handoff.nextHandoffAction,
+        whatToKnow:
+          "This role receives a safe operational packet based on visible runtime state and permissions.",
+        myActions: guidance.supportingActions,
+        doNot: [guidance.doNotAction],
+        escalation: guidance.escalation,
+        handoffTo: handoff.nextOwner,
+        visibleData: [
+          `Station: ${station}`,
+          `Task: ${taskId}`,
+          `Release: ${handoff.releaseReady}`,
+        ],
+        protectedData: commonProtectedData,
+        tone: handoff.tone,
+      }
+  }
+}
+
+function getDecisionTabs(activeRole: RecipeStudioRole): {
+  value: DecisionCenterTab
+  label: string
+}[] {
+  if (activeRole === "worker") {
+    return [
+      { value: "guidance", label: "My Steps" },
+      { value: "handoff", label: "Handoff" },
+      { value: "details", label: "Task Details" },
+    ]
+  }
+
+  if (activeRole === "qa") {
+    return [
+      { value: "handoff", label: "Handoff" },
+      { value: "flags", label: "Flags" },
+      { value: "resolution", label: "Resolution" },
+      { value: "guidance", label: "QA Actions" },
+      { value: "details", label: "QA Details" },
+    ]
+  }
+
+  return [
+    { value: "handoff", label: "Handoff" },
+    { value: "flags", label: "Flags" },
+    { value: "resolution", label: "Resolution" },
+    { value: "guidance", label: "Guidance" },
+    { value: "details", label: "Runtime Details" },
+  ]
+}
+
+function WorkPacketList({
+  title,
+  items,
+  tone = "neutral",
+}: {
+  title: string
+  items: string[]
+  tone?: RuntimeTone
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">
+        {title}
+      </p>
+      <div className="mt-3 grid gap-2">
+        {items.map((item, index) => (
+          <div
+            key={`${title}-${item}-${index}`}
+            className="flex gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3"
+          >
+            <span
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-black ${getToneClasses(
+                tone
+              )}`}
+            >
+              {index + 1}
+            </span>
+            <p className="text-sm font-semibold leading-6 text-white/75">
+              {item}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function RuntimeWorkPacketView({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}) {
+  const packet = getRoleWorkPacket({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+
+  return (
+    <section className="rounded-3xl border border-lime-300/15 bg-lime-300/[0.045] p-5">
+      <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-lime-100/80">
+            RS-3I My Runtime Work Packet
+          </p>
+          <h3 className="mt-1 text-xl font-black text-white">
+            {packet.packetTitle}
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            {packet.whatToKnow}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <StatusPill tone={packet.tone}>Role: {packet.roleLabel}</StatusPill>
+          <StatusPill tone={packet.tone}>Handoff: {packet.handoffTo}</StatusPill>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-lime-300/20 bg-lime-300/[0.07] p-4">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-100/70">
+          Primary Focus
+        </p>
+        <p className="mt-2 text-base font-black leading-7 text-white">
+          {packet.primaryFocus}
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <WorkPacketList
+          title="My Actions"
+          items={packet.myActions}
+          tone={packet.tone}
+        />
+
+        <WorkPacketList
+          title="Do Not Touch"
+          items={packet.doNot}
+          tone="danger"
+        />
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-3">
+        <div className="rounded-2xl border border-sky-200/15 bg-sky-200/[0.045] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-100/65">
+            Visible To Me
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {packet.visibleData.map((item) => (
+              <StatusPill key={item} tone={packet.tone}>
+                {item}
+              </StatusPill>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-red-300/15 bg-red-300/[0.045] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-100/65">
+            Protected From This Packet
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {packet.protectedData.map((item) => (
+              <StatusPill key={item} tone="neutral">
+                {item}
+              </StatusPill>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-amber-300/15 bg-amber-300/[0.045] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-100/65">
+            Escalation
+          </p>
+          <p className="mt-2 text-sm font-bold leading-6 text-amber-50">
+            {packet.escalation}
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function RecipeCommandStrip({
+  recipe,
+  index,
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  recipe: RecipeStudioRecipe
+  index: number
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}) {
+  const summary = getRuntimeReadinessSummary(runtime)
+  const handoff = getRuntimeHandoffSummary({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+  const station = formatValue(runtime?.stationTask?.station)
+  const taskId = compactTaskId(runtime?.stationTask?.taskId)
+
+  return (
+    <section className="rounded-3xl border border-cyan-200/15 bg-cyan-200/[0.045] p-5">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.26em] text-cyan-100/70">
+            Recipe Command Card
+          </p>
+          <h3 className="mt-1 text-2xl font-black text-white">
+            {getRecipeTitle(recipe, index)}
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            One-screen command view: status, station, blocker, next owner, and
+            the safest next production handoff for the current role.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <StatusPill tone={summary.tone}>{summary.productionReadiness}</StatusPill>
+          <StatusPill tone={handoff.tone}>Next: {handoff.nextOwner}</StatusPill>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <RuntimeSummaryItem label="Station" value={station} />
+        <RuntimeSummaryItem label="Task" value={taskId} />
+        <RuntimeSummaryItem
+          label="QA"
+          value={handoff.qaReady}
+          tone={handoff.qaReady.toLowerCase().includes("pending") ? "warning" : handoff.tone}
+        />
+        <RuntimeSummaryItem
+          label="Release"
+          value={handoff.releaseReady}
+          tone={handoff.releaseReady.toLowerCase().includes("blocked") ? "danger" : handoff.tone}
+        />
+        <RuntimeSummaryItem label="Role" value={getRoleLabel(activeRole)} />
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[0.75fr_1.25fr]">
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">
+            Blocked By
+          </p>
+          <p className="mt-2 text-sm font-black leading-6 text-white">
+            {handoff.blockedBy}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-lime-300/15 bg-lime-300/[0.045] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-100/65">
+            Primary Safe Action
+          </p>
+          <p className="mt-2 text-sm font-bold leading-6 text-lime-50">
+            {handoff.nextHandoffAction}
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CompactRuntimeExceptionResolutionMatrixView({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}) {
+  const flags = getRuntimeExceptionFlags({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+
+  const resolutions = flags.map((flag) =>
+    getRuntimeExceptionResolution({
+      flag,
+      activeRole,
+      runtime,
+    })
+  )
+
+  const releaseBlockCount = resolutions.filter((resolution) =>
+    resolution.releaseEffect.toLowerCase().includes("block")
+  ).length
+
+  return (
+    <section className="rounded-3xl border border-violet-200/15 bg-violet-200/[0.045] p-5">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-violet-100/75">
+            Compact RS-3G Resolution
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            Flag → owner → safe action
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            Compressed decision matrix for fast cockpit use. Open a row only
+            when the role needs the full impact and do-not rule.
+          </p>
+        </div>
+
+        <StatusPill tone={releaseBlockCount > 0 ? "danger" : "neutral"}>
+          Release Blocks: {releaseBlockCount}
+        </StatusPill>
+      </div>
+
+      <div className="grid gap-3">
+        {resolutions.map((resolution) => (
+          <details
+            key={`${resolution.label}-${resolution.owner}`}
+            className={`group rounded-2xl border p-4 ${getToneClasses(
+              resolution.tone
+            )}`}
+          >
+            <summary className="flex cursor-pointer list-none flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] opacity-80">
+                  {resolution.label}
+                </p>
+                <h4 className="mt-1 text-base font-black text-white">
+                  {resolution.owner}
+                </h4>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <StatusPill tone={resolution.tone}>
+                  {resolution.releaseEffect}
+                </StatusPill>
+                <StatusPill tone="neutral">Open details</StatusPill>
+              </div>
+            </summary>
+
+            <div className="mt-4 grid gap-3 xl:grid-cols-2">
+              <ResolutionInfoRow
+                label="Required Decision"
+                value={resolution.requiredDecision}
+              />
+              <ResolutionInfoRow
+                label="Safe Next Action"
+                value={resolution.safeNextAction}
+              />
+              <ResolutionInfoRow
+                label="Runtime Impact"
+                value={resolution.runtimeImpact}
+              />
+              <ResolutionInfoRow
+                label="Do Not"
+                value={resolution.doNotAction}
+                danger
+              />
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <RuntimeSummaryItem
+                label="Worker"
+                value={resolution.workerTaskEffect}
+                tone={resolution.tone}
+              />
+              <RuntimeSummaryItem
+                label="QA"
+                value={resolution.qaEffect}
+                tone={resolution.tone}
+              />
+              <RuntimeSummaryItem
+                label="Chef"
+                value={resolution.chefApprovalEffect}
+                tone={resolution.tone}
+              />
+            </div>
+          </details>
+        ))}
+      </div>
+
+      {activeRole !== "worker" ? (
+        <details className="mt-4 rounded-2xl border border-violet-200/15 bg-black/20 p-4">
+          <summary className="cursor-pointer text-sm font-black uppercase tracking-[0.18em] text-violet-100/70">
+            Open full RS-3G matrix only when audit detail is needed
+          </summary>
+          <div className="mt-4">
+            <RuntimeExceptionResolutionMatrixView
+              activeRole={activeRole}
+              runtime={runtime}
+              costingVisible={costingVisible}
+            />
+          </div>
+        </details>
+      ) : null}
+    </section>
+  )
+}
+
+function RuntimeDetailsAccordion({
+  activeRole,
+  runtime,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+}) {
+  if (!runtime) {
+    return (
+      <section className="rounded-3xl border border-amber-300/20 bg-amber-300/[0.06] p-5">
+        <p className="text-sm font-bold text-amber-100">
+          No productionRuntime object was returned for this recipe.
+        </p>
+        <p className="mt-2 text-sm leading-6 text-white/60">
+          RS-3I keeps runtime details closed because the runtime contract is
+          unavailable.
+        </p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="grid gap-4">
+      <details className="rounded-3xl border border-white/10 bg-white/[0.035] p-4">
+        <summary className="cursor-pointer text-sm font-black uppercase tracking-[0.18em] text-white/70">
+          Readiness Snapshot
+        </summary>
+        <div className="mt-4">
+          <RuntimeReadinessSummaryView runtime={runtime} />
+        </div>
+      </details>
+
+      <details open className="rounded-3xl border border-white/10 bg-white/[0.035] p-4">
+        <summary className="cursor-pointer text-sm font-black uppercase tracking-[0.18em] text-white/70">
+          Runtime Path
+        </summary>
+        <div className="mt-4">
+          <RuntimePathView runtime={runtime} />
+        </div>
+      </details>
+
+      <details className="rounded-3xl border border-white/10 bg-white/[0.035] p-4">
+        <summary className="cursor-pointer text-sm font-black uppercase tracking-[0.18em] text-white/70">
+          Station Task
+        </summary>
+        <div className="mt-4">
+          <StationTaskView stationTask={runtime.stationTask} />
+        </div>
+      </details>
+
+      {activeRole !== "worker" ? (
+        <details className="rounded-3xl border border-white/10 bg-white/[0.035] p-4">
+          <summary className="cursor-pointer text-sm font-black uppercase tracking-[0.18em] text-white/70">
+            QA Gate
+          </summary>
+          <div className="mt-4">
+            <QaGateView qaGate={runtime.qaGate} />
+          </div>
+        </details>
+      ) : null}
+
+      {activeRole !== "worker" ? (
+        <details className="rounded-3xl border border-white/10 bg-white/[0.035] p-4">
+          <summary className="cursor-pointer text-sm font-black uppercase tracking-[0.18em] text-white/70">
+            Release Control
+          </summary>
+          <div className="mt-4">
+            <ReleaseControlView releaseControl={runtime.releaseControl} />
+          </div>
+        </details>
+      ) : null}
+
+      <details className="rounded-3xl border border-white/10 bg-white/[0.035] p-4">
+        <summary className="cursor-pointer text-sm font-black uppercase tracking-[0.18em] text-white/70">
+          Role Runtime View
+        </summary>
+        <div className="mt-4">
+          <RoleRuntimeView
+            roleRuntimeView={runtime.roleRuntimeView}
+            activeRole={activeRole}
+          />
+        </div>
+      </details>
+    </section>
+  )
+}
+
+function DecisionCenterView({
+  activeRole,
+  runtime,
+  costingVisible,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  costingVisible: boolean
+}) {
+  const tabs = getDecisionTabs(activeRole)
+  const [activeTab, setActiveTab] = useState<DecisionCenterTab>(tabs[0].value)
+
+  const activeTabIsVisible = tabs.some((tab) => tab.value === activeTab)
+  const selectedTab = activeTabIsVisible ? activeTab : tabs[0].value
+
+  return (
+    <section className="rounded-3xl border border-cyan-200/15 bg-cyan-200/[0.035] p-5">
+      <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-100/70">
+            RS-3I Decision Center
+          </p>
+          <h3 className="mt-1 text-xl font-black text-white">
+            Open only what this role needs
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+            RS-3F flags, RS-3G resolution, RS-3H handoff, and RS-3E guidance are
+            still available, but compressed into role-safe panels instead of one
+            long report.
+          </p>
+        </div>
+
+        <StatusPill tone="success">Cockpit mode</StatusPill>
+      </div>
+
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        {tabs.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => setActiveTab(tab.value)}
+            className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-bold transition ${
+              selectedTab === tab.value
+                ? "border-cyan-200/50 bg-cyan-200/15 text-cyan-50"
+                : "border-white/10 bg-white/[0.04] text-white/60 hover:border-white/25 hover:text-white"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {selectedTab === "handoff" ? (
+        <RuntimeHandoffSummaryView
+          activeRole={activeRole}
+          runtime={runtime}
+          costingVisible={costingVisible}
+        />
+      ) : null}
+
+      {selectedTab === "flags" ? (
+        <RuntimeExceptionFlagsView
+          activeRole={activeRole}
+          runtime={runtime}
+          costingVisible={costingVisible}
+        />
+      ) : null}
+
+      {selectedTab === "resolution" ? (
+        <CompactRuntimeExceptionResolutionMatrixView
+          activeRole={activeRole}
+          runtime={runtime}
+          costingVisible={costingVisible}
+        />
+      ) : null}
+
+      {selectedTab === "guidance" ? (
+        <RuntimeDecisionGuidanceView activeRole={activeRole} runtime={runtime} />
+      ) : null}
+
+      {selectedTab === "details" ? (
+        <RuntimeDetailsAccordion activeRole={activeRole} runtime={runtime} />
+      ) : null}
+    </section>
+  )
+}
+
+function RuntimeRecipeRail({
+  recipes,
+  activeRole,
+  costingVisible,
+}: {
+  recipes: RecipeStudioRecipe[]
+  activeRole: RecipeStudioRole
+  costingVisible: boolean
+}) {
+  return (
+    <nav className="sticky top-3 z-20 rounded-[2rem] border border-white/10 bg-[#071421]/95 p-3 shadow-2xl shadow-black/30 backdrop-blur">
+      <div className="flex gap-3 overflow-x-auto pb-1">
+        {recipes.map((recipe, index) => {
+          const runtime = recipe.productionRuntime
+          const summary = getRuntimeReadinessSummary(runtime)
+          const handoff = getRuntimeHandoffSummary({
+            activeRole,
+            runtime,
+            costingVisible,
+          })
+
+          return (
+            <a
+              key={getRecipeAnchorId(recipe, index)}
+              href={`#${getRecipeAnchorId(recipe, index)}`}
+              className="min-w-[260px] rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition hover:border-cyan-200/30 hover:bg-cyan-200/[0.045]"
+            >
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-100/65">
+                Runtime Packet
+              </p>
+              <p className="mt-1 text-base font-black text-white">
+                {getRecipeTitle(recipe, index)}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <StatusPill tone={summary.tone}>
+                  {summary.productionReadiness}
+                </StatusPill>
+                <StatusPill tone={handoff.tone}>
+                  {handoff.nextOwner}
+                </StatusPill>
+              </div>
+            </a>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
+
+
 function RuntimeReadinessSummaryView({
   runtime,
 }: {
@@ -1942,7 +2875,10 @@ function RecipeRuntimeCard({
   const productionRuntime = recipe.productionRuntime
 
   return (
-    <article className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#081421]/90 shadow-2xl shadow-black/25">
+    <article
+      id={getRecipeAnchorId(recipe, index)}
+      className="scroll-mt-28 overflow-hidden rounded-[2rem] border border-white/10 bg-[#081421]/90 shadow-2xl shadow-black/25"
+    >
       <div className="border-b border-white/10 bg-white/[0.04] p-5 md:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -1956,6 +2892,7 @@ function RecipeRuntimeCard({
               <StatusPill tone="success">Approved Recipe</StatusPill>
               <StatusPill tone="warning">QA Protected</StatusPill>
               <StatusPill>Role: {formatLabel(activeRole)}</StatusPill>
+              <StatusPill tone="success">RS-3I Packet Cockpit</StatusPill>
             </div>
           </div>
 
@@ -1976,87 +2913,27 @@ function RecipeRuntimeCard({
         </div>
       </div>
 
-      {productionRuntime ? (
-        <div className="grid gap-5 p-5 md:p-6">
-          <RuntimeReadinessSummaryView runtime={productionRuntime} />
+      <div className="grid gap-5 p-5 md:p-6">
+        <RecipeCommandStrip
+          recipe={recipe}
+          index={index}
+          activeRole={activeRole}
+          runtime={productionRuntime}
+          costingVisible={costingVisible}
+        />
 
-          <RuntimeHandoffSummaryView
-            activeRole={activeRole}
-            runtime={productionRuntime}
-            costingVisible={costingVisible}
-          />
+        <RuntimeWorkPacketView
+          activeRole={activeRole}
+          runtime={productionRuntime}
+          costingVisible={costingVisible}
+        />
 
-          <RuntimeExceptionFlagsView
-            activeRole={activeRole}
-            runtime={productionRuntime}
-            costingVisible={costingVisible}
-          />
-
-          <RuntimeExceptionResolutionMatrixView
-            activeRole={activeRole}
-            runtime={productionRuntime}
-            costingVisible={costingVisible}
-          />
-
-          <RuntimeDecisionGuidanceView
-            activeRole={activeRole}
-            runtime={productionRuntime}
-          />
-
-          <RuntimePathView runtime={productionRuntime} />
-
-          <div className="grid gap-5 xl:grid-cols-2">
-            <StationTaskView stationTask={productionRuntime.stationTask} />
-            <QaGateView qaGate={productionRuntime.qaGate} />
-          </div>
-
-          <ReleaseControlView
-            releaseControl={productionRuntime.releaseControl}
-          />
-
-          <RoleRuntimeView
-            roleRuntimeView={productionRuntime.roleRuntimeView}
-            activeRole={activeRole}
-          />
-        </div>
-      ) : (
-        <div className="p-5 md:p-6">
-          <RuntimeReadinessSummaryView runtime={productionRuntime} />
-
-          <RuntimeHandoffSummaryView
-            activeRole={activeRole}
-            runtime={productionRuntime}
-            costingVisible={costingVisible}
-          />
-
-          <RuntimeExceptionFlagsView
-            activeRole={activeRole}
-            runtime={productionRuntime}
-            costingVisible={costingVisible}
-          />
-
-          <RuntimeExceptionResolutionMatrixView
-            activeRole={activeRole}
-            runtime={productionRuntime}
-            costingVisible={costingVisible}
-          />
-
-          <RuntimeDecisionGuidanceView
-            activeRole={activeRole}
-            runtime={productionRuntime}
-          />
-
-          <div className="mt-5 rounded-3xl border border-amber-300/20 bg-amber-300/[0.06] p-5">
-            <p className="text-sm font-bold text-amber-100">
-              No productionRuntime object was returned for this recipe.
-            </p>
-            <p className="mt-2 text-sm leading-6 text-white/60">
-              RS-3F expects the API to return recipes[n].productionRuntime from
-              the RS-3A contract.
-            </p>
-          </div>
-        </div>
-      )}
+        <DecisionCenterView
+          activeRole={activeRole}
+          runtime={productionRuntime}
+          costingVisible={costingVisible}
+        />
+      </div>
     </article>
   )
 }
@@ -2135,9 +3012,9 @@ function RecipeStudioRuntimePageContent() {
                 Production Runtime Bridge
               </h1>
               <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
-                RS-3H keeps the RS-3F flags and RS-3G resolution matrix, then
-                adds a handoff summary so each role can see readiness, blockers,
-                next owner, and the next safe production action.
+                RS-3I turns Recipe Studio into a role-based work packet cockpit:
+                each role sees its own safe packet first, while RS-3F flags,
+                RS-3G resolution, and RS-3H handoff remain available on demand.
               </p>
             </div>
 
@@ -2256,6 +3133,14 @@ function RecipeStudioRuntimePageContent() {
               API contract.
             </p>
           </section>
+        ) : null}
+
+        {!loading && !error && recipes.length > 0 ? (
+          <RuntimeRecipeRail
+            recipes={recipes}
+            activeRole={activeRole}
+            costingVisible={costingVisible}
+          />
         ) : null}
 
         {!loading && !error && recipes.length > 0 ? (
