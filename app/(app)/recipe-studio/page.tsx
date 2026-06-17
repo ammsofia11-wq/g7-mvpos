@@ -1241,6 +1241,28 @@ function getRuntimeHandoffSummary({
   const workerTaskReady = hasWorkerTask ? "Ready" : "Needs task"
   const releaseReady = releaseBlocked || qaPending ? "Blocked" : "Reviewable"
 
+  if (activeRole === "worker") {
+    return {
+      runtimeReady,
+      qaReady,
+      workerTaskReady,
+      releaseReady,
+      blockedBy: qaPending || releaseBlocked
+        ? "Supervisor / QA protected handoff"
+        : noRuntimeExceptions
+          ? "No visible worker blocker"
+          : "Worker task protection",
+      nextOwner: "Sous Chef / Station Lead",
+      nextHandoffAction:
+        "Execute only the approved station task. Do not move the batch forward until the supervisor confirms QA or release clearance.",
+      note:
+        station === "—"
+          ? "Worker-safe packet is available, but station identity must be confirmed by the supervisor."
+          : `Worker-safe packet is available for ${station}. QA and release decisions stay outside the worker packet.`,
+      tone: hasWorkerTask ? "success" : "warning",
+    }
+  }
+
   if (qaPending) {
     return {
       runtimeReady,
@@ -1289,7 +1311,7 @@ function getRuntimeHandoffSummary({
     }
   }
 
-  if (costingHidden && activeRole !== "worker") {
+  if (costingHidden) {
     return {
       runtimeReady,
       qaReady,
@@ -1305,23 +1327,6 @@ function getRuntimeHandoffSummary({
     }
   }
 
-  if (activeRole === "worker") {
-    return {
-      runtimeReady,
-      qaReady,
-      workerTaskReady,
-      releaseReady,
-      blockedBy: noRuntimeExceptions ? "No visible runtime blocker" : "Worker task protection",
-      nextOwner: "Sous Chef / Station Lead",
-      nextHandoffAction:
-        "Worker follows the approved station task only and escalates any mismatch to the supervisor.",
-      note:
-        station === "—"
-          ? "Worker-safe handoff is available, but station identity should still be confirmed."
-          : `Worker-safe handoff is available for ${station}.`,
-      tone: hasWorkerTask ? "success" : "warning",
-    }
-  }
 
   return {
     runtimeReady,
@@ -1591,9 +1596,8 @@ function getRoleWorkPacket({
           `Supervisor check: ${formatValue(runtime.stationTask?.requiresSupervisorCheck)}`,
         ],
         protectedData: [
-          "Costing",
-          "Margin",
-          "Full recipe IP",
+          "Business data hidden",
+          "Recipe control data hidden",
           "QA approval controls",
           "Release controls",
         ],
@@ -2938,6 +2942,110 @@ function RecipeRuntimeCard({
   )
 }
 
+function WorkerSafeAccessSummary() {
+  return (
+    <section className="grid gap-4 md:grid-cols-3">
+      <div className="rounded-3xl border border-lime-300/15 bg-lime-300/[0.045] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-lime-100/70">
+          Worker View
+        </p>
+        <p className="mt-2 text-2xl font-black text-white">
+          Station task only
+        </p>
+        <p className="mt-2 text-sm leading-6 text-white/55">
+          The worker packet focuses on the approved task, station setup, and supervisor-safe execution.
+        </p>
+      </div>
+
+      <div className="rounded-3xl border border-sky-200/15 bg-sky-200/[0.045] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-sky-100/70">
+          Visible To Worker
+        </p>
+        <p className="mt-2 text-sm font-semibold leading-6 text-white/75">
+          Station, task ID, instruction mode, supervisor check, safe steps, and escalation route.
+        </p>
+      </div>
+
+      <div className="rounded-3xl border border-red-300/15 bg-red-300/[0.045] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-100/70">
+          Protected Controls
+        </p>
+        <p className="mt-2 text-sm font-semibold leading-6 text-white/75">
+          Business data, recipe control data, QA approval, and release controls stay outside the worker packet.
+        </p>
+      </div>
+    </section>
+  )
+}
+
+function WorkerRecipeDisclosure({
+  recipe,
+  index,
+  activeRole,
+  costingVisible,
+}: {
+  recipe: RecipeStudioRecipe
+  index: number
+  activeRole: RecipeStudioRole
+  costingVisible: boolean
+}) {
+  const runtime = recipe.productionRuntime
+  const handoff = getRuntimeHandoffSummary({
+    activeRole,
+    runtime,
+    costingVisible,
+  })
+  const taskId = compactTaskId(runtime?.stationTask?.taskId)
+  const station = formatValue(runtime?.stationTask?.station)
+
+  return (
+    <details
+      id={getRecipeAnchorId(recipe, index)}
+      open={index === 0}
+      className="group scroll-mt-28 overflow-hidden rounded-[2rem] border border-white/10 bg-[#081421]/90 shadow-2xl shadow-black/25"
+    >
+      <summary className="cursor-pointer list-none border-b border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.06] md:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-lime-200/75">
+              Worker Runtime Packet
+            </p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
+              {getRecipeTitle(recipe, index)}
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <StatusPill tone="success">Station: {station}</StatusPill>
+              <StatusPill tone="success">Task: {taskId}</StatusPill>
+              <StatusPill tone={handoff.releaseReady.toLowerCase().includes("blocked") ? "warning" : "success"}>
+                {handoff.releaseReady}
+              </StatusPill>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <StatusPill tone={handoff.tone}>Next: {handoff.nextOwner}</StatusPill>
+            <span className="inline-flex rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-semibold text-white/65 group-open:hidden">
+              Open packet
+            </span>
+            <span className="hidden rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-semibold text-white/65 group-open:inline-flex">
+              Close packet
+            </span>
+          </div>
+        </div>
+      </summary>
+
+      <div className="p-5 md:p-6">
+        <RecipeRuntimeCard
+          recipe={recipe}
+          index={index}
+          activeRole={activeRole}
+          costingVisible={costingVisible}
+        />
+      </div>
+    </details>
+  )
+}
+
 function RecipeStudioRuntimePageContent() {
   const searchParams = useSearchParams()
   const activeRole = getActiveRole(searchParams.get("role"))
@@ -3073,38 +3181,42 @@ function RecipeStudioRuntimePageContent() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
-              Costing Visible
-            </p>
-            <p className="mt-2 text-2xl font-black text-white">
-              {costingVisible ? "Yes" : "No"}
-            </p>
-          </div>
+        {activeRole === "worker" ? (
+          <WorkerSafeAccessSummary />
+        ) : (
+          <section className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
+                Costing Visible
+              </p>
+              <p className="mt-2 text-2xl font-black text-white">
+                {costingVisible ? "Yes" : "No"}
+              </p>
+            </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
-              Allowed Layers
-            </p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-white/70">
-              {data?.allowedDataLayers?.length
-                ? data.allowedDataLayers.join(", ")
-                : "—"}
-            </p>
-          </div>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
+                Allowed Layers
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-white/70">
+                {data?.allowedDataLayers?.length
+                  ? data.allowedDataLayers.join(", ")
+                  : "—"}
+              </p>
+            </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
-              Blocked Layers
-            </p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-white/70">
-              {data?.blockedDataLayers?.length
-                ? data.blockedDataLayers.join(", ")
-                : "—"}
-            </p>
-          </div>
-        </section>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
+                Blocked Layers
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-white/70">
+                {data?.blockedDataLayers?.length
+                  ? data.blockedDataLayers.join(", ")
+                  : "—"}
+              </p>
+            </div>
+          </section>
+        )}
 
         {loading ? (
           <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-8 text-center">
@@ -3143,7 +3255,7 @@ function RecipeStudioRuntimePageContent() {
           />
         ) : null}
 
-        {!loading && !error && recipes.length > 0 ? (
+        {!loading && !error && recipes.length > 0 && activeRole !== "worker" ? (
           <RuntimeOverviewBoard
             recipes={recipes}
             activeRole={activeRole}
@@ -3153,15 +3265,25 @@ function RecipeStudioRuntimePageContent() {
 
         {!loading && !error && recipes.length > 0 ? (
           <section className="grid gap-6">
-            {recipes.map((recipe, index) => (
-              <RecipeRuntimeCard
-                key={recipe.id || recipe.recipeId || `${index}`}
-                recipe={recipe}
-                index={index}
-                activeRole={activeRole}
-                costingVisible={costingVisible}
-              />
-            ))}
+            {recipes.map((recipe, index) =>
+              activeRole === "worker" ? (
+                <WorkerRecipeDisclosure
+                  key={recipe.id || recipe.recipeId || `${index}`}
+                  recipe={recipe}
+                  index={index}
+                  activeRole={activeRole}
+                  costingVisible={costingVisible}
+                />
+              ) : (
+                <RecipeRuntimeCard
+                  key={recipe.id || recipe.recipeId || `${index}`}
+                  recipe={recipe}
+                  index={index}
+                  activeRole={activeRole}
+                  costingVisible={costingVisible}
+                />
+              )
+            )}
           </section>
         ) : null}
       </section>
