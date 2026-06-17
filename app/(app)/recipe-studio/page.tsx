@@ -806,7 +806,7 @@ function RuntimeExceptionFlagsView({
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-orange-100/75">
-            RS-3F Exception Flags
+            Exception Flags
           </p>
           <h3 className="mt-1 text-lg font-bold text-white">
             Runtime blockers and protected signals
@@ -1093,7 +1093,7 @@ function RuntimeExceptionResolutionMatrixView({
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-violet-100/75">
-            RS-3G Exception Resolution Matrix
+            Resolution Rules
           </p>
           <h3 className="mt-1 text-lg font-bold text-white">
             Exception owner, decision, and safe action
@@ -1264,15 +1264,81 @@ function getRuntimeHandoffSummary({
   }
 
   if (qaPending) {
+    const blockerSummary = visibleBlockers.map((flag) => flag.label).join(" + ")
+
+    if (activeRole === "chef") {
+      return {
+        runtimeReady,
+        qaReady,
+        workerTaskReady,
+        releaseReady,
+        blockedBy: blockerSummary,
+        nextOwner: "QA / Head Chef",
+        nextHandoffAction:
+          "Confirm SOP accuracy, station task readiness, and worker-facing instructions, then prepare QA evidence for cooling, allergen, label, and batch code checks.",
+        note:
+          "Chef can prepare the recipe for runtime, but final release must stay blocked until QA clears the gate.",
+        tone: "warning",
+      }
+    }
+
+    if (activeRole === "qa") {
+      return {
+        runtimeReady,
+        qaReady,
+        workerTaskReady,
+        releaseReady,
+        blockedBy: blockerSummary,
+        nextOwner: "QA Gate Owner",
+        nextHandoffAction:
+          "Complete cooling, allergen, label, and batch code checks, then clear, hold, reject, or escalate the release gate.",
+        note:
+          "QA owns the safety gate. Production can stay prepared, but packaging, dispatch, and customer handoff remain blocked until QA clearance.",
+        tone: "warning",
+      }
+    }
+
+    if (activeRole === "production-manager") {
+      return {
+        runtimeReady,
+        qaReady,
+        workerTaskReady,
+        releaseReady,
+        blockedBy: blockerSummary,
+        nextOwner: "QA / Head Chef",
+        nextHandoffAction:
+          "Keep station execution ready and capacity aligned, but hold final release until QA or authorized manager clearance.",
+        note:
+          "Production can prepare the floor and worker handoff, but cannot move the batch beyond the protected release gate.",
+        tone: "warning",
+      }
+    }
+
+    if (activeRole === "owner") {
+      return {
+        runtimeReady,
+        qaReady,
+        workerTaskReady,
+        releaseReady,
+        blockedBy: blockerSummary,
+        nextOwner: "QA / Head Chef",
+        nextHandoffAction:
+          "Keep release governance active and verify that QA evidence is completed before any production release decision.",
+        note:
+          "Owner sees the governance blocker: the recipe can prepare runtime, but final release remains protected by QA control.",
+        tone: "warning",
+      }
+    }
+
     return {
       runtimeReady,
       qaReady,
       workerTaskReady,
       releaseReady,
-      blockedBy: visibleBlockers.map((flag) => flag.label).join(" + "),
+      blockedBy: blockerSummary,
       nextOwner: "QA / Head Chef",
       nextHandoffAction:
-        "Hand off to QA to complete cooling, allergen, label, and batch code checks before release.",
+        "Route the batch to QA for cooling, allergen, label, and batch code checks before release.",
       note:
         "The recipe can remain prepared for runtime, but final release must stay blocked until QA clears the gate.",
       tone: "warning",
@@ -1365,7 +1431,7 @@ function RuntimeHandoffSummaryView({
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-sky-100/75">
-            RS-3H Runtime Handoff Summary
+            Handoff Summary
           </p>
           <h3 className="mt-1 text-lg font-bold text-white">
             Next owner and production handoff
@@ -1477,8 +1543,14 @@ function getRoleWorkPacket({
   }
 
   const commonProtectedData = costingVisible
-    ? ["Worker-facing recipe IP", "Release authority controls"]
-    : ["Costing", "Margin", "Supplier cost", "Recipe IP", "Release controls"]
+    ? ["Worker-facing recipe details", "Release authority controls"]
+    : [
+        "Commercial costing",
+        "Margin data",
+        "Supplier commercial terms",
+        "Recipe control data",
+        "Release controls",
+      ]
 
   switch (activeRole) {
     case "owner":
@@ -1514,7 +1586,8 @@ function getRoleWorkPacket({
       return {
         roleLabel,
         packetTitle: "Chef Production Packet",
-        primaryFocus: guidance.nextAction,
+        primaryFocus:
+          "Confirm SOP accuracy, station task readiness, worker-facing instructions, and QA evidence before production handoff.",
         whatToKnow:
           "Chef owns recipe execution quality, station task accuracy, SOP readiness, and QA handoff support.",
         myActions: [
@@ -1565,7 +1638,12 @@ function getRoleWorkPacket({
           `Blocked by: ${handoff.blockedBy}`,
           `Release: ${handoff.releaseReady}`,
         ],
-        protectedData: ["Costing", "Margin", "Supplier cost", "Owner governance"],
+        protectedData: [
+          "Commercial costing",
+          "Margin data",
+          "Supplier commercial terms",
+          "Owner business governance",
+        ],
         tone: handoff.tone,
       }
 
@@ -1804,7 +1882,7 @@ function RuntimeWorkPacketView({
       <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.24em] text-lime-100/80">
-            RS-3I My Runtime Work Packet
+            My Runtime Work Packet
           </p>
           <h3 className="mt-1 text-xl font-black text-white">
             {packet.packetTitle}
@@ -1883,6 +1961,269 @@ function RuntimeWorkPacketView({
   )
 }
 
+
+function getRoleCommandMessage({
+  activeRole,
+  handoff,
+}: {
+  activeRole: RecipeStudioRole
+  handoff: RuntimeHandoffSummary
+}) {
+  if (activeRole === "worker") {
+    return {
+      eyebrow: "Worker Command Card",
+      title: "Do the approved task only",
+      description:
+        "One-screen worker command: station, task, supervisor route, and protected limits.",
+      primaryAction:
+        "Execute only the approved station task. Ask the supervisor before any method, timing, quantity, or station change.",
+    }
+  }
+
+  if (activeRole === "chef") {
+    return {
+      eyebrow: "Chef Command Card",
+      title: "Prepare the recipe for safe QA handoff",
+      description:
+        "Chef command view: SOP accuracy, station task quality, worker-facing clarity, and QA evidence readiness.",
+      primaryAction:
+        "Confirm SOP accuracy and station task readiness, then prepare QA evidence before production release.",
+    }
+  }
+
+  if (activeRole === "qa") {
+    return {
+      eyebrow: "QA Gate Command Card",
+      title: "Protect the release gate",
+      description:
+        "QA command view: safety checks, evidence, hold/clear decision, and protected release control.",
+      primaryAction:
+        "Complete cooling, allergen, label, and batch code checks, then clear, hold, reject, or escalate the gate.",
+    }
+  }
+
+  if (activeRole === "production-manager") {
+    return {
+      eyebrow: "Production Command Card",
+      title: "Keep stations ready without breaking the gate",
+      description:
+        "Production command view: station readiness, worker task readiness, QA hold, release hold, and next owner.",
+      primaryAction:
+        "Keep station execution ready, but hold final release until QA or authorized manager clearance.",
+    }
+  }
+
+  return {
+    eyebrow: "Runtime Command Card",
+    title: "Control the next safe handoff",
+    description:
+      "One-screen command view: status, station, blocker, next owner, and safest production handoff for the current role.",
+    primaryAction: handoff.nextHandoffAction,
+  }
+}
+
+function getRoleReadinessSnapshot({
+  activeRole,
+  runtime,
+  handoff,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  handoff: RuntimeHandoffSummary
+}) {
+  const stationReady = formatValue(runtime?.stationTask?.station) !== "—"
+  const taskReady = Boolean(runtime?.stationTask?.taskId)
+  const supervisorCheck = runtime?.stationTask?.requiresSupervisorCheck === true
+  const coolingRequired = runtime?.qaGate?.coolingRequired === true
+  const allergenRequired = runtime?.qaGate?.allergenCheckRequired === true
+  const labelRequired = runtime?.qaGate?.labelCheckRequired === true
+  const batchCodeRequired = runtime?.qaGate?.batchCodeCheckRequired === true
+  const qaPending = handoff.qaReady.toLowerCase().includes("pending")
+  const releaseBlocked = handoff.releaseReady.toLowerCase().includes("blocked")
+
+  if (activeRole === "chef") {
+    return [
+      {
+        label: "SOP",
+        value: taskReady ? "Confirm worker-safe" : "Needs task",
+        tone: taskReady ? "success" : "warning",
+        note: "Recipe method must match station execution.",
+      },
+      {
+        label: "Station Task",
+        value: taskReady ? "Ready to review" : "Missing",
+        tone: taskReady ? "success" : "warning",
+        note: "Chef confirms the task is operationally correct.",
+      },
+      {
+        label: "Worker Instructions",
+        value: supervisorCheck ? "Supervisor check" : "Review",
+        tone: supervisorCheck ? "warning" : "neutral",
+        note: "Instructions must be safe before handoff.",
+      },
+      {
+        label: "QA Evidence",
+        value: qaPending ? "Prepare evidence" : "Clear",
+        tone: qaPending ? "warning" : "success",
+        note: "Cooling, allergen, label, and batch proof.",
+      },
+    ]
+  }
+
+  if (activeRole === "qa") {
+    return [
+      {
+        label: "Cooling",
+        value: coolingRequired ? "Required" : "Policy",
+        tone: coolingRequired ? "warning" : "neutral",
+        note: "Check before release clearance.",
+      },
+      {
+        label: "Allergen",
+        value: allergenRequired ? "Required" : "Policy",
+        tone: allergenRequired ? "warning" : "neutral",
+        note: "Verify allergen risk and label match.",
+      },
+      {
+        label: "Label + Batch Code",
+        value: labelRequired || batchCodeRequired ? "Required" : "Policy",
+        tone: labelRequired || batchCodeRequired ? "warning" : "neutral",
+        note: "Label and batch identity must match.",
+      },
+      {
+        label: "Release Gate",
+        value: releaseBlocked ? "Hold active" : "Reviewable",
+        tone: releaseBlocked ? "danger" : "success",
+        note: "Clear, hold, reject, or escalate.",
+      },
+    ]
+  }
+
+  if (activeRole === "production-manager") {
+    return [
+      {
+        label: "Station",
+        value: stationReady ? "Assigned" : "Needs station",
+        tone: stationReady ? "success" : "warning",
+        note: "Production keeps the station prepared.",
+      },
+      {
+        label: "Task",
+        value: taskReady ? "Ready" : "Needs task",
+        tone: taskReady ? "success" : "warning",
+        note: "Worker execution stays inside approved task.",
+      },
+      {
+        label: "QA Hold",
+        value: qaPending ? "Active" : "Clear",
+        tone: qaPending ? "warning" : "success",
+        note: "Track gate before final release.",
+      },
+      {
+        label: "Release",
+        value: releaseBlocked ? "Blocked" : "Reviewable",
+        tone: releaseBlocked ? "danger" : "success",
+        note: "Do not bypass authority.",
+      },
+    ]
+  }
+
+  if (activeRole === "worker") {
+    return [
+      {
+        label: "Station",
+        value: stationReady ? "Assigned" : "Ask supervisor",
+        tone: stationReady ? "success" : "warning",
+        note: "Work only at the shown station.",
+      },
+      {
+        label: "Task",
+        value: taskReady ? "Approved" : "Not ready",
+        tone: taskReady ? "success" : "warning",
+        note: "Follow the approved task only.",
+      },
+      {
+        label: "Supervisor",
+        value: supervisorCheck ? "Required" : "Ask if unclear",
+        tone: supervisorCheck ? "warning" : "neutral",
+        note: "No changes without approval.",
+      },
+      {
+        label: "Release",
+        value: "Protected",
+        tone: "neutral",
+        note: "QA/release decisions are not worker actions.",
+      },
+    ]
+  }
+
+  return [
+    {
+      label: "Runtime",
+      value: handoff.runtimeReady,
+      tone: handoff.tone,
+      note: "Role-safe runtime visibility.",
+    },
+    {
+      label: "QA",
+      value: handoff.qaReady,
+      tone: qaPending ? "warning" : handoff.tone,
+      note: "QA policy controls release confidence.",
+    },
+    {
+      label: "Worker Task",
+      value: handoff.workerTaskReady,
+      tone: taskReady ? "success" : "warning",
+      note: "Task must stay permission-safe.",
+    },
+    {
+      label: "Release",
+      value: handoff.releaseReady,
+      tone: releaseBlocked ? "danger" : handoff.tone,
+      note: "Final release follows tenant authority.",
+    },
+  ]
+}
+
+function RoleReadinessSnapshot({
+  activeRole,
+  runtime,
+  handoff,
+}: {
+  activeRole: RecipeStudioRole
+  runtime?: RecipeProductionRuntime
+  handoff: RuntimeHandoffSummary
+}) {
+  const snapshot = getRoleReadinessSnapshot({
+    activeRole,
+    runtime,
+    handoff,
+  })
+
+  return (
+    <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      {snapshot.map((item) => (
+        <div
+          key={`${item.label}-${item.value}`}
+          className={`rounded-2xl border p-4 ${getToneClasses(
+            item.tone as RuntimeTone
+          )}`}
+        >
+          <p className="text-xs font-black uppercase tracking-[0.18em] opacity-75">
+            {item.label}
+          </p>
+          <p className="mt-2 text-base font-black text-white">
+            {item.value}
+          </p>
+          <p className="mt-2 text-xs font-semibold leading-5 opacity-70">
+            {item.note}
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function RecipeCommandStrip({
   recipe,
   index,
@@ -1904,20 +2245,23 @@ function RecipeCommandStrip({
   })
   const station = formatValue(runtime?.stationTask?.station)
   const taskId = compactTaskId(runtime?.stationTask?.taskId)
+  const command = getRoleCommandMessage({
+    activeRole,
+    handoff,
+  })
 
   return (
     <section className="rounded-3xl border border-cyan-200/15 bg-cyan-200/[0.045] p-5">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.26em] text-cyan-100/70">
-            Recipe Command Card
+            {command.eyebrow}
           </p>
           <h3 className="mt-1 text-2xl font-black text-white">
-            {getRecipeTitle(recipe, index)}
+            {command.title}
           </h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-            One-screen command view: status, station, blocker, next owner, and
-            the safest next production handoff for the current role.
+            {command.description}
           </p>
         </div>
 
@@ -1943,6 +2287,12 @@ function RecipeCommandStrip({
         <RuntimeSummaryItem label="Role" value={getRoleLabel(activeRole)} />
       </div>
 
+      <RoleReadinessSnapshot
+        activeRole={activeRole}
+        runtime={runtime}
+        handoff={handoff}
+      />
+
       <div className="mt-4 grid gap-4 xl:grid-cols-[0.75fr_1.25fr]">
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">
@@ -1958,7 +2308,7 @@ function RecipeCommandStrip({
             Primary Safe Action
           </p>
           <p className="mt-2 text-sm font-bold leading-6 text-lime-50">
-            {handoff.nextHandoffAction}
+            {command.primaryAction}
           </p>
         </div>
       </div>
@@ -1998,7 +2348,7 @@ function CompactRuntimeExceptionResolutionMatrixView({
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-violet-100/75">
-            Compact RS-3G Resolution
+            Resolution Rules
           </p>
           <h3 className="mt-1 text-lg font-bold text-white">
             Flag → owner → safe action
@@ -2084,7 +2434,7 @@ function CompactRuntimeExceptionResolutionMatrixView({
       {activeRole !== "worker" ? (
         <details className="mt-4 rounded-2xl border border-violet-200/15 bg-black/20 p-4">
           <summary className="cursor-pointer text-sm font-black uppercase tracking-[0.18em] text-violet-100/70">
-            Open full RS-3G matrix only when audit detail is needed
+            Open full resolution audit only when detail is needed
           </summary>
           <div className="mt-4">
             <RuntimeExceptionResolutionMatrixView
@@ -2113,7 +2463,7 @@ function RuntimeDetailsAccordion({
           No productionRuntime object was returned for this recipe.
         </p>
         <p className="mt-2 text-sm leading-6 text-white/60">
-          RS-3I keeps runtime details closed because the runtime contract is
+          Runtime details stay closed because the runtime contract is
           unavailable.
         </p>
       </section>
@@ -2206,15 +2556,14 @@ function DecisionCenterView({
       <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-100/70">
-            RS-3I Decision Center
+            Operational Decision Center
           </p>
           <h3 className="mt-1 text-xl font-black text-white">
-            Open only what this role needs
+            Open only the decision layer this role needs
           </h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-            RS-3F flags, RS-3G resolution, RS-3H handoff, and RS-3E guidance are
-            still available, but compressed into role-safe panels instead of one
-            long report.
+            Handoff, blockers, resolution rules, guidance, and runtime details
+            are compressed into role-safe panels instead of one long report.
           </p>
         </div>
 
@@ -2379,7 +2728,7 @@ function RuntimeDecisionGuidanceView({
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-100/75">
-            RS-3E Decision Guidance
+            Role Guidance
           </p>
           <h3 className="mt-1 text-lg font-bold text-white">
             {guidance.title}
@@ -2458,6 +2807,25 @@ function RuntimeOverviewBoard({
   costingVisible: boolean
 }) {
   const activeRoleLabel = getRoleLabel(activeRole)
+  const overviewTitle =
+    activeRole === "qa"
+      ? "QA Gate Overview"
+      : activeRole === "production-manager"
+        ? "Production Runtime Overview"
+        : activeRole === "chef"
+          ? "Chef Production Overview"
+          : activeRole === "owner"
+            ? "Owner Governance Overview"
+            : "Recipe Runtime Overview"
+
+  const overviewNote =
+    activeRole === "qa"
+      ? "Safety-focused board for QA: pending gates, protected release holds, and batches that need QA action."
+      : activeRole === "production-manager"
+        ? "Production-focused board: station readiness, worker task readiness, QA holds, release blocks, and next owner."
+        : activeRole === "chef"
+          ? "Chef-focused board: SOP readiness, station task accuracy, QA dependency, and production handoff risk."
+          : `Fast cross-recipe board for the ${activeRoleLabel} view. It summarizes readiness, station assignment, worker task state, release blocking, and active runtime exception flags.`
 
   const summaries = recipes.map((recipe, index) => {
     const summary = getRuntimeReadinessSummary(recipe.productionRuntime)
@@ -2503,15 +2871,13 @@ function RuntimeOverviewBoard({
       <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-100/70">
-            RS-3F Runtime Overview Board
+            Runtime Overview
           </p>
           <h2 className="mt-2 text-2xl font-black text-white">
-            Recipe runtime overview
+            {overviewTitle}
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-            Fast cross-recipe board for the {activeRoleLabel} view. It summarizes
-            readiness, station assignment, worker task state, release blocking,
-            and active runtime exception flags.
+            {overviewNote}
           </p>
         </div>
 
@@ -2631,7 +2997,7 @@ function RuntimePathView({ runtime }: { runtime?: RecipeProductionRuntime }) {
             Recipe-to-Production Path
           </h3>
         </div>
-        <StatusPill tone="success">RS-3F Flags</StatusPill>
+        <StatusPill tone="success">Runtime Steps</StatusPill>
       </div>
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -2896,7 +3262,7 @@ function RecipeRuntimeCard({
               <StatusPill tone="success">Approved Recipe</StatusPill>
               <StatusPill tone="warning">QA Protected</StatusPill>
               <StatusPill>Role: {formatLabel(activeRole)}</StatusPill>
-              <StatusPill tone="success">RS-3I Packet Cockpit</StatusPill>
+              <StatusPill tone="success">Role Packet Cockpit</StatusPill>
             </div>
           </div>
 
@@ -3120,9 +3486,9 @@ function RecipeStudioRuntimePageContent() {
                 Production Runtime Bridge
               </h1>
               <p className="mt-4 text-sm leading-7 text-white/65 md:text-base">
-                RS-3I turns Recipe Studio into a role-based work packet cockpit:
-                each role sees its own safe packet first, while RS-3F flags,
-                RS-3G resolution, and RS-3H handoff remain available on demand.
+                RS-3I.2 turns Recipe Studio into an operational role cockpit:
+                each role gets the right work packet, language, readiness lens,
+                and safe next action before opening deeper runtime details.
               </p>
             </div>
 
