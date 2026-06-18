@@ -1,4 +1,4 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 
 type DemoStage = {
   step: string
@@ -79,7 +79,7 @@ const demoStages: DemoStage[] = [
 const proofStats = [
   {
     label: "Founder-Proven Model",
-    value: "4,000–5,000",
+    value: "4,000-5,000",
     note: "meals daily production scale",
   },
   {
@@ -89,7 +89,7 @@ const proofStats = [
   },
   {
     label: "Runtime Scope",
-    value: "Demand → Dispatch",
+    value: "Demand -> Dispatch",
     note: "central kitchen production flow",
   },
 ]
@@ -99,6 +99,11 @@ const commandCards = [
     title: "Kitchen Runtime",
     href: "/kitchen",
     note: "See batch production, worker execution, alerts, and runtime pressure.",
+  },
+  {
+    title: "Production Tasks",
+    href: "/production-tasks",
+    note: "See how locked demand becomes station workload, batch tasks, proof requirements, and worker handoff.",
   },
   {
     title: "Worker Task",
@@ -311,7 +316,7 @@ export default function DemoSalePage() {
             </p>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
             {commandCards.map((card) => (
               <Link
                 key={card.title}
@@ -327,7 +332,7 @@ export default function DemoSalePage() {
                 </p>
 
                 <div className="mt-5 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-300">
-                  Open →
+                  Open -&gt;
                 </div>
               </Link>
             ))}
