@@ -73,6 +73,12 @@ export default function ClientValuePage() {
 
             <div className="flex flex-wrap gap-2">
               <Link
+                href="/client-onboarding"
+                className="rounded-full border border-white/15 px-4 py-2 hover:border-emerald-300 hover:text-emerald-200"
+              >
+                Client Onboarding
+              </Link>
+              <Link
                 href="/production-tasks"
                 className="rounded-full border border-white/15 px-4 py-2 hover:border-amber-300 hover:text-amber-200"
               >
@@ -96,7 +102,7 @@ export default function ClientValuePage() {
           <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
             <div className="space-y-7">
               <div className="inline-flex rounded-full border border-emerald-300/30 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200">
-                G7 Kitchen OS — Client Value
+                G7 Kitchen OS - Client Value
               </div>
 
               <div className="space-y-5">
@@ -127,6 +133,7 @@ export default function ClientValuePage() {
               </p>
               <div className="mt-6 space-y-3">
                 {[
+                  "Client Data Onboarding",
                   "Demand Lock",
                   "Station Tasks",
                   "Worker SOP",
@@ -291,6 +298,13 @@ export default function ClientValuePage() {
               </article>
             ))}
           </div>
+
+          <Link
+            href="/client-onboarding"
+            className="inline-flex rounded-full bg-emerald-300 px-6 py-3 text-sm font-black text-slate-950 hover:bg-white"
+          >
+            Open Client Onboarding
+          </Link>
         </div>
       </section>
 
@@ -311,10 +325,10 @@ export default function ClientValuePage() {
 
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link
-                href="/demo-sale"
+                href="/client-onboarding"
                 className="rounded-full bg-white px-6 py-3 text-center text-sm font-black text-slate-950 hover:bg-emerald-100"
               >
-                Open Demo Journey
+                Open Client Onboarding
               </Link>
               <Link
                 href="/production-tasks"
