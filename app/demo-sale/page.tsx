@@ -101,9 +101,9 @@ const commandCards = [
     note: "See the business value: operation control, cost protection, waste visibility, fair worker evaluation, and onboarding.",
   },
   {
-    title: "Kitchen Runtime",
-    href: "/kitchen",
-    note: "See batch production, worker execution, alerts, and runtime pressure.",
+    title: "Client Onboarding",
+    href: "/client-onboarding",
+    note: "See how a client can start from Excel, CSV, PDF, paper, photos, AI SOP Builder, or starter templates.",
   },
   {
     title: "Production Tasks",
@@ -114,6 +114,16 @@ const commandCards = [
     title: "Worker Task",
     href: "/worker-task",
     note: "See how one approved batch becomes a tablet-first SOP with visual guidance, barcode, storage, packing, and QA escalation.",
+  },
+  {
+    title: "Kitchen Runtime",
+    href: "/kitchen",
+    note: "See batch production, worker execution, alerts, and runtime pressure.",
+  },
+  {
+    title: "Demo Close",
+    href: "/demo-close",
+    note: "Close the sales story with what the client gets, pilot path, protected data rules, and next decision.",
   },
   {
     title: "Recipe Studio",
@@ -168,6 +178,13 @@ export default function DemoSalePage() {
                   className="rounded-full bg-cyan-300 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#06111F] transition hover:bg-white"
                 >
                   Open Runtime
+                </Link>
+
+                <Link
+                  href="/demo-close"
+                  className="rounded-full border border-[#CCFF33]/30 bg-[#CCFF33]/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#CCFF33] transition hover:bg-[#CCFF33] hover:text-[#06111F]"
+                >
+                  Close Demo
                 </Link>
 
                 <Link
@@ -321,7 +338,7 @@ export default function DemoSalePage() {
             </p>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {commandCards.map((card) => (
               <Link
                 key={card.title}
