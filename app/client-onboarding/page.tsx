@@ -111,7 +111,7 @@ export default function ClientOnboardingPage() {
               <div className="flex flex-wrap gap-3">
                 <Link
                   href="/production-tasks"
-                  className="rounded-full bg-emerald-300 px-6 py-3 text-sm font-black text-slate-950 hover:bg-white"
+                  className="rounded-full border border-emerald-300/35 bg-emerald-300/10 px-6 py-3 text-sm font-black text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-300/15 hover:text-white"
                 >
                   Continue to Production Tasks
                 </Link>
@@ -231,7 +231,7 @@ export default function ClientOnboardingPage() {
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link
                 href="/production-tasks"
-                className="rounded-full bg-white px-6 py-3 text-center text-sm font-black text-slate-950 hover:bg-emerald-100"
+                className="rounded-full border border-emerald-300/35 bg-emerald-300/10 px-6 py-3 text-center text-sm font-black text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-300/15 hover:text-white"
               >
                 Open Production Tasks
               </Link>

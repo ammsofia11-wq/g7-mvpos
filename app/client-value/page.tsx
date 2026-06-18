@@ -301,7 +301,7 @@ export default function ClientValuePage() {
 
           <Link
             href="/client-onboarding"
-            className="inline-flex rounded-full bg-emerald-300 px-6 py-3 text-sm font-black text-slate-950 hover:bg-white"
+            className="inline-flex rounded-full border border-emerald-300/35 bg-emerald-300/10 px-6 py-3 text-sm font-black text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-300/15 hover:text-white"
           >
             Open Client Onboarding
           </Link>
@@ -326,7 +326,7 @@ export default function ClientValuePage() {
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link
                 href="/client-onboarding"
-                className="rounded-full bg-white px-6 py-3 text-center text-sm font-black text-slate-950 hover:bg-emerald-100"
+                className="rounded-full border border-emerald-300/35 bg-emerald-300/10 px-6 py-3 text-center text-sm font-black text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-300/15 hover:text-white"
               >
                 Open Client Onboarding
               </Link>
@@ -343,3 +343,4 @@ export default function ClientValuePage() {
     </main>
   )
 }
+

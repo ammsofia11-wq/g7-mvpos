@@ -106,7 +106,7 @@ export default function DemoClosePage() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   href="/client-onboarding"
-                  className="rounded-full bg-[#CCFF33] px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-slate-950 transition hover:bg-white hover:text-slate-950"
+                  className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
                 >
                   Review Onboarding
                 </Link>
@@ -282,7 +282,7 @@ export default function DemoClosePage() {
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link
                 href="/client-onboarding"
-                className="rounded-full bg-[#CCFF33] px-6 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-white hover:text-slate-950"
+                className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-3 text-center text-sm font-black text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
               >
                 Start Client Onboarding
               </Link>
@@ -300,3 +300,4 @@ export default function DemoClosePage() {
     </main>
   )
 }
+

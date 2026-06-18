@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 
 type DemoStage = {
   step: string
@@ -175,14 +175,14 @@ export default function DemoSalePage() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   href="/kitchen"
-                  className="rounded-full bg-cyan-300 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#06111F] transition hover:bg-white"
+                  className="rounded-full border border-cyan-300/35 bg-cyan-300/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
                 >
                   Open Runtime
                 </Link>
 
                 <Link
                   href="/demo-close"
-                  className="rounded-full border border-[#CCFF33]/30 bg-[#CCFF33]/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#CCFF33] transition hover:bg-[#CCFF33] hover:text-[#06111F]"
+                  className="rounded-full border border-[#CCFF33]/30 bg-[#CCFF33]/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
                 >
                   Close Demo
                 </Link>
