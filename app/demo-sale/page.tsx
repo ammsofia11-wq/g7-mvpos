@@ -101,6 +101,11 @@ const commandCards = [
     note: "See batch production, worker execution, alerts, and runtime pressure.",
   },
   {
+    title: "Worker Task",
+    href: "/worker-task",
+    note: "See how one approved batch becomes a tablet-first SOP with visual guidance, barcode, storage, packing, and QA escalation.",
+  },
+  {
     title: "Recipe Studio",
     href: "/recipe-studio",
     note: "See how approved recipes connect to production runtime logic.",
@@ -306,7 +311,7 @@ export default function DemoSalePage() {
             </p>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             {commandCards.map((card) => (
               <Link
                 key={card.title}
