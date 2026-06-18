@@ -96,6 +96,11 @@ const proofStats = [
 
 const commandCards = [
   {
+    title: "Client Value",
+    href: "/client-value",
+    note: "See the business value: operation control, cost protection, waste visibility, fair worker evaluation, and onboarding.",
+  },
+  {
     title: "Kitchen Runtime",
     href: "/kitchen",
     note: "See batch production, worker execution, alerts, and runtime pressure.",
@@ -316,7 +321,7 @@ export default function DemoSalePage() {
             </p>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
             {commandCards.map((card) => (
               <Link
                 key={card.title}
