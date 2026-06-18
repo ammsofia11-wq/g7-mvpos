@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 
 import {
   createAllKitchenCommandScenarioReports,
@@ -61,14 +61,14 @@ export default function KitchenCommandPreviewPage() {
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 href="/demo-sale"
-                className="rounded-full bg-cyan-300 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#06111F] transition hover:bg-white"
+                className="rounded-full bg-cyan-300 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-slate-950 transition hover:bg-white hover:text-slate-950"
               >
                 Open Sellable Demo Journey
               </Link>
 
               <Link
                 href="/production-tasks"
-                className="rounded-full border border-lime-300/25 bg-lime-300/[0.08] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:bg-lime-300 hover:text-[#06111F]"
+                className="rounded-full border border-lime-300/25 bg-lime-300/[0.08] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:bg-lime-300 hover:text-slate-950"
               >
                 Open Production Tasks
               </Link>
@@ -135,7 +135,7 @@ export default function KitchenCommandPreviewPage() {
 
             <Link
               href="/demo-sale"
-              className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:bg-cyan-300 hover:text-[#06111F]"
+              className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:bg-cyan-300 hover:text-slate-950"
             >
               Open /demo-sale -&gt;
             </Link>
@@ -162,7 +162,7 @@ export default function KitchenCommandPreviewPage() {
 
             <Link
               href="/production-tasks"
-              className="shrink-0 rounded-full border border-lime-300/30 bg-lime-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:bg-lime-300 hover:text-[#06111F]"
+              className="shrink-0 rounded-full border border-lime-300/30 bg-lime-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:bg-lime-300 hover:text-slate-950"
             >
               Open /production-tasks -&gt;
             </Link>
@@ -455,3 +455,4 @@ function InfoList({
     </div>
   )
 }
+
