@@ -46,6 +46,16 @@ export default function Home() {
               delivery.
             </p>
 
+            <div className="mt-5 rounded-[22px] border border-cyan-300/20 bg-cyan-300/[0.045] p-4 shadow-[0_0_28px_rgba(34,211,238,0.08)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
+                Founder-Proven Model
+              </p>
+
+              <p className="mt-2 text-[13px] font-bold leading-6 text-slate-200">
+                Scaled from 4,000 to 5,000 meals daily with food cost at 21%.
+              </p>
+            </div>
+
             <div className="mt-7 flex flex-wrap gap-3">
               <a href="/dashboard" className="g7-button-primary">
                 Enter Kitchen OS
