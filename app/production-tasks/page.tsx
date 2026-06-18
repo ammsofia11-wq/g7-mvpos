@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 
 type StationTone = "cyan" | "lime" | "amber" | "red"
 
@@ -184,7 +184,7 @@ export default function ProductionTasksPage() {
 
                 <Link
                   href="/kitchen"
-                  className="rounded-full border border-lime-300/25 bg-lime-300/[0.08] px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-lime-100 transition hover:bg-lime-300 hover:text-[#06111F]"
+                  className="rounded-full border border-lime-300/25 bg-lime-300/[0.08] px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-lime-100 transition hover:border-lime-200 hover:bg-lime-300/15 hover:text-lime-50"
                 >
                   Open live runtime
                 </Link>
@@ -508,3 +508,4 @@ function InfoBox({ title, value }: { title: string; value: string }) {
     </div>
   )
 }
+
