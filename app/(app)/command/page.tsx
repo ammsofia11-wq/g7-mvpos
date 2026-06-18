@@ -1,4 +1,4 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 
 import {
   createAllKitchenCommandScenarioReports,
@@ -44,7 +44,7 @@ export default function KitchenCommandPreviewPage() {
         <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-4xl">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">
-              Command OS · Executive Chef Runtime Preview
+              Command OS - Executive Chef Runtime Preview
             </p>
 
             <h1 className="mt-3 text-3xl font-black tracking-[-0.06em] text-white sm:text-5xl">
@@ -64,6 +64,13 @@ export default function KitchenCommandPreviewPage() {
                 className="rounded-full bg-cyan-300 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#06111F] transition hover:bg-white"
               >
                 Open Sellable Demo Journey
+              </Link>
+
+              <Link
+                href="/production-tasks"
+                className="rounded-full border border-lime-300/25 bg-lime-300/[0.08] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:bg-lime-300 hover:text-[#06111F]"
+              >
+                Open Production Tasks
               </Link>
 
               <Link
@@ -107,31 +114,60 @@ export default function KitchenCommandPreviewPage() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-[30px] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.09),rgba(204,255,51,0.035))] p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
-              Demo-Sale Entry Point
-            </p>
+      <section className="mt-5 grid gap-4 lg:grid-cols-2">
+        <section className="rounded-[30px] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.09),rgba(204,255,51,0.035))] p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
+                Demo-Sale Entry Point
+              </p>
 
-            <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
-              Show the full G7 production story before opening runtime screens.
-            </h2>
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
+                Show the full G7 production story before opening runtime screens.
+              </h2>
 
-            <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
-              Use the sellable demo journey to explain how G7 moves from Demand
-              Lock to Recipe Runtime, Station Tasks, Worker SOP, Cooling Checks,
-              QA Release, Packaging Readiness, and Command View.
-            </p>
+              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
+                Use the sellable demo journey to explain how G7 moves from Demand
+                Lock to Recipe Runtime, Station Tasks, Worker SOP, Cooling Checks,
+                QA Release, Packaging Readiness, and Command View.
+              </p>
+            </div>
+
+            <Link
+              href="/demo-sale"
+              className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:bg-cyan-300 hover:text-[#06111F]"
+            >
+              Open /demo-sale -&gt;
+            </Link>
           </div>
+        </section>
 
-          <Link
-            href="/demo-sale"
-            className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:bg-cyan-300 hover:text-[#06111F]"
-          >
-            Open /demo-sale →
-          </Link>
-        </div>
+        <section className="rounded-[30px] border border-lime-300/15 bg-[linear-gradient(135deg,rgba(204,255,51,0.08),rgba(34,211,238,0.035))] p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-lime-300">
+                Production Tasks Entry Point
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
+                Inspect how locked demand becomes station work before worker SOP.
+              </h2>
+
+              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
+                Open the production tasks bridge to review station workload,
+                batch tasks, required proof, QA handoff, barcode identity, and
+                the path into tablet-first worker execution.
+              </p>
+            </div>
+
+            <Link
+              href="/production-tasks"
+              className="shrink-0 rounded-full border border-lime-300/30 bg-lime-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:bg-lime-300 hover:text-[#06111F]"
+            >
+              Open /production-tasks -&gt;
+            </Link>
+          </div>
+        </section>
       </section>
 
       <section className="mt-5 grid gap-4 lg:grid-cols-3">
@@ -304,7 +340,7 @@ export default function KitchenCommandPreviewPage() {
                       </p>
 
                       <p className="mt-2 text-sm font-black text-white">
-                        {recommendation.supportMove.workerName} →{" "}
+                        {recommendation.supportMove.workerName} -&gt;{" "}
                         {recommendation.supportMove.toStation}
                       </p>
 
