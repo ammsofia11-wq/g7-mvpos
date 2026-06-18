@@ -183,6 +183,13 @@ export default function ProductionTasksPage() {
                 </Link>
 
                 <Link
+                  href="/kitchen"
+                  className="rounded-full border border-lime-300/25 bg-lime-300/[0.08] px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-lime-100 transition hover:bg-lime-300 hover:text-[#06111F]"
+                >
+                  Open live runtime
+                </Link>
+
+                <Link
                   href="/demo-sale"
                   className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white transition hover:border-cyan-300/45 hover:bg-cyan-300/10"
                 >
@@ -326,6 +333,50 @@ export default function ProductionTasksPage() {
               <StationTaskCard key={task.id} task={task} />
             ))}
           </section>
+        </section>
+
+        <section className="rounded-[32px] border border-lime-300/15 bg-[linear-gradient(135deg,rgba(204,255,51,0.08),rgba(34,211,238,0.04))] p-5 sm:p-6">
+          <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr] xl:items-center">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-lime-300">
+                Live runtime handoff
+              </p>
+
+              <h2 className="mt-3 text-3xl font-black tracking-[-0.06em] text-white">
+                After the task bridge, the live floor shows execution pressure.
+              </h2>
+
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                The production tasks bridge explains how demand becomes station
+                work. The live runtime floor shows current batches, workforce
+                pressure, alerts, approvals, production flow, and operational
+                readiness without changing this demo-safe bridge.
+              </p>
+            </div>
+
+            <div className="rounded-[28px] border border-lime-300/20 bg-lime-300/[0.07] p-5">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-lime-200">
+                Live operational view
+              </p>
+
+              <h3 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
+                Open Kitchen Runtime Floor
+              </h3>
+
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                Move from the static production task bridge into the existing
+                live runtime workspace to inspect current kitchen execution,
+                alerts, production flow, workforce state, and approval pressure.
+              </p>
+
+              <Link
+                href="/kitchen"
+                className="mt-5 inline-flex rounded-full bg-lime-300 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#06111F] transition hover:bg-white"
+              >
+                Open /kitchen
+              </Link>
+            </div>
+          </div>
         </section>
 
         <section className="rounded-[32px] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.08),rgba(204,255,51,0.04))] p-5 sm:p-6">
