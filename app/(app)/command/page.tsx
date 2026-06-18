@@ -44,7 +44,7 @@ export default function KitchenCommandPreviewPage() {
         <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-4xl">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">
-              KC-1C · Executive Chef Command Preview
+              Command OS · Executive Chef Runtime Preview
             </p>
 
             <h1 className="mt-3 text-3xl font-black tracking-[-0.06em] text-white sm:text-5xl">
@@ -52,10 +52,10 @@ export default function KitchenCommandPreviewPage() {
             </h1>
 
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">
-              This preview shows how G7 Kitchen OS reads production pressure,
-              detects delayed stations, protects QA and release gates, and
-              recommends safe support movement before the drag-and-drop command
-              board is connected to live runtime data.
+              This command preview shows how G7 Kitchen OS reads production
+              pressure, detects delayed stations, protects QA and release gates,
+              and recommends safe support movement before decisions move into
+              the live kitchen runtime floor.
             </p>
 
             <div className="mt-5 flex flex-wrap gap-3">
@@ -357,17 +357,18 @@ export default function KitchenCommandPreviewPage() {
 
       <section className="mt-5 rounded-[30px] border border-cyan-300/15 bg-cyan-300/[0.05] p-5">
         <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
-          Next step
+          Runtime Control Readiness
         </p>
 
         <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
-          KC-1D will turn this into a real Command Board
+          Ready to move from command intelligence into live runtime control
         </h2>
 
         <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
-          The next layer can add station lanes, batch cards, suggested worker
-          moves, approval buttons, and protected QA gates. After that, the board
-          can connect to live kitchen runtime state.
+          This view gives owners and operators the decision layer before they
+          open the live kitchen floor: scenario logic, risk, support movement,
+          approval requirements, blockers, confidence, and safe limits stay
+          visible before runtime action.
         </p>
       </section>
     </div>
@@ -418,4 +419,3 @@ function InfoList({
     </div>
   )
 }
-
