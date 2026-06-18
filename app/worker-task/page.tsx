@@ -12,6 +12,13 @@ type TaskStep = {
   tone: TaskStepTone
 }
 
+type CompletionGateCheck = {
+  label: string
+  status: string
+  note: string
+  tone: TaskStepTone
+}
+
 const taskSteps: TaskStep[] = [
   {
     id: "01",
@@ -132,6 +139,45 @@ const taskFacts = [
     label: "Assigned Role",
     value: "Cook / Commis",
     note: "Role-based task view",
+  },
+]
+
+const completionGateChecks: CompletionGateCheck[] = [
+  {
+    label: "Temperature proof",
+    status: "Required",
+    note: "The batch cannot move forward when the required temperature evidence is missing.",
+    tone: "red",
+  },
+  {
+    label: "Cooling evidence",
+    status: "Required",
+    note: "Cooling entry, status, and exit readiness must be visible before QA release.",
+    tone: "cyan",
+  },
+  {
+    label: "Barcode identity",
+    status: "Awaiting scan",
+    note: "The worker must keep traceability attached to the batch before storage or handoff.",
+    tone: "amber",
+  },
+  {
+    label: "Storage location",
+    status: "Confirm location",
+    note: "Fridge, rack, shelf, or holding location must be clear to the next station.",
+    tone: "lime",
+  },
+  {
+    label: "Packing and seal",
+    status: "Check before handoff",
+    note: "Packing rule, sealing movement, and label handoff must be confirmed.",
+    tone: "amber",
+  },
+  {
+    label: "QA clearance",
+    status: "Supervisor gate",
+    note: "Any missing proof keeps the task locked and triggers QA or supervisor escalation.",
+    tone: "red",
   },
 ]
 
@@ -282,6 +328,52 @@ export default function WorkerTaskExecutionPage() {
           </section>
         </section>
 
+        <section className="rounded-[32px] border border-red-300/20 bg-[radial-gradient(circle_at_top_left,rgba(248,113,113,0.16),transparent_34%),linear-gradient(135deg,rgba(248,113,113,0.07),rgba(34,211,238,0.035))] p-5 sm:p-6">
+          <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr] xl:items-start">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-red-200">
+                Completion Gate
+              </p>
+
+              <h2 className="mt-3 text-3xl font-black tracking-[-0.06em] text-white">
+                Task completion stays locked until proof is cleared.
+              </h2>
+
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                A worker should not finish a batch by memory, pressure, or verbal
+                approval. G7 keeps the completion gate visible until temperature,
+                cooling, barcode, storage, packing, label, and QA evidence are
+                confirmed.
+              </p>
+
+              <div className="mt-5 rounded-[24px] border border-red-300/25 bg-red-300/[0.075] p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-100">
+                  Current completion state
+                </p>
+
+                <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-white">
+                  Complete task locked
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  The task can move forward only after required operational proof
+                  is present or a supervisor clears the exception.
+                </p>
+
+                <button className="mt-4 rounded-full border border-red-200/25 bg-black/20 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-red-100">
+                  Escalate missing proof
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {completionGateChecks.map((check) => (
+                <CompletionGateCard key={check.label} check={check} />
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="rounded-[32px] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.08),rgba(204,255,51,0.04))] p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -400,5 +492,32 @@ function TaskStepCard({ step }: { step: TaskStep }) {
         </div>
       </div>
     </article>
+  )
+}
+
+function CompletionGateCard({ check }: { check: CompletionGateCheck }) {
+  const toneClass =
+    check.tone === "red"
+      ? "border-red-300/20 bg-red-300/[0.055] text-red-100"
+      : check.tone === "amber"
+        ? "border-amber-300/20 bg-amber-300/[0.055] text-amber-100"
+        : check.tone === "lime"
+          ? "border-lime-300/20 bg-lime-300/[0.055] text-lime-100"
+          : "border-cyan-300/20 bg-cyan-300/[0.055] text-cyan-100"
+
+  return (
+    <div className={`rounded-[22px] border p-4 ${toneClass}`}>
+      <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-80">
+        {check.status}
+      </p>
+
+      <h3 className="mt-2 text-lg font-black leading-6 text-white">
+        {check.label}
+      </h3>
+
+      <p className="mt-2 text-xs leading-5 text-slate-300">
+        {check.note}
+      </p>
+    </div>
   )
 }
