@@ -1,4 +1,6 @@
-﻿import {
+import Link from "next/link"
+
+import {
   createAllKitchenCommandScenarioReports,
   summarizeKitchenCommandScenarioReport,
 } from "../../ai/runtime-support-recommendation-scenarios"
@@ -55,9 +57,25 @@ export default function KitchenCommandPreviewPage() {
               recommends safe support movement before the drag-and-drop command
               board is connected to live runtime data.
             </p>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href="/demo-sale"
+                className="rounded-full bg-cyan-300 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#06111F] transition hover:bg-white"
+              >
+                Open Sellable Demo Journey
+              </Link>
+
+              <Link
+                href="/kitchen"
+                className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white transition hover:border-cyan-300/40 hover:bg-cyan-300/10"
+              >
+                Open Live Runtime
+              </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 sm:min-w-[420px]">
+          <div className="grid grid-cols-2 gap-3 sm:min-w-[420px] xl:grid-cols-4">
             <div className="rounded-[22px] border border-cyan-300/15 bg-cyan-300/[0.06] p-4">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-300">
                 Scenarios
@@ -78,7 +96,41 @@ export default function KitchenCommandPreviewPage() {
               </p>
               <p className="mt-2 text-3xl font-black text-white">{approvalRequiredCount}</p>
             </div>
+
+            <div className="rounded-[22px] border border-orange-300/15 bg-orange-300/[0.06] p-4">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-300">
+                High Risk
+              </p>
+              <p className="mt-2 text-3xl font-black text-white">{criticalOrHighCount}</p>
+            </div>
           </div>
+        </div>
+      </section>
+
+      <section className="mt-5 rounded-[30px] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.09),rgba(204,255,51,0.035))] p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
+              Demo-Sale Entry Point
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
+              Show the full G7 production story before opening runtime screens.
+            </h2>
+
+            <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
+              Use the sellable demo journey to explain how G7 moves from Demand
+              Lock to Recipe Runtime, Station Tasks, Worker SOP, Cooling Checks,
+              QA Release, Packaging Readiness, and Command View.
+            </p>
+          </div>
+
+          <Link
+            href="/demo-sale"
+            className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:bg-cyan-300 hover:text-[#06111F]"
+          >
+            Open /demo-sale →
+          </Link>
         </div>
       </section>
 
@@ -366,3 +418,4 @@ function InfoList({
     </div>
   )
 }
+
