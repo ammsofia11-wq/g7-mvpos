@@ -154,20 +154,23 @@ function LogoLockup() {
 
 function Signature() {
   return (
-    <p
-      className="text-[42px] leading-none text-[#C8753C] opacity-95 xl:text-[48px]"
-      style={{
-        fontFamily:
-          '"Brush Script MT","Segoe Script","Lucida Handwriting",cursive',
-        transform: "rotate(-7deg)",
-        letterSpacing: "0.02em",
-      }}
-    >
-      G7Chef
-    </p>
+    <div className="inline-flex flex-col items-start">
+      <p
+        className="text-[28px] leading-none text-[#C8753C] opacity-90 xl:text-[32px]"
+        style={{
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontStyle: "italic",
+          fontWeight: 400,
+          letterSpacing: "0.03em",
+        }}
+      >
+        G7 Chef
+      </p>
+
+      <div className="mt-2 h-px w-24 bg-gradient-to-r from-[#C8753C]/80 via-[#C8753C]/35 to-transparent" />
+    </div>
   );
 }
-
 function CoreVisual() {
   return (
     <section className="relative mx-auto aspect-square w-full max-w-[520px] xl:max-w-[560px]">
