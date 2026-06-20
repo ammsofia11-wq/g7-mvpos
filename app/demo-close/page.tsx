@@ -83,10 +83,10 @@ export default function DemoClosePage() {
               </Link>
 
               <Link
-                href="/client-onboarding"
+                href="/pilot-onboarding"
                 className="rounded-full border border-white/15 px-4 py-2 transition hover:border-[#CCFF33]/40 hover:text-[#CCFF33]"
               >
-                Client Onboarding
+                Pilot Onboarding
               </Link>
 
               <Link
@@ -117,7 +117,7 @@ export default function DemoClosePage() {
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href="/client-onboarding"
+                  href="/pilot-onboarding"
                   className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
                 >
                   Start Pilot Onboarding
@@ -313,7 +313,7 @@ export default function DemoClosePage() {
 
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link
-                href="/client-onboarding"
+                href="/pilot-onboarding"
                 className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-3 text-center text-sm font-black text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
               >
                 Start Pilot Onboarding
