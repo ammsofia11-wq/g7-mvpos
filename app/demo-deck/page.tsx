@@ -1,142 +1,331 @@
 import Image from "next/image";
 
-const flowNodes = [
-  { id: "01", label: "Ingredients" },
-  { id: "02", label: "Supplier Options" },
-  { id: "03", label: "Approved Recipe" },
-  { id: "04", label: "SOP" },
-  { id: "05", label: "Worker Task" },
-  { id: "06", label: "QA" },
-  { id: "07", label: "Runtime" },
+const categorySlides = [
+  {
+    no: "01",
+    kicker: "Category Launch",
+    title: "The Missing Operating System for Central Kitchen Production.",
+    accent: "G7 is a Chef-Based Kitchen OS.",
+    body: "Culinary Intelligence for Central Kitchen Production. Built from real kitchen operations to turn chef logic into controlled execution.",
+    visual: "category",
+  },
+  {
+    no: "02",
+    kicker: "Market Gap",
+    title: "Sales are controlled. Kitchen production is still exposed.",
+    accent: "POS controls orders. ERP tracks resources. G7 controls production.",
+    body: "Most kitchens have systems around the operation, but the production floor itself still depends on memory, paper, messages, and daily firefighting.",
+    visual: "gap",
+  },
+  {
+    no: "03",
+    kicker: "What G7 Is",
+    title: "A Chef-Based Kitchen OS.",
+    accent: "Not a recipe app. Not a dashboard. Not just software.",
+    body: "G7 carries chef-approved operating logic into purchasing, recipes, SOPs, worker execution, QA, cold chain, runtime control, and pilot scaling.",
+    visual: "core",
+  },
+  {
+    no: "04",
+    kicker: "Chef Logic Layer",
+    title: "The chef defines the operating logic.",
+    accent: "Concept, standards, ingredients, recipes, QA, and execution rules.",
+    body: "G7 starts where real kitchen control starts: with the chef’s approved logic, not with disconnected tasks or isolated screens.",
+    visual: "chef",
+  },
+  {
+    no: "05",
+    kicker: "Purchasing Control Layer",
+    title: "Purchasing works inside chef-approved options.",
+    accent: "Option A. Option B. Option C.",
+    body: "Purchasing can move fast, compare suppliers, and protect availability without breaking the chef’s quality standards.",
+    visual: "purchasing",
+  },
+  {
+    no: "06",
+    kicker: "Recipe-to-SOP Layer",
+    title: "Recipe testing becomes approved SOP.",
+    accent: "Test. Feedback. Version. Approve. Standardize.",
+    body: "Each recipe becomes a structured operating standard with yield, method, cooling rules, QA checks, photos, videos, and worker-ready instructions.",
+    visual: "sop",
+  },
+  {
+    no: "07",
+    kicker: "Production Execution Layer",
+    title: "Demand becomes station-level execution.",
+    accent: "Right task. Right step. Right proof.",
+    body: "G7 converts approved demand into production tasks, station workload, timing, handoff proof, worker screens, and execution control.",
+    visual: "execution",
+  },
+  {
+    no: "08",
+    kicker: "Quality Layer",
+    title: "QA and cold chain stay visible.",
+    accent: "Every critical movement is traceable.",
+    body: "From supplier vehicle to receiving, storage, production, cooling, packaging, dispatch, and delivery handoff — every critical point has responsibility.",
+    visual: "quality",
+  },
+  {
+    no: "09",
+    kicker: "Intelligence Layer",
+    title: "See the kitchen before problems grow.",
+    accent: "Runtime visibility. Pressure detection. Release readiness.",
+    body: "G7 helps management see active work, delays, blocked batches, QA holds, output gaps, station pressure, and support movement while production is running.",
+    visual: "runtime",
+  },
+  {
+    no: "10",
+    kicker: "Pilot Path",
+    title: "Start focused. Prove value. Scale with confidence.",
+    accent: "One pilot flow can prove the operating model.",
+    body: "Choose one kitchen scope, prepare the first data pack, approve the chef logic, run controlled production, review results, and scale step by step.",
+    visual: "pilot",
+  },
 ];
+
+const coreOrbit = [
+  "Chef Logic",
+  "Ingredients",
+  "Supplier Options",
+  "Approved Recipe",
+  "SOP",
+  "Worker Task",
+  "QA",
+  "Runtime",
+];
+
+const visualFlows: Record<string, string[]> = {
+  category: [
+    "Missing Layer",
+    "Chef-Based OS",
+    "Culinary Intelligence",
+    "Controlled Execution",
+  ],
+  gap: ["POS", "ERP", "Kitchen Production Gap", "G7"],
+  chef: ["Concept", "Ingredient Standards", "Recipe Logic", "QA Rules"],
+  purchasing: ["Ingredient List", "Option A", "Option B", "Option C"],
+  sop: ["Recipe Draft", "Test", "Feedback", "Version", "Approval", "SOP"],
+  execution: ["Locked Demand", "Station Tasks", "Worker Screen", "Proof"],
+  quality: ["Supplier", "Receiving", "Storage", "Cooling", "Dispatch"],
+  runtime: ["Active", "Delayed", "Blocked", "QA Hold", "Release"],
+  pilot: ["Pilot Scope", "Data Pack", "Chef Approval", "Production Flow", "Review"],
+};
+
+function LogoLockup() {
+  return (
+    <header className="flex items-center gap-5">
+      <Image
+        src="/images/g7-logo-clean.png"
+        alt="G7 Kitchen OS"
+        width={150}
+        height={80}
+        className="h-14 w-auto object-contain"
+        priority
+      />
+      <div className="h-11 w-px bg-[#C8753C]/75" />
+      <p className="text-[11px] font-black uppercase tracking-[0.55em] text-[#C8753C]">
+        G7 Kitchen OS
+      </p>
+    </header>
+  );
+}
+
+function Signature() {
+  return (
+    <p
+      className="text-[42px] leading-none text-[#C8753C] opacity-95 xl:text-[48px]"
+      style={{
+        fontFamily:
+          '"Brush Script MT","Segoe Script","Lucida Handwriting",cursive',
+        transform: "rotate(-7deg)",
+        letterSpacing: "0.02em",
+      }}
+    >
+      G7Chef
+    </p>
+  );
+}
+
+function CoreVisual() {
+  return (
+    <section className="relative mx-auto aspect-square w-full max-w-[520px] xl:max-w-[560px]">
+      <div className="absolute inset-0 rounded-full border border-cyan-300/10" />
+      <div className="absolute inset-[8%] rounded-full border border-cyan-300/10" />
+      <div className="absolute inset-[16%] rounded-full border border-cyan-300/15" />
+      <div className="absolute inset-[25%] rounded-full border border-cyan-300/25 shadow-[0_0_70px_rgba(0,210,255,0.22)]" />
+
+      <div className="absolute left-1/2 top-1/2 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-cyan-300/40 bg-[#041827]/90 shadow-[0_0_80px_rgba(0,210,255,0.32)]">
+        <Image
+          src="/images/g7-logo-clean.png"
+          alt="G7"
+          width={120}
+          height={70}
+          className="h-16 w-auto object-contain"
+          priority
+        />
+        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.32em] text-white/80">
+          Kitchen OS
+        </p>
+      </div>
+
+      {coreOrbit.map((label, index) => {
+        const angle = (index / coreOrbit.length) * 360 - 90;
+        const radius = 40;
+        const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
+        const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
+
+        return (
+          <div
+            key={label}
+            className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 text-center"
+            style={{ left: `${x}%`, top: `${y}%` }}
+          >
+            <div className="flex h-13 w-13 items-center justify-center rounded-full border border-cyan-300/40 bg-[#041827]/90 text-sm font-black text-cyan-200 shadow-[0_0_34px_rgba(0,210,255,0.2)]">
+              {String(index + 1).padStart(2, "0")}
+            </div>
+            <p className="w-28 text-[11px] font-bold leading-tight text-slate-100">
+              {label}
+            </p>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function FlowVisual({ type }: { type: string }) {
+  const items = visualFlows[type] ?? visualFlows.category;
+
+  return (
+    <section className="relative mx-auto w-full max-w-[660px]">
+      <div className="absolute -inset-8 rounded-[44px] border border-cyan-300/10 bg-cyan-300/[0.03] shadow-[0_0_80px_rgba(0,210,255,0.08)]" />
+
+      <div className="relative grid gap-4">
+        {items.map((item, index) => (
+          <div
+            key={item}
+            className="grid grid-cols-[66px_1fr] items-center gap-4"
+          >
+            <div className="flex h-15 w-15 items-center justify-center rounded-2xl border border-cyan-300/35 bg-[#041827]/90 text-base font-black text-cyan-200 shadow-[0_0_30px_rgba(0,210,255,0.12)]">
+              {String(index + 1).padStart(2, "0")}
+            </div>
+
+            <div className="rounded-2xl border border-cyan-300/20 bg-[#061C2D]/80 px-5 py-4">
+              <p className="text-lg font-black text-white">{item}</p>
+              <div className="mt-2 h-px bg-gradient-to-r from-[#C8753C]/80 via-cyan-300/30 to-transparent" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MarketGapVisual() {
+  return (
+    <section className="relative mx-auto w-full max-w-[700px]">
+      <div className="grid gap-5">
+        <div className="rounded-[32px] border border-cyan-300/20 bg-cyan-300/5 p-6">
+          <p className="text-[11px] font-black uppercase tracking-[0.34em] text-cyan-200">
+            Existing Systems
+          </p>
+          <div className="mt-5 grid grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+              <p className="text-3xl font-black text-white">POS</p>
+              <p className="mt-2 text-sm text-slate-300">
+                Controls sales, orders, and payments.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+              <p className="text-3xl font-black text-white">ERP</p>
+              <p className="mt-2 text-sm text-slate-300">
+                Tracks resources, stock, and accounting.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[32px] border border-[#C8753C]/35 bg-[#C8753C]/10 p-6 shadow-[0_0_55px_rgba(200,117,60,0.12)]">
+          <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#F0B27A]">
+            Missing Layer
+          </p>
+          <p className="mt-4 text-4xl font-black leading-tight text-white">
+            Kitchen Production OS
+          </p>
+          <p className="mt-3 text-sm leading-6 text-slate-200">
+            The layer that controls what happens after demand exists.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SlideVisual({ type }: { type: string }) {
+  if (type === "core") return <CoreVisual />;
+  if (type === "gap") return <MarketGapVisual />;
+  return <FlowVisual type={type} />;
+}
 
 export default function DemoDeckPage() {
   return (
-    <main className="h-screen overflow-hidden bg-[#041827] text-white">
-      <section className="relative h-screen overflow-hidden px-10 py-7">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_74%_45%,rgba(0,210,255,0.24),transparent_34%),radial-gradient(circle_at_16%_88%,rgba(200,117,60,0.13),transparent_25%),linear-gradient(135deg,#041827_0%,#073044_48%,#03111F_100%)]" />
+    <main className="bg-[#041827] text-white">
+      {categorySlides.map((slide) => (
+        <section
+          key={slide.no}
+          className="relative min-h-screen overflow-hidden px-10 py-7"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_74%_45%,rgba(0,210,255,0.24),transparent_34%),radial-gradient(circle_at_16%_88%,rgba(200,117,60,0.13),transparent_25%),linear-gradient(135deg,#041827_0%,#073044_48%,#03111F_100%)]" />
 
-        <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(0,214,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,214,255,0.07)_1px,transparent_1px)] [background-size:48px_48px]" />
+          <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(0,214,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,214,255,0.07)_1px,transparent_1px)] [background-size:48px_48px]" />
 
-        <div className="relative z-10 mx-auto grid h-full max-w-[1360px] grid-cols-[0.82fr_1.18fr] items-center gap-10">
-          <section className="min-w-0">
-            <header className="mb-7 flex items-center gap-5">
-              <Image
-                src="/images/g7-logo-clean.png"
-                alt="G7 Kitchen OS"
-                width={150}
-                height={80}
-                className="h-14 w-auto object-contain"
-                priority
-              />
-
-              <div className="h-11 w-px bg-[#C8753C]/75" />
-
-              <p className="text-[11px] font-black uppercase tracking-[0.55em] text-[#C8753C]">
-                G7 Kitchen OS
-              </p>
-            </header>
-
-            <p className="mb-3 text-[10px] font-black uppercase tracking-[0.42em] text-cyan-300">
-              Culinary Intelligence
-            </p>
-
-            <h1 className="max-w-[560px] text-[54px] font-black leading-[0.9] tracking-[-0.06em] xl:text-[64px]">
-              <span className="block">G7 is a</span>
-              <span className="block bg-gradient-to-r from-cyan-300 to-sky-500 bg-clip-text text-transparent">
-                Chef-Based
-              </span>
-              <span className="block">Kitchen OS.</span>
-            </h1>
-
-            <div className="mt-5 h-px max-w-[500px] bg-gradient-to-r from-cyan-300/85 via-cyan-300/20 to-transparent" />
-
-            <p className="mt-5 max-w-[540px] text-[22px] font-bold leading-tight text-[#C8753C] xl:text-[24px]">
-              Culinary Intelligence for Central Kitchen Production.
-            </p>
-
-            <div className="mt-6 border-l-2 border-cyan-300/75 pl-5">
-              <p className="max-w-[520px] text-[19px] leading-snug text-slate-50">
-                From chef logic to controlled kitchen execution.
-              </p>
+          <div className="relative z-10 mx-auto grid min-h-[calc(100vh-56px)] max-w-[1360px] grid-rows-[auto_1fr_auto] gap-7">
+            <div className="flex items-center justify-between gap-6">
+              <LogoLockup />
+              <div className="rounded-full border border-cyan-300/25 bg-cyan-300/5 px-4 py-2 text-[11px] font-black uppercase tracking-[0.24em] text-cyan-100">
+                Slide {slide.no} of 10
+              </div>
             </div>
 
-            <div className="mt-8 flex items-end justify-between gap-6">
-              <p
-                className="text-[44px] leading-none text-[#C8753C] opacity-95 xl:text-[50px]"
-                style={{
-                  fontFamily:
-                    '"Brush Script MT","Segoe Script","Lucida Handwriting",cursive',
-                  transform: "rotate(-7deg)",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                G7Chef
-              </p>
+            <div className="grid min-h-0 items-center gap-10 lg:grid-cols-[0.82fr_1.18fr]">
+              <section className="min-w-0">
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.42em] text-cyan-300">
+                  {slide.kicker}
+                </p>
 
-              <div className="hidden rounded-full border border-cyan-300/20 bg-cyan-300/5 px-5 py-2 text-[9px] font-black uppercase tracking-[0.32em] text-slate-300 xl:block">
+                <h1 className="max-w-[700px] text-[48px] font-black leading-[0.92] tracking-[-0.06em] xl:text-[60px]">
+                  {slide.title}
+                </h1>
+
+                <div className="mt-5 h-px max-w-[520px] bg-gradient-to-r from-cyan-300/85 via-cyan-300/20 to-transparent" />
+
+                <p className="mt-5 max-w-[620px] text-[22px] font-bold leading-tight text-[#C8753C] xl:text-[24px]">
+                  {slide.accent}
+                </p>
+
+                <div className="mt-6 border-l-2 border-cyan-300/75 pl-5">
+                  <p className="max-w-[620px] text-[18px] leading-7 text-slate-50 xl:text-[20px]">
+                    {slide.body}
+                  </p>
+                </div>
+              </section>
+
+              <SlideVisual type={slide.visual} />
+            </div>
+
+            <footer className="flex items-center justify-between gap-6">
+              <Signature />
+
+              <div className="rounded-full border border-cyan-300/20 bg-cyan-300/5 px-5 py-2 text-[9px] font-black uppercase tracking-[0.32em] text-slate-300">
                 Built from{" "}
                 <span className="text-[#C8753C]">
                   real kitchen operations.
                 </span>
               </div>
-            </div>
-          </section>
-
-          <section className="relative mx-auto aspect-square w-full max-w-[540px] xl:max-w-[570px]">
-            <div className="absolute inset-0 rounded-full border border-cyan-300/10" />
-            <div className="absolute inset-[8%] rounded-full border border-cyan-300/10" />
-            <div className="absolute inset-[16%] rounded-full border border-cyan-300/15" />
-            <div className="absolute inset-[25%] rounded-full border border-cyan-300/25 shadow-[0_0_70px_rgba(0,210,255,0.24)]" />
-
-            <div className="absolute left-1/2 top-1/2 flex h-38 w-38 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-cyan-300/40 bg-[#041827]/90 shadow-[0_0_80px_rgba(0,210,255,0.34)]">
-              <Image
-                src="/images/g7-logo-clean.png"
-                alt="G7"
-                width={120}
-                height={70}
-                className="h-16 w-auto object-contain"
-                priority
-              />
-
-              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.32em] text-white/80">
-                Kitchen OS
-              </p>
-            </div>
-
-            <div className="absolute left-1/2 top-[24%] -translate-x-1/2 rounded-full border border-[#C8753C]/50 bg-[#041827]/75 px-5 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#F0B27A]">
-              Chef Logic
-            </div>
-
-            <div className="absolute bottom-[24%] left-1/2 -translate-x-1/2 rounded-full border border-[#C8753C]/50 bg-[#041827]/75 px-5 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#F0B27A]">
-              Controlled Execution
-            </div>
-
-            {flowNodes.map((node, index) => {
-              const angle = (index / flowNodes.length) * 360 - 90;
-              const radius = 40;
-              const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
-              const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
-
-              return (
-                <div
-                  key={node.label}
-                  className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 text-center"
-                  style={{ left: `${x}%`, top: `${y}%` }}
-                >
-                  <div className="flex h-13 w-13 items-center justify-center rounded-full border border-cyan-300/40 bg-[#041827]/90 text-base font-black text-cyan-200 shadow-[0_0_34px_rgba(0,210,255,0.22)]">
-                    {node.id}
-                  </div>
-
-                  <p className="w-28 text-[12px] font-bold leading-tight text-slate-100">
-                    {node.label}
-                  </p>
-                </div>
-              );
-            })}
-          </section>
-        </div>
-      </section>
+            </footer>
+          </div>
+        </section>
+      ))}
     </main>
   );
 }
