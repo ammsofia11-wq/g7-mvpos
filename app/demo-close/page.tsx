@@ -86,6 +86,12 @@ export default function DemoClosePage() {
               >
                 Production Tasks
               </Link>
+              <Link
+                href="/demo-deck"
+                className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
+              >
+                Cinematic Deck
+              </Link>
             </div>
           </nav>
 
@@ -300,4 +306,6 @@ export default function DemoClosePage() {
     </main>
   )
 }
+
+
 
