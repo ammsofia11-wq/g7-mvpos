@@ -1,4 +1,4 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 
 import {
   createAllKitchenCommandScenarioReports,
@@ -67,6 +67,13 @@ export default function KitchenCommandPreviewPage() {
               </Link>
 
               <Link
+                href="/demo-deck"
+                className="rounded-full border border-[#C98D46]/35 bg-[#C98D46]/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#F3C27A] transition hover:border-[#F3C27A] hover:bg-[#C98D46]/15 hover:text-[#FFE2A8]"
+              >
+                Open Category Launch Deck
+              </Link>
+
+              <Link
                 href="/production-tasks"
                 className="rounded-full border border-lime-300/25 bg-lime-300/[0.08] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:border-lime-200 hover:bg-lime-300/15 hover:text-lime-50"
               >
@@ -114,9 +121,9 @@ export default function KitchenCommandPreviewPage() {
         </div>
       </section>
 
-      <section className="mt-5 grid gap-4 lg:grid-cols-2">
+      <section className="mt-5 grid gap-4 lg:grid-cols-3">
         <section className="rounded-[30px] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.09),rgba(204,255,51,0.035))] p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex h-full flex-col gap-4 lg:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
                 Demo-Sale Entry Point
@@ -126,7 +133,7 @@ export default function KitchenCommandPreviewPage() {
                 Show the full G7 production story before opening runtime screens.
               </h2>
 
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
+              <p className="mt-3 text-sm leading-7 text-slate-400">
                 Use the sellable demo journey to explain how G7 moves from Demand
                 Lock to Recipe Runtime, Station Tasks, Worker SOP, Cooling Checks,
                 QA Release, Packaging Readiness, and Command View.
@@ -135,15 +142,42 @@ export default function KitchenCommandPreviewPage() {
 
             <Link
               href="/demo-sale"
-              className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
+              className="w-fit rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
             >
               Open /demo-sale -&gt;
             </Link>
           </div>
         </section>
 
+        <section className="rounded-[30px] border border-[#C98D46]/20 bg-[linear-gradient(135deg,rgba(201,141,70,0.11),rgba(34,211,238,0.035))] p-5">
+          <div className="flex h-full flex-col gap-4 lg:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#F3C27A]">
+                Category Launch Deck
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
+                Present G7 as the missing operating system for central kitchen production.
+              </h2>
+
+              <p className="mt-3 text-sm leading-7 text-slate-400">
+                Open the 10-slide Category Launch Presentation to explain the new
+                market category, the operational gap, and why G7 is the production
+                OS layer between demand, kitchen execution, QA, packaging, and dispatch.
+              </p>
+            </div>
+
+            <Link
+              href="/demo-deck"
+              className="w-fit rounded-full border border-[#C98D46]/35 bg-[#C98D46]/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#F3C27A] transition hover:border-[#F3C27A] hover:bg-[#C98D46]/15 hover:text-[#FFE2A8]"
+            >
+              Open /demo-deck -&gt;
+            </Link>
+          </div>
+        </section>
+
         <section className="rounded-[30px] border border-lime-300/15 bg-[linear-gradient(135deg,rgba(204,255,51,0.08),rgba(34,211,238,0.035))] p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex h-full flex-col gap-4 lg:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-lime-300">
                 Production Tasks Entry Point
@@ -153,7 +187,7 @@ export default function KitchenCommandPreviewPage() {
                 Inspect how locked demand becomes station work before worker SOP.
               </h2>
 
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
+              <p className="mt-3 text-sm leading-7 text-slate-400">
                 Open the production tasks bridge to review station workload,
                 batch tasks, required proof, QA handoff, barcode identity, and
                 the path into tablet-first worker execution.
@@ -162,7 +196,7 @@ export default function KitchenCommandPreviewPage() {
 
             <Link
               href="/production-tasks"
-              className="shrink-0 rounded-full border border-lime-300/30 bg-lime-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:border-lime-200 hover:bg-lime-300/15 hover:text-lime-50"
+              className="w-fit rounded-full border border-lime-300/30 bg-lime-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:border-lime-200 hover:bg-lime-300/15 hover:text-lime-50"
             >
               Open /production-tasks -&gt;
             </Link>
@@ -455,5 +489,3 @@ function InfoList({
     </div>
   )
 }
-
-

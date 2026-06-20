@@ -96,6 +96,11 @@ const proofStats = [
 
 const commandCards = [
   {
+    title: "Category Launch Deck",
+    href: "/demo-deck",
+    note: "The 10-slide presentation that explains G7 as the missing operating system for central kitchen production.",
+  },
+  {
     title: "Client Value",
     href: "/client-value",
     note: "See the business value: operation control, cost protection, waste visibility, fair worker evaluation, and onboarding.",
