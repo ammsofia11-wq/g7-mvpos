@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const categorySlides = [
   {
@@ -110,6 +111,27 @@ const visualFlows: Record<string, string[]> = {
   runtime: ["Active", "Delayed", "Blocked", "QA Hold", "Release"],
   pilot: ["Pilot Scope", "Data Pack", "Chef Approval", "Production Flow", "Review"],
 };
+
+const nextPathCards = [
+  {
+    title: "Equipment Intelligence",
+    href: "/equipment-intelligence",
+    label: "Open Equipment Layer",
+    body: "Show how G7 can sit above smart ovens, blast chillers, sensors, packaging lines, scales, and fleet cold-chain signals.",
+  },
+  {
+    title: "Demo Close",
+    href: "/demo-close",
+    label: "Close The Sales Story",
+    body: "Move from category explanation into pilot path, protected data rules, client value, and the next decision.",
+  },
+  {
+    title: "Demo Journey",
+    href: "/demo-sale",
+    label: "Back To Demo Flow",
+    body: "Return to the full sellable journey from demand lock to production tasks, worker execution, runtime, QA, and close.",
+  },
+];
 
 function LogoLockup() {
   return (
@@ -267,6 +289,48 @@ function SlideVisual({ type }: { type: string }) {
   return <FlowVisual type={type} />;
 }
 
+function NextPathVisual() {
+  return (
+    <section className="relative mx-auto w-full max-w-[700px]">
+      <div className="absolute -inset-8 rounded-[44px] border border-cyan-300/10 bg-cyan-300/[0.03] shadow-[0_0_80px_rgba(0,210,255,0.08)]" />
+
+      <div className="relative grid gap-4">
+        {nextPathCards.map((card, index) => (
+          <Link
+            key={card.title}
+            href={card.href}
+            className="group rounded-[28px] border border-cyan-300/20 bg-[#061C2D]/80 p-5 transition hover:border-[#C8753C]/60 hover:bg-[#08263A]"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-cyan-300/35 bg-[#041827]/90 text-base font-black text-cyan-200 shadow-[0_0_30px_rgba(0,210,255,0.12)]">
+                {String(index + 1).padStart(2, "0")}
+              </div>
+
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#C8753C]">
+                  {card.label}
+                </p>
+
+                <h3 className="mt-2 text-2xl font-black leading-tight text-white">
+                  {card.title}
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  {card.body}
+                </p>
+
+                <p className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300 transition group-hover:text-[#F0B27A]">
+                  Continue -&gt;
+                </p>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function DemoDeckPage() {
   return (
     <main className="bg-[#041827] text-white">
@@ -326,6 +390,83 @@ export default function DemoDeckPage() {
           </div>
         </section>
       ))}
+
+      <section className="relative min-h-screen overflow-hidden px-10 py-7">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_42%,rgba(0,210,255,0.22),transparent_34%),radial-gradient(circle_at_18%_82%,rgba(200,117,60,0.18),transparent_28%),linear-gradient(135deg,#041827_0%,#073044_46%,#03111F_100%)]" />
+
+        <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(0,214,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,214,255,0.07)_1px,transparent_1px)] [background-size:48px_48px]" />
+
+        <div className="relative z-10 mx-auto grid min-h-[calc(100vh-56px)] max-w-[1360px] grid-rows-[auto_1fr_auto] gap-7">
+          <div className="flex items-center justify-between gap-6">
+            <LogoLockup />
+            <div className="rounded-full border border-[#C8753C]/35 bg-[#C8753C]/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.24em] text-[#F0B27A]">
+              Final Path
+            </div>
+          </div>
+
+          <div className="grid min-h-0 items-center gap-10 lg:grid-cols-[0.82fr_1.18fr]">
+            <section className="min-w-0">
+              <p className="mb-3 text-[10px] font-black uppercase tracking-[0.42em] text-cyan-300">
+                Next Step
+              </p>
+
+              <h1 className="max-w-[720px] text-[48px] font-black leading-[0.92] tracking-[-0.06em] xl:text-[60px]">
+                Move from category story to system proof.
+              </h1>
+
+              <div className="mt-5 h-px max-w-[520px] bg-gradient-to-r from-cyan-300/85 via-cyan-300/20 to-transparent" />
+
+              <p className="mt-5 max-w-[620px] text-[22px] font-bold leading-tight text-[#C8753C] xl:text-[24px]">
+                Equipment Intelligence. Demo Close. Pilot Decision.
+              </p>
+
+              <div className="mt-6 border-l-2 border-cyan-300/75 pl-5">
+                <p className="max-w-[620px] text-[18px] leading-7 text-slate-50 xl:text-[20px]">
+                  After the category launch story, continue into how G7 connects
+                  central kitchen production with equipment intelligence, sales
+                  close logic, and a focused pilot path.
+                </p>
+              </div>
+
+              <div className="mt-7 flex flex-wrap gap-3">
+                <Link
+                  href="/equipment-intelligence"
+                  className="rounded-full border border-cyan-300/35 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
+                >
+                  Open Equipment Intelligence
+                </Link>
+
+                <Link
+                  href="/demo-close"
+                  className="rounded-full border border-[#C8753C]/40 bg-[#C8753C]/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#F0B27A] transition hover:border-[#F0B27A] hover:bg-[#C8753C]/15 hover:text-[#FFE2A8]"
+                >
+                  Close Demo
+                </Link>
+
+                <Link
+                  href="/demo-sale"
+                  className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white transition hover:border-cyan-300/40 hover:bg-cyan-300/10"
+                >
+                  Back To Demo Journey
+                </Link>
+              </div>
+            </section>
+
+            <NextPathVisual />
+          </div>
+
+          <footer className="flex items-center justify-between gap-6">
+            <Signature />
+
+            <div className="rounded-full border border-cyan-300/20 bg-cyan-300/5 px-5 py-2 text-[9px] font-black uppercase tracking-[0.32em] text-slate-300">
+              Category story{" "}
+              <span className="text-[#C8753C]">
+                connected to next action.
+              </span>
+            </div>
+          </footer>
+        </div>
+      </section>
     </main>
   );
 }
