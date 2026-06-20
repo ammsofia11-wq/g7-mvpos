@@ -101,6 +101,11 @@ const commandCards = [
     note: "The 10-slide presentation that explains G7 as the missing operating system for central kitchen production.",
   },
   {
+    title: "Equipment Intelligence",
+    href: "/equipment-intelligence",
+    note: "See how G7 is designed to become the operational brain above connected kitchen equipment, from smart ovens and blast chillers to packaging, sensors, and fleet cold-chain data.",
+  },
+  {
     title: "Client Value",
     href: "/client-value",
     note: "See the business value: operation control, cost protection, waste visibility, fair worker evaluation, and onboarding.",

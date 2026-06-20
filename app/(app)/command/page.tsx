@@ -74,6 +74,13 @@ export default function KitchenCommandPreviewPage() {
               </Link>
 
               <Link
+                href="/equipment-intelligence"
+                className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
+              >
+                Open Equipment Intelligence
+              </Link>
+
+              <Link
                 href="/production-tasks"
                 className="rounded-full border border-lime-300/25 bg-lime-300/[0.08] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-lime-100 transition hover:border-lime-200 hover:bg-lime-300/15 hover:text-lime-50"
               >
@@ -121,7 +128,7 @@ export default function KitchenCommandPreviewPage() {
         </div>
       </section>
 
-      <section className="mt-5 grid gap-4 lg:grid-cols-3">
+      <section className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <section className="rounded-[30px] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.09),rgba(204,255,51,0.035))] p-5">
           <div className="flex h-full flex-col gap-4 lg:justify-between">
             <div>
@@ -172,6 +179,33 @@ export default function KitchenCommandPreviewPage() {
               className="w-fit rounded-full border border-[#C98D46]/35 bg-[#C98D46]/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#F3C27A] transition hover:border-[#F3C27A] hover:bg-[#C98D46]/15 hover:text-[#FFE2A8]"
             >
               Open /demo-deck -&gt;
+            </Link>
+          </div>
+        </section>
+
+        <section className="rounded-[30px] border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(201,141,70,0.055))] p-5">
+          <div className="flex h-full flex-col gap-4 lg:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
+                Equipment Intelligence
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
+                Show how G7 becomes the operational brain above connected equipment.
+              </h2>
+
+              <p className="mt-3 text-sm leading-7 text-slate-400">
+                Open the equipment intelligence layer to explain how smart ovens,
+                blast chillers, packaging lines, sensors, scales, and fleet
+                cold-chain data can become runtime signals inside G7.
+              </p>
+            </div>
+
+            <Link
+              href="/equipment-intelligence"
+              className="w-fit rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
+            >
+              Open /equipment-intelligence -&gt;
             </Link>
           </div>
         </section>
