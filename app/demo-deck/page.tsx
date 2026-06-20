@@ -333,11 +333,11 @@ function NextPathVisual() {
 
 export default function DemoDeckPage() {
   return (
-    <main className="bg-[#041827] text-white">
+    <main className="h-screen snap-y snap-mandatory overflow-y-auto scroll-smooth bg-[#041827] text-white">
       {categorySlides.map((slide) => (
         <section
           key={slide.no}
-          className="relative min-h-screen overflow-hidden px-10 py-7"
+          className="relative min-h-screen snap-start snap-always overflow-hidden px-10 py-7"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_74%_45%,rgba(0,210,255,0.24),transparent_34%),radial-gradient(circle_at_16%_88%,rgba(200,117,60,0.13),transparent_25%),linear-gradient(135deg,#041827_0%,#073044_48%,#03111F_100%)]" />
 
@@ -391,7 +391,7 @@ export default function DemoDeckPage() {
         </section>
       ))}
 
-      <section className="relative min-h-screen overflow-hidden px-10 py-7">
+      <section className="relative min-h-screen snap-start snap-always overflow-hidden px-10 py-7">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_42%,rgba(0,210,255,0.22),transparent_34%),radial-gradient(circle_at_18%_82%,rgba(200,117,60,0.18),transparent_28%),linear-gradient(135deg,#041827_0%,#073044_46%,#03111F_100%)]" />
 
         <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(0,214,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,214,255,0.07)_1px,transparent_1px)] [background-size:48px_48px]" />
