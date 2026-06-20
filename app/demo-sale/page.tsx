@@ -9,6 +9,14 @@ type DemoStage = {
   kitchenAction: string
 }
 
+type ClientDemoPath = {
+  step: string
+  title: string
+  href: string
+  signal: string
+  note: string
+}
+
 const demoStages: DemoStage[] = [
   {
     step: "01",
@@ -91,6 +99,51 @@ const proofStats = [
     label: "Runtime Scope",
     value: "Demand -> Dispatch",
     note: "central kitchen production flow",
+  },
+]
+
+const clientDemoPath: ClientDemoPath[] = [
+  {
+    step: "01",
+    title: "Category Launch Deck",
+    href: "/demo-deck",
+    signal: "Start the story",
+    note: "Explain the missing category: G7 is the operating system for central kitchen production.",
+  },
+  {
+    step: "02",
+    title: "Equipment Intelligence",
+    href: "/equipment-intelligence",
+    signal: "Show the future layer",
+    note: "Connect the story to smart ovens, chillers, packaging, sensors, scales, and cold-chain signals.",
+  },
+  {
+    step: "03",
+    title: "Production Tasks",
+    href: "/production-tasks",
+    signal: "Prove production control",
+    note: "Show how locked demand becomes station workload, batch tasks, proof requirements, and handoff.",
+  },
+  {
+    step: "04",
+    title: "Worker Task",
+    href: "/worker-task",
+    signal: "Prove worker execution",
+    note: "Show the tablet-first worker SOP with visual guidance, barcode, storage, packing, and QA escalation.",
+  },
+  {
+    step: "05",
+    title: "Kitchen Runtime",
+    href: "/kitchen",
+    signal: "Show live operations",
+    note: "Move into runtime pressure, batch progress, worker execution, alerts, and operational visibility.",
+  },
+  {
+    step: "06",
+    title: "Demo Close",
+    href: "/demo-close",
+    signal: "Ask for the next decision",
+    note: "Close with pilot path, protected data rules, client-owned data, value, and next meeting decision.",
   },
 ]
 
@@ -184,24 +237,24 @@ export default function DemoSalePage() {
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href="/kitchen"
+                  href="/demo-deck"
                   className="rounded-full border border-cyan-300/35 bg-cyan-300/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
                 >
-                  Open Runtime
+                  Start Category Launch
+                </Link>
+
+                <Link
+                  href="/equipment-intelligence"
+                  className="rounded-full border border-[#CCFF33]/30 bg-[#CCFF33]/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
+                >
+                  Equipment Intelligence
                 </Link>
 
                 <Link
                   href="/demo-close"
-                  className="rounded-full border border-[#CCFF33]/30 bg-[#CCFF33]/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
+                  className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#C8753C]/40 hover:bg-[#C8753C]/10 hover:text-[#F0B27A]"
                 >
                   Close Demo
-                </Link>
-
-                <Link
-                  href="/"
-                  className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-white transition hover:border-cyan-300/40 hover:bg-cyan-300/10"
-                >
-                  Back Home
                 </Link>
               </div>
             </div>
@@ -244,6 +297,60 @@ export default function DemoSalePage() {
             </aside>
           </div>
         </header>
+
+        <section className="rounded-[32px] border border-cyan-300/20 bg-cyan-300/[0.045] p-5 shadow-[0_22px_80px_rgba(0,210,255,0.06)] sm:p-6">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
+                Recommended Client Demo Path
+              </p>
+
+              <h2 className="mt-3 max-w-4xl text-[34px] font-black leading-[0.92] tracking-[-0.055em] text-white sm:text-[42px]">
+                Start here. Then prove the system.
+              </h2>
+            </div>
+
+            <p className="max-w-2xl text-[13px] leading-6 text-slate-300">
+              This is the primary path for a client meeting. It explains the
+              category first, then proves production control, worker execution,
+              live runtime visibility, and the pilot decision.
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {clientDemoPath.map((item) => (
+              <Link
+                key={item.step}
+                href={item.href}
+                className="group rounded-[26px] border border-white/10 bg-black/25 p-4 transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.07]"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-[18px] border border-cyan-300/30 bg-cyan-300/10 text-[18px] font-black text-cyan-200">
+                    {item.step}
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#CCFF33]">
+                      {item.signal}
+                    </p>
+
+                    <h3 className="mt-2 text-[22px] font-black leading-tight text-white">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-3 text-[12px] leading-5 text-slate-400">
+                      {item.note}
+                    </p>
+
+                    <div className="mt-5 text-[11px] font-black uppercase tracking-[0.16em] text-cyan-300 transition group-hover:text-[#CCFF33]">
+                      Open Step -&gt;
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section className="grid gap-4 lg:grid-cols-[320px_1fr]">
           <aside className="rounded-[30px] border border-white/10 bg-white/[0.04] p-5 lg:sticky lg:top-4 lg:self-start">
@@ -334,17 +441,17 @@ export default function DemoSalePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
-                Runtime Entry Points
+                System Access Library
               </p>
 
               <h2 className="mt-3 text-[36px] font-black leading-none tracking-[-0.055em] text-white">
-                Continue into the live system.
+                Optional areas after the core story.
               </h2>
             </div>
 
             <p className="max-w-xl text-[13px] leading-6 text-slate-300">
-              These links open existing product areas without changing their
-              runtime logic or protected data contracts.
+              Use these links when the client asks for more detail. The primary
+              sales path remains the guided client demo above.
             </p>
           </div>
 
