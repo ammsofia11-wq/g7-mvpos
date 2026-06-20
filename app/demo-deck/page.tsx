@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -154,23 +157,19 @@ function LogoLockup() {
 
 function Signature() {
   return (
-    <div className="inline-flex flex-col items-start">
-      <p
-        className="text-[28px] leading-none text-[#C8753C] opacity-90 xl:text-[32px]"
-        style={{
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          fontStyle: "italic",
-          fontWeight: 400,
-          letterSpacing: "0.03em",
-        }}
-      >
-        G7 Chef
-      </p>
-
-      <div className="mt-2 h-px w-24 bg-gradient-to-r from-[#C8753C]/80 via-[#C8753C]/35 to-transparent" />
+    <div className="relative -ml-1 -mt-5 h-12 w-40 xl:h-14 xl:w-52">
+      <Image
+        src="/images/g7chef-signature-04.png"
+        alt="G7Chef signature"
+        fill
+        sizes="208px"
+        className="object-contain object-left drop-shadow-[0_0_12px_rgba(200,117,60,0.16)]"
+        priority
+      />
     </div>
   );
 }
+
 function CoreVisual() {
   return (
     <section className="relative mx-auto aspect-square w-full max-w-[520px] xl:max-w-[560px]">
@@ -335,11 +334,109 @@ function NextPathVisual() {
 }
 
 export default function DemoDeckPage() {
+  const deckRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const getSlides = () =>
+      Array.from(
+        deckRef.current?.querySelectorAll<HTMLElement>("[data-deck-slide]") ??
+          [],
+      );
+
+    const getCurrentSlideIndex = () => {
+      const container = deckRef.current;
+      const slides = getSlides();
+
+      if (!container || slides.length === 0) {
+        return 0;
+      }
+
+      let closestIndex = 0;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      slides.forEach((slide, index) => {
+        const distance = Math.abs(slide.offsetTop - container.scrollTop);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = index;
+        }
+      });
+
+      return closestIndex;
+    };
+
+    const goToSlide = (index: number) => {
+      const slides = getSlides();
+
+      if (slides.length === 0) {
+        return;
+      }
+
+      const safeIndex = Math.max(0, Math.min(index, slides.length - 1));
+      slides[safeIndex]?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      const targetTag = target?.tagName;
+
+      if (
+        target?.isContentEditable ||
+        targetTag === "INPUT" ||
+        targetTag === "TEXTAREA" ||
+        targetTag === "SELECT"
+      ) {
+        return;
+      }
+
+      const currentIndex = getCurrentSlideIndex();
+      const totalSlides = getSlides().length;
+
+      if (event.key === "ArrowDown" || event.key === "PageDown" || event.key === " ") {
+        event.preventDefault();
+        goToSlide(currentIndex + 1);
+      }
+
+      if (event.key === "ArrowUp" || event.key === "PageUp") {
+        event.preventDefault();
+        goToSlide(currentIndex - 1);
+      }
+
+      if (event.key === "Home") {
+        event.preventDefault();
+        goToSlide(0);
+      }
+
+      if (event.key === "End") {
+        event.preventDefault();
+        goToSlide(totalSlides - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
-    <main className="h-screen snap-y snap-mandatory overflow-y-auto scroll-smooth bg-[#041827] text-white">
+    <main
+      ref={deckRef}
+      className="h-screen snap-y snap-mandatory overflow-y-auto scroll-smooth bg-[#041827] text-white"
+    >
       {categorySlides.map((slide) => (
         <section
           key={slide.no}
+          data-deck-slide={slide.no}
           className="relative min-h-screen snap-start snap-always overflow-hidden px-10 py-7"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_74%_45%,rgba(0,210,255,0.24),transparent_34%),radial-gradient(circle_at_16%_88%,rgba(200,117,60,0.13),transparent_25%),linear-gradient(135deg,#041827_0%,#073044_48%,#03111F_100%)]" />
@@ -394,7 +491,10 @@ export default function DemoDeckPage() {
         </section>
       ))}
 
-      <section className="relative min-h-screen snap-start snap-always overflow-hidden px-10 py-7">
+      <section
+        data-deck-slide="final"
+        className="relative min-h-screen snap-start snap-always overflow-hidden px-10 py-7"
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_42%,rgba(0,210,255,0.22),transparent_34%),radial-gradient(circle_at_18%_82%,rgba(200,117,60,0.18),transparent_28%),linear-gradient(135deg,#041827_0%,#073044_46%,#03111F_100%)]" />
 
         <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(0,214,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(0,214,255,0.07)_1px,transparent_1px)] [background-size:48px_48px]" />
