@@ -64,33 +64,36 @@ export default function DemoClosePage() {
               href="/demo-sale"
               className="rounded-full border border-white/15 px-4 py-2 transition hover:border-cyan-300/40 hover:text-cyan-200"
             >
-              Back to Demo Sale
+              Back to Demo Journey
             </Link>
 
             <div className="flex flex-wrap gap-2">
+              <Link
+                href="/demo-deck"
+                className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
+              >
+                Category Launch Deck
+              </Link>
+
               <Link
                 href="/client-value"
                 className="rounded-full border border-white/15 px-4 py-2 transition hover:border-emerald-300/40 hover:text-emerald-200"
               >
                 Client Value
               </Link>
+
               <Link
                 href="/client-onboarding"
                 className="rounded-full border border-white/15 px-4 py-2 transition hover:border-[#CCFF33]/40 hover:text-[#CCFF33]"
               >
                 Client Onboarding
               </Link>
+
               <Link
                 href="/production-tasks"
                 className="rounded-full border border-white/15 px-4 py-2 transition hover:border-amber-300/40 hover:text-amber-200"
               >
                 Production Tasks
-              </Link>
-              <Link
-                href="/demo-deck"
-                className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
-              >
-                Cinematic Deck
               </Link>
             </div>
           </nav>
@@ -102,11 +105,14 @@ export default function DemoClosePage() {
               </div>
 
               <h1 className="mt-5 max-w-5xl text-[42px] font-black leading-[0.9] tracking-[-0.065em] text-white sm:text-[62px] lg:text-[76px]">
-                Close the demo with a clear next step.
+                Close the demo with a clear pilot decision.
               </h1>
 
               <p className="mt-5 max-w-3xl text-[15px] leading-7 text-slate-300 sm:text-[17px]">
-                The demo has shown the business value, onboarding path, production tasks, worker SOP execution, and runtime floor. This page turns the story into a safe pilot decision without exposing protected data or touching live runtime logic.
+                The demo has shown the category story, equipment intelligence,
+                production tasks, worker SOP execution, and runtime floor. This
+                page turns the story into a safe pilot decision without exposing
+                protected data or touching live runtime logic.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -114,7 +120,14 @@ export default function DemoClosePage() {
                   href="/client-onboarding"
                   className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
                 >
-                  Review Onboarding
+                  Start Pilot Onboarding
+                </Link>
+
+                <Link
+                  href="/production-tasks"
+                  className="rounded-full border border-cyan-300/35 bg-cyan-300/10 px-5 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/15 hover:text-white"
+                >
+                  View Production Tasks
                 </Link>
 
                 <Link
@@ -136,15 +149,19 @@ export default function DemoClosePage() {
               </h2>
 
               <p className="mt-4 text-[13px] leading-6 text-slate-300">
-                POS platforms control orders and payments. G7 controls the operation after demand exists: data onboarding, production tasks, SOP execution, QA gates, workforce pressure, and runtime visibility.
+                POS platforms control orders and payments. G7 controls the
+                operation after demand exists: data onboarding, production tasks,
+                SOP execution, QA gates, workforce pressure, and runtime
+                visibility.
               </p>
 
-              <div className="mt-5 rounded-[22px] border border-white/10 bg-black/20 p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-                  Safe Close
+              <div className="mt-5 rounded-[22px] border border-[#CCFF33]/20 bg-black/20 p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#CCFF33]">
+                  Pilot Decision
                 </p>
+
                 <p className="mt-2 text-[22px] font-black leading-tight text-white">
-                  Start with a pilot. Scale with the system.
+                  Start focused. Prove value. Scale with the system.
                 </p>
               </div>
             </aside>
@@ -156,6 +173,7 @@ export default function DemoClosePage() {
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
               What the client gets
             </p>
+
             <h2 className="mt-3 text-[36px] font-black leading-none tracking-[-0.055em] text-white">
               A complete sellable demo path.
             </h2>
@@ -186,7 +204,9 @@ export default function DemoClosePage() {
             </h2>
 
             <p className="mt-4 text-[13px] leading-6 text-slate-300">
-              The close should not promise a magical instant system. It should make the next step practical: define scope, collect client data, approve the chef logic, and run a controlled production pilot.
+              The close should not promise a magical instant system. It should
+              make the next step practical: define scope, collect client data,
+              approve the chef logic, and run a controlled production pilot.
             </p>
           </div>
 
@@ -205,6 +225,7 @@ export default function DemoClosePage() {
                     <h3 className="text-[24px] font-black leading-none tracking-[-0.04em] text-white">
                       {item.title}
                     </h3>
+
                     <p className="mt-3 text-[13px] leading-6 text-slate-300">
                       {item.text}
                     </p>
@@ -227,7 +248,9 @@ export default function DemoClosePage() {
               </h2>
 
               <p className="mt-4 text-[13px] leading-6 text-slate-300">
-                The client should leave with a clear path, not just a nice screen. The decision is to start a focused pilot with a defined data pack and one controlled production flow.
+                The client should leave with a clear path, not just a nice
+                screen. The decision is to start a focused pilot with a defined
+                data pack and one controlled production flow.
               </p>
             </div>
 
@@ -277,11 +300,14 @@ export default function DemoClosePage() {
               </p>
 
               <h2 className="mt-3 text-[38px] font-black leading-[0.95] tracking-[-0.055em] text-white">
-                G7 turns central kitchen work into a controlled operating system.
+                G7 turns central kitchen work into a controlled operating
+                system.
               </h2>
 
               <p className="mt-4 max-w-4xl text-[14px] leading-7 text-slate-200">
-                The client does not need perfect data to begin. G7 provides the structure to collect it, clean it, approve it, and turn it into production execution with visibility from demand to runtime.
+                The client does not need perfect data to begin. G7 provides the
+                structure to collect it, clean it, approve it, and turn it into
+                production execution with visibility from demand to runtime.
               </p>
             </div>
 
@@ -290,7 +316,7 @@ export default function DemoClosePage() {
                 href="/client-onboarding"
                 className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-3 text-center text-sm font-black text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
               >
-                Start Client Onboarding
+                Start Pilot Onboarding
               </Link>
 
               <Link
@@ -299,6 +325,13 @@ export default function DemoClosePage() {
               >
                 View Production Tasks
               </Link>
+
+              <Link
+                href="/demo-sale"
+                className="rounded-full border border-cyan-300/30 px-6 py-3 text-center text-sm font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10"
+              >
+                Back to Demo Journey
+              </Link>
             </div>
           </div>
         </section>
@@ -306,6 +339,3 @@ export default function DemoClosePage() {
     </main>
   )
 }
-
-
-
