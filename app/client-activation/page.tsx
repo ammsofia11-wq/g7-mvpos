@@ -243,6 +243,79 @@ export default function ClientActivationPage() {
             </div>
           </section>
 
+          <section className="rounded-[2rem] border border-cyan-300/20 bg-cyan-300/[0.06] p-6 shadow-2xl shadow-black/30 md:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.26em] text-cyan-100">
+                  Go-Live Readiness Board
+                </p>
+                <h2 className="mt-3 text-3xl font-black text-white">
+                  Activation is not complete until the first live batch is ready.
+                </h2>
+                <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+                  This board keeps the client focused on the minimum operational
+                  structure required before G7 moves from setup into controlled
+                  production execution.
+                </p>
+              </div>
+
+              <div className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-100">
+                Setup before live use
+              </div>
+            </div>
+
+            <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {[
+                {
+                  title: "Workspace Rules",
+                  status: "Required",
+                  text: "Country, currency, timezone, branches, role access, and production structure confirmed.",
+                },
+                {
+                  title: "Product Build Data",
+                  status: "Required",
+                  text: "First category and first approved products prepared with build cards and module tasks.",
+                },
+                {
+                  title: "Ingredient and Supplier Data",
+                  status: "Required",
+                  text: "Ingredients, approved suppliers, alternatives, yield rules, and costing inputs prepared by the client.",
+                },
+                {
+                  title: "Stations and Workers",
+                  status: "Required",
+                  text: "Stations mapped, worker roles assigned, and task ownership prepared for execution.",
+                },
+                {
+                  title: "QA Release Flow",
+                  status: "Required",
+                  text: "QA checks, release gates, hold rules, and escalation path confirmed before production.",
+                },
+                {
+                  title: "First Live Batch",
+                  status: "Final Gate",
+                  text: "A controlled first batch is selected to test production tasks, QA release, runtime visibility, and team handoff.",
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-3xl border border-white/10 bg-[#061725] p-5"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-lg font-black text-white">
+                      {item.title}
+                    </h3>
+                    <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100">
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+                    {item.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
           <section className="rounded-[2rem] border border-white/10 bg-[#061725]/90 p-6 shadow-2xl shadow-black/40 md:p-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
@@ -283,3 +356,4 @@ export default function ClientActivationPage() {
     </main>
   );
 }
+
