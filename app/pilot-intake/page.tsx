@@ -157,7 +157,7 @@ const productBuilds: ProductBuild[] = [
     ],
     cookingNotes: [
       "Cook any chicken component to a safe internal temperature before chilling.",
-      "Hold finished chilled product at Ã¢â€°Â¤ 5Ã‚Â°C.",
+      "Hold finished chilled product at  5C.",
     ],
     packagingSteps: [
       "Prepare sandwich container or wrap.",
@@ -167,7 +167,7 @@ const productBuilds: ProductBuild[] = [
       "Add Garnish Module.",
       "Close, label, and move to QA release.",
     ],
-    qaChecks: ["Weight check", "Layer visibility", "Cold holding Ã¢â€°Â¤ 5Ã‚Â°C", "Label and date check"],
+    qaChecks: ["Weight check", "Layer visibility", "Cold holding  5C", "Label and date check"],
     missingData: ["Final packaging format", "Final product photo", "Shelf life confirmation", "Packed output weight"],
   },
   {
@@ -188,7 +188,7 @@ const productBuilds: ProductBuild[] = [
         station: "Butchery - Hot Kitchen",
         owner: "Hot Kitchen Worker",
         status: "Ready",
-        summary: "Chicken breast marinated with green Thai paste, cooked to 74Ã‚Â°C.",
+        summary: "Chicken breast marinated with green Thai paste, cooked to 74C.",
       },
       {
         name: "Basmati Rice",
@@ -220,7 +220,7 @@ const productBuilds: ProductBuild[] = [
         station: "Packaging",
         owner: "Packaging Worker",
         status: "Ready",
-        summary: "Cool below 5Ã‚Â°C, portion into box, seal, label, and release.",
+        summary: "Cool below 5C, portion into box, seal, label, and release.",
       },
     ],
     ingredients: [
@@ -241,18 +241,18 @@ const productBuilds: ProductBuild[] = [
       "Marinate chicken with green Thai marinade for 15-30 minutes chilled.",
     ],
     cookingNotes: [
-      "Cook chicken in oven roasted mode to 74Ã‚Â°C.",
+      "Cook chicken in oven roasted mode to 74C.",
       "Cook rice with chicken stock mixed with green Thai sauce.",
     ],
     packagingSteps: [
-      "Cool meal components to below 5Ã‚Â°C before packaging.",
+      "Cool meal components to below 5C before packaging.",
       "Place rice in the Carb Module side of the container.",
       "Place chicken in Protein Module side.",
       "Pack yogurt sauce as side sauce.",
       "Add garnish according to approved photo.",
       "Seal, label, and move to QA release.",
     ],
-    qaChecks: ["Chicken core temperature 74Ã‚Â°C", "Finished product Ã¢â€°Â¤ 5Ã‚Â°C", "2-compartment placement", "Label check"],
+    qaChecks: ["Chicken core temperature 74C", "Finished product  5C", "2-compartment placement", "Label check"],
     missingData: ["Actual cooked chicken yield", "Final packed weight", "Garnish standard photo", "Shelf life approval"],
   },
   {
@@ -330,7 +330,7 @@ const productBuilds: ProductBuild[] = [
       "Fry macaroni to golden color, strain extra oil, then combine and cook al dente.",
     ],
     packagingSteps: [
-      "Cool product below 5Ã‚Â°C before packaging.",
+      "Cool product below 5C before packaging.",
       "Portion pasta and chicken according to approved build.",
       "Add garnish if required.",
       "Seal, label, and send to QA release.",
@@ -396,7 +396,7 @@ const productBuilds: ProductBuild[] = [
     ],
     cookingNotes: [
       "Cook rice pudding base to approved thickness.",
-      "Blast chill to Ã¢â€°Â¤ 5Ã‚Â°C before packaging.",
+      "Blast chill to  5C before packaging.",
     ],
     packagingSteps: [
       "Place dessert cup on scale.",
@@ -405,7 +405,7 @@ const productBuilds: ProductBuild[] = [
       "Seal cup and apply label.",
       "Move to cold QA release.",
     ],
-    qaChecks: ["Texture check", "Sweetness approval", "Cup weight", "Cold holding Ã¢â€°Â¤ 5Ã‚Â°C", "Allergen label"],
+    qaChecks: ["Texture check", "Sweetness approval", "Cup weight", "Cold holding  5C", "Allergen label"],
     missingData: ["Full recipe", "Target cup weight", "Shelf life", "Allergen decision", "Final garnish"],
   },
   {
@@ -1041,7 +1041,7 @@ export default function PilotIntakePage() {
             <div className="mt-6 grid gap-3 md:grid-cols-2">
               {pilotDeliverables.map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 text-xs font-black text-[#CCFF33]">Ã¢Å“â€œ</span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 text-xs font-black text-[#CCFF33]">"</span>
                   <p className="text-sm font-bold text-slate-200">{item}</p>
                 </div>
               ))}
