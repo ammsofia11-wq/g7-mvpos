@@ -126,34 +126,37 @@ const stationPlan = [
 const pilotProducts = [
   {
     number: "01",
-    name: "Chicken Fajita Wrap",
-    modules: "Protein Module / Carb Module / Sauce Module / Packaging Module",
+    name: "Club Sandwich",
+    modules:
+      "Protein Module / Carb Module / Sauce Module / Garnish Module / Packaging Module",
   },
   {
     number: "02",
-    name: "Salmon Rice Bowl",
-    modules: "Protein Module / Carb Module / Sauce Module / Garnish Module / Packaging Module",
+    name: "Green Thai Chicken Curry",
+    modules:
+      "Protein Module / Carb Module / Sauce Module / Garnish Module / Packaging Module",
   },
   {
     number: "03",
-    name: "Beef Tenderloin Meal",
-    modules: "Protein Module / Carb Module / Sauce Module / Garnish Module / Packaging Module",
+    name: "Qatari Pasta Chicken Machboos",
+    modules:
+      "Protein Module / Carb Module / Sauce Module / Garnish Module / Packaging Module",
   },
   {
     number: "04",
-    name: "Halloumi Salad Box",
-    modules: "Protein Module / Sauce Module / Garnish Module / Packaging Module",
+    name: "Rice Pudding",
+    modules: "Carb Module / Sauce Module / Garnish Module / Packaging Module",
   },
   {
     number: "05",
-    name: "Protein Pancake Box",
-    modules: "Carb Module / Sauce Module / Garnish Module / Packaging Module",
+    name: "Tomato Sauce Batch",
+    modules: "Sauce Module / Packaging Module / QA Release Gate",
   },
 ];
 
 export default function PilotOnboardingPage() {
   const [clientProfile, setClientProfile] = useState<ClientProfile>({
-    companyName: "Nourish / Diet To Door Egypt Pilot",
+    companyName: "Salem's diet",
     contactName: "Operations Owner",
     kitchenName: "Main Central Kitchen",
     country: "Egypt",
