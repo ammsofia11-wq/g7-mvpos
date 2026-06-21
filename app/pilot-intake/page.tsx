@@ -12,9 +12,9 @@ type Ingredient = {
   note?: string;
 };
 
-type Brick = {
+type CulinaryModule = {
   name: string;
-  type: string;
+  moduleType: string;
   station: string;
   productionType: string;
   ingredients: Ingredient[];
@@ -63,10 +63,10 @@ const cookingYieldRules = [
   },
 ];
 
-const baseBricks: Brick[] = [
+const baseCulinaryModules: CulinaryModule[] = [
   {
     name: "Chicken Fajita Filling",
-    type: "Protein Filling",
+    moduleType: "Protein Module",
     station: "Butchery → Vegetable Prep → Hot Kitchen",
     productionType: "In-House",
     notes: [
@@ -180,7 +180,7 @@ const baseBricks: Brick[] = [
   },
   {
     name: "Tortilla Bread",
-    type: "Bakery / Carb Matrix",
+    moduleType: "Carb Module",
     station: "Bakery or Store",
     productionType: "In-House or Purchased Ready",
     notes: [
@@ -201,7 +201,7 @@ const baseBricks: Brick[] = [
   },
   {
     name: "Guacamole",
-    type: "Cold Sauce Matrix",
+    moduleType: "Sauce Module",
     station: "Cold Prep",
     productionType: "In-House",
     notes: [
@@ -265,7 +265,7 @@ const baseTasks: GeneratedTask[] = [
     task: "Collect pilot ingredients and scan issue list",
     worker: "Storekeeper 01",
     expectedOutput:
-      "Gross issue list prepared for chicken, vegetables, tortilla, guacamole ingredients, spices, labels, and packaging.",
+      "Gross issue list prepared for chicken, vegetables, tortilla, guacamole ingredients, spices, labels, and Packaging Module materials.",
     approval: "Store issue confirmation",
   },
   {
@@ -316,11 +316,11 @@ const baseTasks: GeneratedTask[] = [
   {
     step: "07",
     station: "Packaging",
-    task: "Portion tortilla, fajita filling, and guacamole",
+    task: "Complete Packaging Module Build Card",
     worker: "Packaging Worker 01",
     expectedOutput:
-      "100 finished meals packed according to visual portioning guide. Packed portion output must be measured.",
-    approval: "Packaging supervisor check",
+      "100 finished meals packed according to the Build Card, including Protein Module, Carb Module, Sauce Module, Garnish Module when applicable, and Packaging Module checks. Packed portion output must be measured.",
+    approval: "Packaging Module supervisor check",
   },
   {
     step: "08",
@@ -381,8 +381,8 @@ export default function PilotIntakePage() {
       }
     >();
 
-    for (const brick of baseBricks) {
-      for (const ingredient of brick.ingredients) {
+    for (const culinaryModule of baseCulinaryModules) {
+      for (const ingredient of culinaryModule.ingredients) {
         if (
           ingredient.name === "Tortilla Bread / Dough" &&
           tortillaType === "purchased"
@@ -519,9 +519,9 @@ export default function PilotIntakePage() {
 
               <p className="mt-5 max-w-3xl text-[15px] leading-7 text-slate-300 sm:text-[17px]">
                 This is the missing page after the demo close. When a client
-                says yes, G7 starts the first pilot product, breaks it into G7
-                Matrix, calculates purchase/yield, generates station tasks, and
-                shows worker responsibilities.
+                says yes, G7 starts the first pilot product, structures it as a Product Build with G7 Culinary Modules,
+                calculates purchase/yield, generates Module Tasks, and shows
+                worker responsibilities.
               </p>
             </div>
 
@@ -549,7 +549,7 @@ export default function PilotIntakePage() {
                     Runtime Output
                   </p>
                   <p className="mt-1 text-[18px] font-black leading-tight text-white">
-                    G7 Matrix → Purchase → Tasks → Workers → QA
+                    Product Build → G7 Culinary Modules → Module Tasks → Workers → QA
                   </p>
                 </div>
               </div>
@@ -639,17 +639,17 @@ export default function PilotIntakePage() {
 
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
-              Step 2 — G7 Matrix Product Setup
+              Step 2 — Product Build Setup
             </p>
 
             <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-              One dish becomes a G7 Matrix production structure.
+              One dish becomes a Product Build with G7 Culinary Modules.
             </h2>
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {baseBricks.map((brick, index) => (
+              {baseCulinaryModules.map((culinaryModule, index) => (
                 <article
-                  key={brick.name}
+                  key={culinaryModule.name}
                   className="rounded-[26px] border border-white/10 bg-black/20 p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -657,20 +657,20 @@ export default function PilotIntakePage() {
                       {index + 1}
                     </span>
                     <span className="rounded-full border border-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
-                      {brick.type}
+                      {culinaryModule.moduleType}
                     </span>
                   </div>
 
                   <h3 className="mt-4 text-[22px] font-black leading-none tracking-[-0.04em] text-white">
-                    {brick.name}
+                    {culinaryModule.name}
                   </h3>
 
                   <p className="mt-3 text-[12px] font-bold leading-5 text-slate-300">
-                    Station: {brick.station}
+                    Station: {culinaryModule.station}
                   </p>
 
                   <p className="mt-2 text-[12px] font-bold leading-5 text-slate-400">
-                    Production: {brick.productionType}
+                    Production: {culinaryModule.productionType}
                   </p>
                 </article>
               ))}
@@ -716,23 +716,23 @@ export default function PilotIntakePage() {
           </p>
 
           <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-            Every matrix part has its own raw-weight recipe.
+            Every G7 Culinary Module has its own raw-weight recipe.
           </h2>
 
           <div className="mt-6 grid gap-4 xl:grid-cols-3">
-            {baseBricks.map((brick) => (
+            {baseCulinaryModules.map((culinaryModule) => (
               <article
-                key={brick.name}
+                key={culinaryModule.name}
                 className="rounded-[28px] border border-white/10 bg-black/20 p-5"
               >
                 <h3 className="text-[24px] font-black leading-none tracking-[-0.04em] text-white">
-                  {brick.name}
+                  {culinaryModule.name}
                 </h3>
 
                 <div className="mt-4 grid gap-2">
-                  {brick.ingredients.map((ingredient) => (
+                  {culinaryModule.ingredients.map((ingredient) => (
                     <div
-                      key={`${brick.name}-${ingredient.name}-${ingredient.stage}`}
+                      key={`${culinaryModule.name}-${ingredient.name}-${ingredient.stage}`}
                       className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -753,7 +753,7 @@ export default function PilotIntakePage() {
                 </div>
 
                 <div className="mt-4 grid gap-2">
-                  {brick.notes.map((note) => (
+                  {culinaryModule.notes.map((note) => (
                     <p
                       key={note}
                       className="rounded-2xl border border-[#CCFF33]/15 bg-[#CCFF33]/[0.06] p-3 text-[12px] font-bold leading-5 text-slate-300"
@@ -919,11 +919,11 @@ export default function PilotIntakePage() {
 
         <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
-            Step 5 — Generated Station Tasks
+            Step 5 — Generated Module Tasks
           </p>
 
           <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-            One product becomes controlled worker tasks.
+            One product becomes controlled Module Tasks.
           </h2>
 
           <div className="mt-6 grid gap-3">
@@ -989,9 +989,9 @@ export default function PilotIntakePage() {
 
               <p className="mt-4 max-w-4xl text-[14px] leading-7 text-slate-200">
                 This page proves the promise after the demo: G7 can take a real
-                product, structure it into G7 Matrix, calculate purchasing and
-                yield, generate station tasks, assign workers, and prepare the
-                first controlled pilot flow.
+                product, structure it as a Product Build with G7 Culinary Modules,
+                calculate purchasing and yield, generate Module Tasks, assign
+                workers, and prepare the first controlled pilot flow.
               </p>
             </div>
 

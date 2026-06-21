@@ -12,7 +12,7 @@ const onboardingSteps = [
     number: "02",
     title: "Kitchen Stations Setup",
     description:
-      "Define the real production floor: prep, butchery, hot kitchen, cooling, QA, portioning, packaging, dispatch, and handoff.",
+      "Define the real production floor: prep, butchery, hot kitchen, cooling, QA, portioning, Packaging Module, dispatch, and handoff.",
     signal: "Production map",
   },
   {
@@ -24,7 +24,7 @@ const onboardingSteps = [
   },
   {
     number: "04",
-    title: "G7 Matrix Recipe Intake",
+    title: "Product Build & G7 Culinary Modules Intake",
     description:
       "Enter the client’s own recipes, ingredients, raw weights, yields, allergens, SOPs, and approved supplier rules.",
     signal: "Client data only",
@@ -33,7 +33,7 @@ const onboardingSteps = [
     number: "05",
     title: "First Pilot Product Setup",
     description:
-      "Convert one real client product into purchase requirements, station tasks, worker responsibilities, QA gates, and runtime preview.",
+      "Convert one real client product into purchase requirements, Module Tasks, Build Card, worker responsibilities, QA gates, and runtime preview.",
     signal: "Live pilot",
   },
   {
@@ -49,7 +49,7 @@ const readinessChecks = [
   "Tenant workspace created",
   "Stations and production flow mapped",
   "Client roles and permissions approved",
-  "First G7 Matrix recipe entered",
+  "First Product Build entered",
   "First pilot product generated",
   "QA and release process confirmed",
 ];
