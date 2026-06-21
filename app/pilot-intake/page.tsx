@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -100,7 +100,7 @@ const productBuilds: ProductBuild[] = [
       {
         name: "Chicken Mortadella / Chicken Filling",
         type: "Protein Module",
-        station: "Butchery → Cold Prep → Cooking",
+        station: "Butchery â†’ Cold Prep â†’ Cooking",
         owner: "Executive Chef",
         status: "Verify",
         summary: "Chicken breast base with seasoning and inclusion ingredients; final portion size must be confirmed during pilot.",
@@ -157,7 +157,7 @@ const productBuilds: ProductBuild[] = [
     ],
     cookingNotes: [
       "Cook any chicken component to a safe internal temperature before chilling.",
-      "Hold finished chilled product at ≤ 5°C.",
+      "Hold finished chilled product at â‰¤ 5Â°C.",
     ],
     packagingSteps: [
       "Prepare sandwich container or wrap.",
@@ -167,7 +167,7 @@ const productBuilds: ProductBuild[] = [
       "Add Garnish Module.",
       "Close, label, and move to QA release.",
     ],
-    qaChecks: ["Weight check", "Layer visibility", "Cold holding ≤ 5°C", "Label and date check"],
+    qaChecks: ["Weight check", "Layer visibility", "Cold holding â‰¤ 5Â°C", "Label and date check"],
     missingData: ["Final packaging format", "Final product photo", "Shelf life confirmation", "Packed output weight"],
   },
   {
@@ -185,10 +185,10 @@ const productBuilds: ProductBuild[] = [
       {
         name: "Green Thai Chicken",
         type: "Protein Module",
-        station: "Butchery → Hot Kitchen",
+        station: "Butchery â†’ Hot Kitchen",
         owner: "Hot Kitchen Worker",
         status: "Ready",
-        summary: "Chicken breast marinated with green Thai paste, cooked to 74°C.",
+        summary: "Chicken breast marinated with green Thai paste, cooked to 74Â°C.",
       },
       {
         name: "Basmati Rice",
@@ -220,7 +220,7 @@ const productBuilds: ProductBuild[] = [
         station: "Packaging",
         owner: "Packaging Worker",
         status: "Ready",
-        summary: "Cool below 5°C, portion into box, seal, label, and release.",
+        summary: "Cool below 5Â°C, portion into box, seal, label, and release.",
       },
     ],
     ingredients: [
@@ -238,21 +238,21 @@ const productBuilds: ProductBuild[] = [
     ],
     prepNotes: [
       "Blend red onion, coriander, curry leaves, garlic, ginger, lemon grass, salt, and water.",
-      "Marinate chicken with green Thai marinade for 15–30 minutes chilled.",
+      "Marinate chicken with green Thai marinade for 15â€“30 minutes chilled.",
     ],
     cookingNotes: [
-      "Cook chicken in oven roasted mode to 74°C.",
+      "Cook chicken in oven roasted mode to 74Â°C.",
       "Cook rice with chicken stock mixed with green Thai sauce.",
     ],
     packagingSteps: [
-      "Cool meal components to below 5°C before packaging.",
+      "Cool meal components to below 5Â°C before packaging.",
       "Place rice in the Carb Module side of the container.",
       "Place chicken in Protein Module side.",
       "Pack yogurt sauce as side sauce.",
       "Add garnish according to approved photo.",
       "Seal, label, and move to QA release.",
     ],
-    qaChecks: ["Chicken core temperature 74°C", "Finished product ≤ 5°C", "2-compartment placement", "Label check"],
+    qaChecks: ["Chicken core temperature 74Â°C", "Finished product â‰¤ 5Â°C", "2-compartment placement", "Label check"],
     missingData: ["Actual cooked chicken yield", "Final packed weight", "Garnish standard photo", "Shelf life approval"],
   },
   {
@@ -270,7 +270,7 @@ const productBuilds: ProductBuild[] = [
       {
         name: "Machboos Chicken",
         type: "Protein Module",
-        station: "Butchery → Hot Kitchen",
+        station: "Butchery â†’ Hot Kitchen",
         owner: "Hot Kitchen Worker",
         status: "Ready",
         summary: "Chicken cubes cooked in machboos base with onion, tomato, vegetables, spices, and loomi.",
@@ -330,7 +330,7 @@ const productBuilds: ProductBuild[] = [
       "Fry macaroni to golden color, strain extra oil, then combine and cook al dente.",
     ],
     packagingSteps: [
-      "Cool product below 5°C before packaging.",
+      "Cool product below 5Â°C before packaging.",
       "Portion pasta and chicken according to approved build.",
       "Add garnish if required.",
       "Seal, label, and send to QA release.",
@@ -396,7 +396,7 @@ const productBuilds: ProductBuild[] = [
     ],
     cookingNotes: [
       "Cook rice pudding base to approved thickness.",
-      "Blast chill to ≤ 5°C before packaging.",
+      "Blast chill to â‰¤ 5Â°C before packaging.",
     ],
     packagingSteps: [
       "Place dessert cup on scale.",
@@ -405,7 +405,7 @@ const productBuilds: ProductBuild[] = [
       "Seal cup and apply label.",
       "Move to cold QA release.",
     ],
-    qaChecks: ["Texture check", "Sweetness approval", "Cup weight", "Cold holding ≤ 5°C", "Allergen label"],
+    qaChecks: ["Texture check", "Sweetness approval", "Cup weight", "Cold holding â‰¤ 5Â°C", "Allergen label"],
     missingData: ["Full recipe", "Target cup weight", "Shelf life", "Allergen decision", "Final garnish"],
   },
   {
@@ -431,7 +431,7 @@ const productBuilds: ProductBuild[] = [
       {
         name: "Aromatics",
         type: "Garnish Module",
-        station: "Vegetable Prep → Hot Kitchen",
+        station: "Vegetable Prep â†’ Hot Kitchen",
         owner: "Vegetable Prep Worker",
         status: "Verify",
         summary: "Onion, garlic, dry herbs, sugar, salt, and olive oil require verified weights.",
@@ -546,13 +546,13 @@ const rolloutPhases = [
   {
     phase: "Phase 1",
     title: "Production Core Go-Live",
-    timing: "45–60 days",
+    timing: "45â€“60 days",
     scope: "Product Builds, Culinary Modules, Build Cards, Module Tasks, Worker Tasks, QA Release, and production dashboard for the approved pilot scope.",
   },
   {
     phase: "Phase 2",
     title: "Inventory & Purchasing Core",
-    timing: "60–90 days",
+    timing: "60â€“90 days",
     scope: "Ingredients, yields, approved supplier rules, issue lists, stock movement, batch traceability, and live measurement records.",
   },
   {
@@ -663,7 +663,7 @@ export default function PilotIntakePage() {
                     Pilot Output
                   </p>
                   <p className="mt-1 text-[18px] font-black leading-tight text-white">
-                    5 Product Builds → Modules → Build Cards → Module Tasks → QA
+                    5 Product Builds â†’ Modules â†’ Build Cards â†’ Module Tasks â†’ QA
                   </p>
                 </div>
               </div>
@@ -674,7 +674,7 @@ export default function PilotIntakePage() {
         <section className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-              Step 1 — Client Workspace
+              Step 1 â€” Client Workspace
             </p>
 
             <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
@@ -735,7 +735,7 @@ export default function PilotIntakePage() {
 
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
-              Step 2 — Intake Method
+              Step 2 â€” Intake Method
             </p>
 
             <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
@@ -780,7 +780,7 @@ export default function PilotIntakePage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-                Step 3 — 5 Product Build Scope
+                Step 3 â€” 5 Product Build Scope
               </p>
               <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
                 Select a product to structure into modules.
@@ -858,7 +858,7 @@ export default function PilotIntakePage() {
 
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-              Step 4 — G7 Culinary Modules
+              Step 4 â€” G7 Culinary Modules
             </p>
             <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
               Product structure before production.
@@ -889,7 +889,7 @@ export default function PilotIntakePage() {
 
         <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200">
-            Step 5 — Product Intake Template
+            Step 5 â€” Product Intake Template
           </p>
           <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
             Ingredients and source data captured for {selectedProduct.name}.
@@ -975,7 +975,7 @@ export default function PilotIntakePage() {
 
         <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
-            Step 6 — Generated Module Tasks
+            Step 6 â€” Generated Module Tasks
           </p>
           <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
             G7 turns the selected Product Build into station tasks.
@@ -1041,7 +1041,7 @@ export default function PilotIntakePage() {
             <div className="mt-6 grid gap-3 md:grid-cols-2">
               {pilotDeliverables.map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 text-xs font-black text-[#CCFF33]">✓</span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 text-xs font-black text-[#CCFF33]">âœ“</span>
                   <p className="text-sm font-bold text-slate-200">{item}</p>
                 </div>
               ))}
@@ -1059,7 +1059,7 @@ export default function PilotIntakePage() {
                 If the client is impressed, this becomes the first part of full G7 rollout.
               </h2>
               <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-                The correct owner response is not “take the demo and use it.” The correct response is: the pilot has proven value, so the approved Product Builds, Build Cards, Module Tasks, and QA Gates move into a phased Production Core rollout.
+                The correct owner response is not â€œtake the demo and use it.â€ The correct response is: the pilot has proven value, so the approved Product Builds, Build Cards, Module Tasks, and QA Gates move into a phased Production Core rollout.
               </p>
 
               <div className="mt-6 grid gap-3">
@@ -1109,6 +1109,9 @@ export default function PilotIntakePage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <Link href="/client-activation" className="rounded-full border border-amber-300/40 bg-amber-300/15 px-6 py-3 text-center text-sm font-black text-amber-50 transition hover:border-amber-200/70 hover:bg-amber-300/25">
+                Activate Client Workspace
+              </Link>
               <Link href="/production-tasks" className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-3 text-center text-sm font-black text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]">
                 View Production Tasks
               </Link>
@@ -1125,3 +1128,4 @@ export default function PilotIntakePage() {
     </main>
   );
 }
+
