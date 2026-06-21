@@ -525,6 +525,45 @@ function buildTasks(product: ProductBuild): ModuleTask[] {
   ];
 }
 
+const pilotDeliverables = [
+  "5 Product Builds captured from real client sources",
+  "G7 Culinary Modules structured by product",
+  "Packaging Module Build Cards prepared for worker execution",
+  "Module Tasks generated for Store, Production, Packaging, and QA",
+  "QA Release Gates mapped for each Product Build",
+  "Missing measurements marked as TBD Live instead of guessed",
+  "Pilot Result Summary ready for client sign-off",
+];
+
+const commercialCloseItems = [
+  "Pilot fee: 150,000 EGP Founder Launch Pricing",
+  "Scope: 5 Product Builds for one client workspace",
+  "Output: pilot-ready production structure, not a generic demo screen",
+  "Credit rule: agreed pilot credit can be deducted from the full rollout setup if signed within 30 days",
+];
+
+const rolloutPhases = [
+  {
+    phase: "Phase 1",
+    title: "Production Core Go-Live",
+    timing: "45–60 days",
+    scope: "Product Builds, Culinary Modules, Build Cards, Module Tasks, Worker Tasks, QA Release, and production dashboard for the approved pilot scope.",
+  },
+  {
+    phase: "Phase 2",
+    title: "Inventory & Purchasing Core",
+    timing: "60–90 days",
+    scope: "Ingredients, yields, approved supplier rules, issue lists, stock movement, batch traceability, and live measurement records.",
+  },
+  {
+    phase: "Phase 3",
+    title: "Reporting / Dispatch / Expansion",
+    timing: "90+ days",
+    scope: "Management reports, dispatch handoff, multi-user operating rules, and integration roadmap by priority.",
+  },
+];
+
+
 export default function PilotIntakePage() {
   const [clientName, setClientName] = useState("Salem's diet");
   const [kitchenName, setKitchenName] = useState("Main Central Kitchen");
@@ -991,35 +1030,93 @@ export default function PilotIntakePage() {
 
           <div className="rounded-[32px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-              Pilot Result Preview
+              Pilot Result & Client Sign-Off
             </p>
             <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-              Salem&apos;s diet pilot workspace is ready for the first controlled run.
+              Salem&apos;s diet now has a paid pilot output, not a throwaway demo.
             </h2>
+            <p className="mt-4 text-sm font-bold leading-7 text-slate-200">
+              This result explains what the client receives after the 5-product pilot and prepares the next commercial conversation: continue into Production Core Go-Live or keep the pilot scope only.
+            </p>
             <div className="mt-6 grid gap-3 md:grid-cols-2">
-              {[
-                "5 Product Builds captured",
-                "Mixed data sources accepted",
-                "Culinary Modules structured",
-                "Packaging Build Cards prepared",
-                "Module Tasks generated",
-                "QA gates mapped",
-              ].map((item) => (
+              {pilotDeliverables.map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 text-xs font-black text-[#CCFF33]">✓</span>
                   <p className="text-sm font-bold text-slate-200">{item}</p>
                 </div>
               ))}
             </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          </div>
+        </section>
+
+        <section className="rounded-[32px] border border-cyan-300/20 bg-cyan-300/[0.07] p-5 sm:p-6">
+          <div className="grid gap-8 xl:grid-cols-[0.85fr_1.15fr] xl:items-start">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-200">
+                Commercial Close After Pilot
+              </p>
+              <h2 className="mt-3 text-[38px] font-black leading-[0.95] tracking-[-0.055em] text-white">
+                If the client is impressed, this becomes the first part of full G7 rollout.
+              </h2>
+              <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
+                The correct owner response is not “take the demo and use it.” The correct response is: the pilot has proven value, so the approved Product Builds, Build Cards, Module Tasks, and QA Gates move into a phased Production Core rollout.
+              </p>
+
+              <div className="mt-6 grid gap-3">
+                {commercialCloseItems.map((item) => (
+                  <div key={item} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[13px] font-black leading-6 text-white">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {rolloutPhases.map((phase) => (
+                <article key={phase.phase} className="rounded-[26px] border border-white/10 bg-black/20 p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">
+                      {phase.phase}
+                    </span>
+                    <span className="rounded-full border border-[#CCFF33]/25 bg-[#CCFF33]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#CCFF33]">
+                      {phase.timing}
+                    </span>
+                  </div>
+                  <h3 className="mt-4 text-[24px] font-black leading-none tracking-[-0.045em] text-white">
+                    {phase.title}
+                  </h3>
+                  <p className="mt-3 text-[13px] font-bold leading-6 text-slate-300">
+                    {phase.scope}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[32px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-6 sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
+                Next Decision
+              </p>
+              <h2 className="mt-3 text-[38px] font-black leading-[0.95] tracking-[-0.055em] text-white">
+                Approve pilot result, then choose Production Core Go-Live.
+              </h2>
+              <p className="mt-4 max-w-4xl text-sm font-bold leading-7 text-slate-200">
+                This page now closes the client journey: G7 captured real client data, structured five Product Builds, prepared execution cards, surfaced live-measurement gaps, and created a clear path from pilot to rollout without promising an unfinished enterprise platform as a finished product.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link href="/production-tasks" className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-3 text-center text-sm font-black text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]">
                 View Production Tasks
               </Link>
               <Link href="/worker-task" className="rounded-full border border-white/30 px-6 py-3 text-center text-sm font-black text-white transition hover:border-white">
                 View Worker Task
               </Link>
-              <Link href="/kitchen" className="rounded-full border border-cyan-300/30 px-6 py-3 text-center text-sm font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10">
-                Runtime Preview
+              <Link href="/pilot-onboarding" className="rounded-full border border-cyan-300/30 px-6 py-3 text-center text-sm font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10">
+                Back to Client Workspace
               </Link>
             </div>
           </div>
