@@ -3,467 +3,545 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-type Ingredient = {
+type IntakeMethod = {
+  label: string;
+  source: string;
+  status: "Captured" | "Needs Interview" | "Verify Live";
+  note: string;
+};
+
+type ProductIngredient = {
   name: string;
-  amountG: number;
+  unit: string;
+  qty: string;
+  module: string;
   station: string;
-  stage: string;
-  yieldRatio: number | null;
   note?: string;
 };
 
 type CulinaryModule = {
   name: string;
-  moduleType: string;
+  type: string;
   station: string;
-  productionType: string;
-  ingredients: Ingredient[];
-  notes: string[];
+  owner: string;
+  status: "Ready" | "TBD Live" | "Verify";
+  summary: string;
 };
 
-type GeneratedTask = {
+type ProductBuild = {
+  id: string;
+  number: string;
+  name: string;
+  daypart: string;
+  intakeSource: string;
+  category: string;
+  targetBatch: string;
+  servingCondition: string;
+  packagingStyle: string;
+  sourceStatus: "SOP captured" | "Photo captured" | "Chef interview required";
+  modules: CulinaryModule[];
+  ingredients: ProductIngredient[];
+  prepNotes: string[];
+  cookingNotes: string[];
+  packagingSteps: string[];
+  qaChecks: string[];
+  missingData: string[];
+};
+
+type ModuleTask = {
   step: string;
   station: string;
   task: string;
   worker: string;
-  expectedOutput: string;
+  output: string;
   approval: string;
 };
 
-const controlledStations = [
-  "Full Pilot Flow",
-  "Store",
-  "Butchery",
-  "Vegetable Prep",
-  "Bakery",
-  "Cold Prep",
-  "Hot Kitchen",
-  "Packaging",
-  "QA",
-];
-
-const cookingYieldRules = [
+const intakeMethods: IntakeMethod[] = [
   {
-    item: "Chicken",
-    cookingLoss: "40–45%",
-    cookedYield: "55–60%",
-    note: "Chicken breast must be measured live from raw usable weight to cooked output.",
+    label: "Written Recipe / SOP",
+    source: "DOCX recipe files",
+    status: "Captured",
+    note: "G7 converts existing client documents into Product Builds, Culinary Modules, Build Cards, and Module Tasks.",
   },
   {
-    item: "Beef / Tenderloin",
-    cookingLoss: "30–35%",
-    cookedYield: "65–70%",
-    note: "Tenderloin and premium beef cuts should have their own method-specific cooked yield.",
+    label: "Chef Interview",
+    source: "Verbal / head knowledge",
+    status: "Needs Interview",
+    note: "Used when recipe details are in the chef's head, not written cleanly yet.",
   },
   {
-    item: "Fish / Salmon / Hamour / White Fish",
-    cookingLoss: "TBD live",
-    cookedYield: "TBD live",
-    note: "Fish yield must be measured by species, cut, thickness, and cooking method.",
+    label: "Photo / Handwritten Sheet",
+    source: "Tomato sauce batch image",
+    status: "Verify Live",
+    note: "G7 captures handwritten data, marks unclear values as TBD, and verifies during pilot production.",
+  },
+  {
+    label: "Live Kitchen Observation",
+    source: "Pilot run measurement",
+    status: "Verify Live",
+    note: "Raw weight, cooked yield, packed output, temperature, timing, and waste are measured during the paid pilot.",
   },
 ];
 
-const baseCulinaryModules: CulinaryModule[] = [
+const productBuilds: ProductBuild[] = [
   {
-    name: "Chicken Fajita Filling",
-    moduleType: "Protein Module",
-    station: "Butchery → Vegetable Prep → Hot Kitchen",
-    productionType: "In-House",
-    notes: [
-      "All weights are RAW usable weights per portion.",
-      "Fresh cilantro is added after cooking during final mixing.",
-      "Chicken cooking loss target: 40–45%. Expected cooked yield: 55–60%. Final cooked output must be measured live.",
-      "Chicken butchery and cooking yield must be measured during the live pilot.",
+    id: "breakfast-club-sandwich",
+    number: "01",
+    name: "Club Sandwich",
+    daypart: "Breakfast Product Build",
+    intakeSource: "Existing DOCX recipe / SOP",
+    category: "Breakfast / sandwich meal",
+    targetBatch: "100 portions pilot target",
+    servingCondition: "Chilled / ready-to-eat",
+    packagingStyle: "Meal container with label and QA release",
+    sourceStatus: "SOP captured",
+    modules: [
+      {
+        name: "Chicken Mortadella / Chicken Filling",
+        type: "Protein Module",
+        station: "Butchery → Cold Prep → Cooking",
+        owner: "Executive Chef",
+        status: "Verify",
+        summary: "Chicken breast base with seasoning and inclusion ingredients; final portion size must be confirmed during pilot.",
+      },
+      {
+        name: "Whole Grain Toast",
+        type: "Carb Module",
+        station: "Bakery / Store",
+        owner: "Storekeeper",
+        status: "Ready",
+        summary: "Approved bread item or in-house bread issue according to client selection.",
+      },
+      {
+        name: "Mustard Mayo",
+        type: "Sauce Module",
+        station: "Cold Prep",
+        owner: "Cold Prep Worker",
+        status: "Ready",
+        summary: "Yellow mustard and mayonnaise portioned as the sandwich sauce layer.",
+      },
+      {
+        name: "Lettuce / Tomato / Cheese / Egg",
+        type: "Garnish Module",
+        station: "Cold Prep",
+        owner: "Cold Prep Worker",
+        status: "Verify",
+        summary: "Cold sandwich garnish layers must be weighed and visually approved.",
+      },
+      {
+        name: "Sandwich Pack",
+        type: "Packaging Module",
+        station: "Packaging",
+        owner: "Packaging Worker",
+        status: "TBD Live",
+        summary: "Packaging style requires final client confirmation: wrap, box, label, and holding rule.",
+      },
     ],
     ingredients: [
-      {
-        name: "Chicken Breast",
-        amountG: 180,
-        station: "Butchery",
-        stage: "Raw net before cooking",
-        yieldRatio: null,
-        note: "Measure live: gross pull → trimmed net → cooked output → packed portion",
-      },
-      {
-        name: "Red Onion",
-        amountG: 30,
-        station: "Vegetable Prep",
-        stage: "Cleaned and cut julienne",
-        yieldRatio: 79 / 93,
-      },
-      {
-        name: "Green Bell Pepper",
-        amountG: 30,
-        station: "Vegetable Prep",
-        stage: "Cleaned and cut julienne",
-        yieldRatio: 70 / 85,
-      },
-      {
-        name: "Red Bell Pepper",
-        amountG: 30,
-        station: "Vegetable Prep",
-        stage: "Cleaned and cut julienne",
-        yieldRatio: 205 / 255,
-      },
-      {
-        name: "Yellow Bell Pepper",
-        amountG: 30,
-        station: "Vegetable Prep",
-        stage: "Cleaned and cut julienne",
-        yieldRatio: 160 / 186,
-      },
-      {
-        name: "Olive Oil",
-        amountG: 15,
-        station: "Hot Kitchen",
-        stage: "Cooking fat",
-        yieldRatio: 1,
-      },
-      {
-        name: "Sea Salt",
-        amountG: 1,
-        station: "Hot Kitchen",
-        stage: "Seasoning",
-        yieldRatio: 1,
-      },
-      {
-        name: "Black Pepper",
-        amountG: 0.3,
-        station: "Hot Kitchen",
-        stage: "Seasoning",
-        yieldRatio: 1,
-      },
-      {
-        name: "Cumin Powder",
-        amountG: 0.5,
-        station: "Hot Kitchen",
-        stage: "Seasoning",
-        yieldRatio: 1,
-      },
-      {
-        name: "Coriander Powder",
-        amountG: 0.3,
-        station: "Hot Kitchen",
-        stage: "Seasoning",
-        yieldRatio: 1,
-      },
-      {
-        name: "Paprika",
-        amountG: 0.5,
-        station: "Hot Kitchen",
-        stage: "Seasoning",
-        yieldRatio: 1,
-      },
-      {
-        name: "Onion Powder",
-        amountG: 0.3,
-        station: "Hot Kitchen",
-        stage: "Seasoning",
-        yieldRatio: 1,
-      },
-      {
-        name: "Garlic Powder",
-        amountG: 0.3,
-        station: "Hot Kitchen",
-        stage: "Seasoning",
-        yieldRatio: 1,
-      },
-      {
-        name: "Fresh Cilantro",
-        amountG: 3,
-        station: "Hot Kitchen",
-        stage: "After cooking / final mixing",
-        yieldRatio: null,
-        note: "Measure cleaning yield live",
-      },
+      { name: "Chicken breast", unit: "g", qty: "30 / 30 / 40", module: "Protein Module", station: "Butchery", note: "S/M/L source quantities" },
+      { name: "Green olives", unit: "g", qty: "2 / 4 / 5", module: "Protein Module", station: "Cold Prep" },
+      { name: "Walnuts", unit: "g", qty: "1 / 2 / 5", module: "Protein Module", station: "Cold Prep" },
+      { name: "Lettuce", unit: "g", qty: "20 / 20 / 25", module: "Garnish Module", station: "Cold Prep" },
+      { name: "Mozzarella", unit: "g", qty: "10 / 15 / 20", module: "Garnish Module", station: "Cold Prep" },
+      { name: "Eggs", unit: "g", qty: "30 / 60 / 60", module: "Protein Module", station: "Cold Prep" },
+      { name: "Whole grain toast", unit: "g", qty: "60", module: "Carb Module", station: "Bakery / Store" },
+      { name: "Tomato slice", unit: "g", qty: "15", module: "Garnish Module", station: "Cold Prep" },
+      { name: "Yellow mustard", unit: "g", qty: "2.5", module: "Sauce Module", station: "Cold Prep" },
+      { name: "Mayonnaise", unit: "g", qty: "5 / 5 / 7", module: "Sauce Module", station: "Cold Prep" },
     ],
+    prepNotes: [
+      "Wash and sanitize produce before cold prep.",
+      "Portion all ingredients before production starts.",
+      "Client confirms final sandwich layering and cut style during pilot.",
+    ],
+    cookingNotes: [
+      "Cook any chicken component to a safe internal temperature before chilling.",
+      "Hold finished chilled product at ≤ 5°C.",
+    ],
+    packagingSteps: [
+      "Prepare sandwich container or wrap.",
+      "Place Carb Module.",
+      "Add Protein Module.",
+      "Add Sauce Module.",
+      "Add Garnish Module.",
+      "Close, label, and move to QA release.",
+    ],
+    qaChecks: ["Weight check", "Layer visibility", "Cold holding ≤ 5°C", "Label and date check"],
+    missingData: ["Final packaging format", "Final product photo", "Shelf life confirmation", "Packed output weight"],
   },
   {
-    name: "Tortilla Bread",
-    moduleType: "Carb Module",
-    station: "Bakery or Store",
-    productionType: "In-House or Purchased Ready",
-    notes: [
-      "If made in-house, bakery needs a full tortilla recipe.",
-      "If purchased ready, G7 creates a store issue and supplier spec check instead of a bakery production task.",
-      "Target dough or piece weight is 70g per portion.",
-    ],
-    ingredients: [
+    id: "lunch-green-thai-chicken",
+    number: "02",
+    name: "Green Thai Chicken Curry with Basmati Rice",
+    daypart: "Lunch Product Build",
+    intakeSource: "Existing DOCX recipe / SOP",
+    category: "Lunch meal",
+    targetBatch: "100 portions pilot target",
+    servingCondition: "Chilled meal, reheatable",
+    packagingStyle: "2-compartment plastic box size 28 with yogurt sauce side",
+    sourceStatus: "SOP captured",
+    modules: [
       {
-        name: "Tortilla Bread / Dough",
-        amountG: 70,
-        station: "Bakery",
-        stage: "Final dough or approved ready piece",
-        yieldRatio: 1,
-        note: "In-house recipe details to be entered later",
+        name: "Green Thai Chicken",
+        type: "Protein Module",
+        station: "Butchery → Hot Kitchen",
+        owner: "Hot Kitchen Worker",
+        status: "Ready",
+        summary: "Chicken breast marinated with green Thai paste, cooked to 74°C.",
+      },
+      {
+        name: "Basmati Rice",
+        type: "Carb Module",
+        station: "Hot Kitchen",
+        owner: "Hot Kitchen Worker",
+        status: "Ready",
+        summary: "Rice cooked with chicken stock and green Thai sauce.",
+      },
+      {
+        name: "Yogurt Sauce",
+        type: "Sauce Module",
+        station: "Cold Prep",
+        owner: "Cold Prep Worker",
+        status: "Ready",
+        summary: "Yogurt with cucumber, mint, garlic, lemon juice, and salt.",
+      },
+      {
+        name: "Lemon / Herbs",
+        type: "Garnish Module",
+        station: "Packaging",
+        owner: "Packaging Worker",
+        status: "Verify",
+        summary: "Final garnish to match approved product photo.",
+      },
+      {
+        name: "2-Compartment Box",
+        type: "Packaging Module",
+        station: "Packaging",
+        owner: "Packaging Worker",
+        status: "Ready",
+        summary: "Cool below 5°C, portion into box, seal, label, and release.",
       },
     ],
+    ingredients: [
+      { name: "Chicken breast", unit: "g", qty: "120 / 150 / 180", module: "Protein Module", station: "Butchery" },
+      { name: "Coriander leaves", unit: "g", qty: "8", module: "Sauce Module", station: "Cold Prep" },
+      { name: "Lemon grass", unit: "g", qty: "3", module: "Sauce Module", station: "Cold Prep" },
+      { name: "Ginger", unit: "g", qty: "3", module: "Sauce Module", station: "Cold Prep" },
+      { name: "Red onion", unit: "g", qty: "10", module: "Sauce Module", station: "Vegetable Prep" },
+      { name: "Garlic", unit: "g", qty: "2", module: "Sauce Module", station: "Cold Prep" },
+      { name: "Curry leaves", unit: "g", qty: "0.2", module: "Sauce Module", station: "Cold Prep" },
+      { name: "Olive oil", unit: "g", qty: "10 / 13 / 16", module: "Protein Module", station: "Hot Kitchen" },
+      { name: "Basmati rice", unit: "g", qty: "40 / 50 / 60", module: "Carb Module", station: "Hot Kitchen" },
+      { name: "Chicken stock", unit: "g", qty: "100 / 120 / 150", module: "Carb Module", station: "Hot Kitchen" },
+      { name: "Yogurt sauce", unit: "g", qty: "35", module: "Sauce Module", station: "Cold Prep" },
+    ],
+    prepNotes: [
+      "Blend red onion, coriander, curry leaves, garlic, ginger, lemon grass, salt, and water.",
+      "Marinate chicken with green Thai marinade for 15–30 minutes chilled.",
+    ],
+    cookingNotes: [
+      "Cook chicken in oven roasted mode to 74°C.",
+      "Cook rice with chicken stock mixed with green Thai sauce.",
+    ],
+    packagingSteps: [
+      "Cool meal components to below 5°C before packaging.",
+      "Place rice in the Carb Module side of the container.",
+      "Place chicken in Protein Module side.",
+      "Pack yogurt sauce as side sauce.",
+      "Add garnish according to approved photo.",
+      "Seal, label, and move to QA release.",
+    ],
+    qaChecks: ["Chicken core temperature 74°C", "Finished product ≤ 5°C", "2-compartment placement", "Label check"],
+    missingData: ["Actual cooked chicken yield", "Final packed weight", "Garnish standard photo", "Shelf life approval"],
   },
   {
-    name: "Guacamole",
-    moduleType: "Sauce Module",
-    station: "Cold Prep",
-    productionType: "In-House",
-    notes: [
-      "Cold prep task with taste approval.",
-      "Avocado and lemon juice purchase weights are calculated from before/after yield.",
+    id: "dinner-qatari-pasta-machboos",
+    number: "03",
+    name: "Qatari Pasta Chicken Machboos",
+    daypart: "Dinner Product Build",
+    intakeSource: "Existing DOCX recipe / SOP",
+    category: "Dinner meal",
+    targetBatch: "100 portions pilot target",
+    servingCondition: "Chilled meal, reheatable",
+    packagingStyle: "Meal bowl or 2-compartment box with QA label",
+    sourceStatus: "SOP captured",
+    modules: [
+      {
+        name: "Machboos Chicken",
+        type: "Protein Module",
+        station: "Butchery → Hot Kitchen",
+        owner: "Hot Kitchen Worker",
+        status: "Ready",
+        summary: "Chicken cubes cooked in machboos base with onion, tomato, vegetables, spices, and loomi.",
+      },
+      {
+        name: "Fried Macaroni Pasta",
+        type: "Carb Module",
+        station: "Hot Kitchen",
+        owner: "Hot Kitchen Worker",
+        status: "Ready",
+        summary: "Macaroni fried to golden color, then cooked al dente with machboos mix.",
+      },
+      {
+        name: "Tomato Spice Base",
+        type: "Sauce Module",
+        station: "Hot Kitchen",
+        owner: "Hot Kitchen Worker",
+        status: "Verify",
+        summary: "Tomato, onion, garlic, ginger, loomi, and spice base; may link later to Tomato Sauce Batch.",
+      },
+      {
+        name: "Fresh Coriander",
+        type: "Garnish Module",
+        station: "Packaging",
+        owner: "Packaging Worker",
+        status: "Ready",
+        summary: "Added at the final stage before shutdown and visual check.",
+      },
+      {
+        name: "Dinner Meal Pack",
+        type: "Packaging Module",
+        station: "Packaging",
+        owner: "Packaging Worker",
+        status: "TBD Live",
+        summary: "Final bowl/box style and appearance standard to be confirmed in pilot.",
+      },
     ],
     ingredients: [
+      { name: "Chicken breast", unit: "g", qty: "120 / 150 / 180", module: "Protein Module", station: "Butchery" },
+      { name: "Macaroni pasta", unit: "g", qty: "50 / 60 / 75", module: "Carb Module", station: "Hot Kitchen" },
+      { name: "Red onion", unit: "g", qty: "60", module: "Sauce Module", station: "Vegetable Prep" },
+      { name: "Peeled tomato", unit: "g", qty: "15", module: "Sauce Module", station: "Hot Kitchen" },
+      { name: "Green bell pepper", unit: "g", qty: "10", module: "Garnish Module", station: "Vegetable Prep" },
+      { name: "Green chili", unit: "g", qty: "1", module: "Sauce Module", station: "Hot Kitchen" },
+      { name: "Potato", unit: "g", qty: "10", module: "Carb Module", station: "Vegetable Prep" },
+      { name: "Carrots", unit: "g", qty: "10", module: "Garnish Module", station: "Vegetable Prep" },
+      { name: "Loomi black dried loomi", unit: "g", qty: "0.5", module: "Sauce Module", station: "Hot Kitchen" },
+      { name: "Fresh coriander", unit: "g", qty: "2", module: "Garnish Module", station: "Packaging" },
+    ],
+    prepNotes: [
+      "Cut chicken breast into medium cubes.",
+      "Slice onions, dice bell pepper and chilies, cut potatoes and carrots.",
+      "Measure all spices before cooking.",
+    ],
+    cookingNotes: [
+      "Cook onion base, aromatics, vegetables, loomi, tomatoes, and chicken.",
+      "Fry macaroni to golden color, strain extra oil, then combine and cook al dente.",
+    ],
+    packagingSteps: [
+      "Cool product below 5°C before packaging.",
+      "Portion pasta and chicken according to approved build.",
+      "Add garnish if required.",
+      "Seal, label, and send to QA release.",
+    ],
+    qaChecks: ["Chicken cooked safely", "Pasta texture al dente", "Color and aroma check", "Final weight check"],
+    missingData: ["Actual cooking loss", "Final bowl weight", "Packaging image standard", "Shelf life approval"],
+  },
+  {
+    id: "dessert-rice-pudding",
+    number: "04",
+    name: "Rice Pudding",
+    daypart: "Dessert Product Build",
+    intakeSource: "Chef verbal intake / recipe still required",
+    category: "Dessert",
+    targetBatch: "TBD by chef interview",
+    servingCondition: "Chilled dessert",
+    packagingStyle: "Dessert cup / seal / label / cold QA release",
+    sourceStatus: "Chef interview required",
+    modules: [
       {
-        name: "Avocado",
-        amountG: 30,
-        station: "Cold Prep",
-        stage: "Cleaned usable avocado",
-        yieldRatio: 134 / 204,
+        name: "Rice Milk Base",
+        type: "Carb Module",
+        station: "Hot Kitchen",
+        owner: "Pastry / Hot Kitchen Worker",
+        status: "TBD Live",
+        summary: "Rice, milk, sweetener/sugar, and starch/thickener structure to be captured from chef interview.",
       },
       {
-        name: "Red Onion",
-        amountG: 5,
-        station: "Cold Prep",
-        stage: "Fine dice",
-        yieldRatio: 79 / 93,
+        name: "Cream / Flavor Base",
+        type: "Sauce Module",
+        station: "Pastry / Hot Kitchen",
+        owner: "Pastry Worker",
+        status: "TBD Live",
+        summary: "Flavor, sweetness, and texture standard must be approved by chef.",
       },
       {
-        name: "Tomato",
-        amountG: 20,
-        station: "Cold Prep",
-        stage: "Diced usable tomato",
-        yieldRatio: null,
-        note: "Measure tomato cleaning yield live",
+        name: "Cinnamon / Nuts / Garnish",
+        type: "Garnish Module",
+        station: "Packaging",
+        owner: "Packaging Worker",
+        status: "TBD Live",
+        summary: "Final garnish depends on client allergen and cost decision.",
       },
       {
-        name: "Fresh Cilantro",
-        amountG: 2,
-        station: "Cold Prep",
-        stage: "Chopped fresh",
-        yieldRatio: null,
-        note: "Measure cleaning yield live",
-      },
-      {
-        name: "Sea Salt",
-        amountG: 0.5,
-        station: "Cold Prep",
-        stage: "Seasoning",
-        yieldRatio: 1,
-      },
-      {
-        name: "Lemon Juice",
-        amountG: 5,
-        station: "Cold Prep",
-        stage: "Fresh juice",
-        yieldRatio: 50 / 124,
-        note: "Purchase as lemon, output as juice",
+        name: "Dessert Cup Pack",
+        type: "Packaging Module",
+        station: "Packaging",
+        owner: "Packaging Worker",
+        status: "TBD Live",
+        summary: "Cup size, seal, label, shelf life, and cold holding must be defined.",
       },
     ],
+    ingredients: [
+      { name: "Rice", unit: "g", qty: "TBD", module: "Carb Module", station: "Hot Kitchen", note: "Chef interview required" },
+      { name: "Milk", unit: "g", qty: "TBD", module: "Sauce Module", station: "Hot Kitchen", note: "Chef interview required" },
+      { name: "Sugar / sweetener", unit: "g", qty: "TBD", module: "Sauce Module", station: "Hot Kitchen", note: "Client formula required" },
+      { name: "Vanilla / flavor", unit: "g", qty: "TBD", module: "Sauce Module", station: "Hot Kitchen" },
+      { name: "Cinnamon / nuts", unit: "g", qty: "TBD", module: "Garnish Module", station: "Packaging", note: "Allergen decision" },
+    ],
+    prepNotes: [
+      "Run chef interview to capture formula, cooking texture, and target cup size.",
+      "Define allergen rule for dairy and nuts.",
+    ],
+    cookingNotes: [
+      "Cook rice pudding base to approved thickness.",
+      "Blast chill to ≤ 5°C before packaging.",
+    ],
+    packagingSteps: [
+      "Place dessert cup on scale.",
+      "Portion rice pudding to target weight.",
+      "Add approved garnish.",
+      "Seal cup and apply label.",
+      "Move to cold QA release.",
+    ],
+    qaChecks: ["Texture check", "Sweetness approval", "Cup weight", "Cold holding ≤ 5°C", "Allergen label"],
+    missingData: ["Full recipe", "Target cup weight", "Shelf life", "Allergen decision", "Final garnish"],
+  },
+  {
+    id: "batch-tomato-sauce",
+    number: "05",
+    name: "Tomato Sauce Batch",
+    daypart: "Batch / Sauce Module Build",
+    intakeSource: "Handwritten photo intake",
+    category: "Batch sauce / reusable Sauce Module",
+    targetBatch: "45 kg net yield from handwritten sheet",
+    servingCondition: "Cooked sauce, chilled for production use",
+    packagingStyle: "Batch container / label / storage / issue to production",
+    sourceStatus: "Photo captured",
+    modules: [
+      {
+        name: "Tomato Sauce Base",
+        type: "Sauce Module",
+        station: "Hot Kitchen",
+        owner: "Hot Kitchen Worker",
+        status: "Verify",
+        summary: "Handwritten batch sheet captured; unclear quantities must be confirmed before pilot production.",
+      },
+      {
+        name: "Aromatics",
+        type: "Garnish Module",
+        station: "Vegetable Prep → Hot Kitchen",
+        owner: "Vegetable Prep Worker",
+        status: "Verify",
+        summary: "Onion, garlic, dry herbs, sugar, salt, and olive oil require verified weights.",
+      },
+      {
+        name: "Batch Storage Pack",
+        type: "Packaging Module",
+        station: "Packaging / Store",
+        owner: "Storekeeper",
+        status: "TBD Live",
+        summary: "Define batch container, label, production date, expiry, storage temperature, and issue rule.",
+      },
+    ],
+    ingredients: [
+      { name: "Tomato sauce", unit: "kg", qty: "42", module: "Sauce Module", station: "Hot Kitchen", note: "From photo, verify" },
+      { name: "Brown onion", unit: "kg", qty: "4", module: "Garnish Module", station: "Vegetable Prep", note: "From photo, verify" },
+      { name: "Peeled garlic", unit: "g", qty: "420", module: "Garnish Module", station: "Vegetable Prep", note: "From photo, verify" },
+      { name: "Dry basil", unit: "g", qty: "TBD verify", module: "Sauce Module", station: "Hot Kitchen", note: "Handwriting unclear" },
+      { name: "Dry oregano", unit: "g", qty: "TBD verify", module: "Sauce Module", station: "Hot Kitchen", note: "Handwriting unclear" },
+      { name: "Sugar", unit: "g", qty: "TBD verify", module: "Sauce Module", station: "Hot Kitchen", note: "Handwriting unclear" },
+      { name: "Salt", unit: "g", qty: "TBD verify", module: "Sauce Module", station: "Hot Kitchen", note: "Handwriting unclear" },
+      { name: "Olive oil", unit: "kg", qty: "TBD verify", module: "Sauce Module", station: "Hot Kitchen", note: "Handwriting unclear" },
+    ],
+    prepNotes: [
+      "Use photo intake as first source, then confirm all handwritten weights with chef.",
+      "Define whether this sauce is a reusable G7 Sauce Module for pasta, machboos, and other meals.",
+    ],
+    cookingNotes: [
+      "Cooking method, time, target thickness, and final Brix/texture standard need chef confirmation.",
+      "Record final cooked net weight and variance against 45 kg target.",
+    ],
+    packagingSteps: [
+      "Cool sauce safely after cooking.",
+      "Transfer to approved batch containers.",
+      "Label with batch name, date, yield, expiry, and owner.",
+      "Move to chilled storage or issue to production.",
+    ],
+    qaChecks: ["Weight/yield check", "Texture check", "Salt/acidity taste check", "Batch label", "Storage temperature"],
+    missingData: ["Full cooking method", "Unclear handwritten quantities", "Shelf life", "Storage temperature", "Issue unit"],
   },
 ];
 
-const baseTasks: GeneratedTask[] = [
-  {
-    step: "01",
-    station: "Store",
-    task: "Collect pilot ingredients and scan issue list",
-    worker: "Storekeeper 01",
-    expectedOutput:
-      "Gross issue list prepared for chicken, vegetables, tortilla, guacamole ingredients, spices, labels, and Packaging Module materials.",
-    approval: "Store issue confirmation",
-  },
-  {
-    step: "02",
-    station: "Butchery",
-    task: "Chicken breast thawing / trimming / julienne cut",
-    worker: "Butchery Worker 01",
-    expectedOutput:
-      "Chicken raw gross, trimmed net, trim waste, cut style, and handoff to hot kitchen recorded.",
-    approval: "Chef or production manager accepts butchery handoff",
-  },
-  {
-    step: "03",
-    station: "Vegetable Prep",
-    task: "Clean and cut onion and bell peppers julienne",
-    worker: "Veg Prep Worker 01",
-    expectedOutput:
-      "Before cleaning weight, after cleaning weight, waste, cut quality, and handoff to hot kitchen recorded.",
-    approval: "Cut quality visual check",
-  },
-  {
-    step: "04",
-    station: "Hot Kitchen",
-    task: "Mix oil and spices, cook chicken fajita filling",
-    worker: "Hot Kitchen Worker 01",
-    expectedOutput:
-      "Cooked fajita filling with final cilantro mixing after cooking. Chicken cooked yield must be measured.",
-    approval: "Taste approval required",
-  },
-  {
-    step: "05",
-    station: "Bakery",
-    task: "Prepare tortilla bread or verify purchased tortilla",
-    worker: "Bakery / Store Worker",
-    expectedOutput:
-      "Either 70g dough/piece produced in-house or ready tortilla issued from approved supplier stock.",
-    approval: "Bakery output or supplier spec check",
-  },
-  {
-    step: "06",
-    station: "Cold Prep",
-    task: "Prepare guacamole",
-    worker: "Cold Prep Worker 01",
-    expectedOutput:
-      "Guacamole mixed cold with avocado, onion, tomato, cilantro, salt, and lemon juice.",
-    approval: "Taste approval required",
-  },
-  {
-    step: "07",
-    station: "Packaging",
-    task: "Complete Packaging Module Build Card",
-    worker: "Packaging Worker 01",
-    expectedOutput:
-      "100 finished meals packed according to the Build Card, including Protein Module, Carb Module, Sauce Module, Garnish Module when applicable, and Packaging Module checks. Packed portion output must be measured.",
-    approval: "Packaging Module supervisor check",
-  },
-  {
-    step: "08",
-    station: "QA",
-    task: "Final release gate",
-    worker: "QA User",
-    expectedOutput:
-      "Random weight check, appearance check, label check, barcode check, and release decision.",
-    approval: "Approve / Hold / Reject",
-  },
-];
-
-function formatNumber(value: number, decimals = 1) {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
-}
-
-function formatWeightFromGrams(grams: number) {
-  if (grams >= 1000) {
-    return `${formatNumber(grams / 1000, 2)} kg`;
+function statusClass(status: string) {
+  if (status === "Ready" || status === "Captured" || status === "SOP captured") {
+    return "border-[#CCFF33]/30 bg-[#CCFF33]/10 text-[#CCFF33]";
   }
 
-  return `${formatNumber(grams, grams < 10 ? 1 : 0)} g`;
-}
-
-function formatYield(ratio: number | null) {
-  if (ratio === null) {
-    return "TBD live";
+  if (status === "Verify" || status === "Verify Live" || status === "Photo captured") {
+    return "border-amber-300/30 bg-amber-300/10 text-amber-100";
   }
 
-  return `${formatNumber(ratio * 100, 1)}%`;
+  return "border-cyan-300/30 bg-cyan-300/10 text-cyan-100";
+}
+
+function buildTasks(product: ProductBuild): ModuleTask[] {
+  const stations = new Set(product.modules.map((moduleItem) => moduleItem.station));
+
+  return [
+    {
+      step: "01",
+      station: "Store",
+      task: `Prepare issue list for ${product.name}`,
+      worker: "Storekeeper 01",
+      output: "Ingredients, packaging materials, labels, and TBD live items prepared for the pilot run.",
+      approval: "Store issue confirmation",
+    },
+    {
+      step: "02",
+      station: Array.from(stations).join(" / ").slice(0, 90) || "Production",
+      task: "Execute G7 Culinary Modules",
+      worker: "Assigned station workers",
+      output: "Protein, Carb, Sauce, Garnish, and Packaging Module work completed according to the Product Build.",
+      approval: "Production manager handoff",
+    },
+    {
+      step: "03",
+      station: "Packaging",
+      task: "Complete Packaging Module Build Card",
+      worker: "Packaging Worker 01",
+      output: "Final packed product follows the Build Card sequence, visual standard, label rule, and portion target.",
+      approval: "Packaging supervisor check",
+    },
+    {
+      step: "04",
+      station: "QA",
+      task: "Final QA release gate",
+      worker: "QA User",
+      output: "Weight, appearance, label, temperature, and release decision recorded.",
+      approval: "Approve / Hold / Reject",
+    },
+  ];
 }
 
 export default function PilotIntakePage() {
-  const [clientName, setClientName] = useState(
-    "Nourish / Diet To Door Egypt Pilot",
-  );
+  const [clientName, setClientName] = useState("Salem's diet");
   const [kitchenName, setKitchenName] = useState("Main Central Kitchen");
   const [batchQuantity, setBatchQuantity] = useState(100);
-  const [pilotStation, setPilotStation] = useState("Full Pilot Flow");
-  const [tortillaType, setTortillaType] = useState<"in-house" | "purchased">(
-    "in-house",
+  const [selectedProductId, setSelectedProductId] = useState(productBuilds[0].id);
+  const [selectedMethod, setSelectedMethod] = useState(intakeMethods[0].label);
+
+  const selectedProduct = useMemo(
+    () => productBuilds.find((product) => product.id === selectedProductId) ?? productBuilds[0],
+    [selectedProductId],
   );
 
-  const purchaseRows = useMemo(() => {
-    const rows = new Map<
-      string,
-      {
-        name: string;
-        stations: Set<string>;
-        usableG: number;
-        purchaseG: number;
-        wasteG: number | null;
-        yieldRatio: number | null;
-        note: string;
-      }
-    >();
+  const selectedTasks = useMemo(() => buildTasks(selectedProduct), [selectedProduct]);
 
-    for (const culinaryModule of baseCulinaryModules) {
-      for (const ingredient of culinaryModule.ingredients) {
-        if (
-          ingredient.name === "Tortilla Bread / Dough" &&
-          tortillaType === "purchased"
-        ) {
-          continue;
-        }
-
-        const usableG = ingredient.amountG * batchQuantity;
-        const hasYield = ingredient.yieldRatio !== null;
-        const purchaseG = hasYield ? usableG / ingredient.yieldRatio! : usableG;
-        const wasteG = hasYield ? purchaseG - usableG : null;
-
-        const existing = rows.get(ingredient.name);
-
-        if (existing) {
-          existing.usableG += usableG;
-          existing.purchaseG += purchaseG;
-          existing.wasteG =
-            existing.wasteG === null || wasteG === null
-              ? null
-              : existing.wasteG + wasteG;
-          existing.stations.add(ingredient.station);
-          if (ingredient.note) {
-            existing.note = `${existing.note}; ${ingredient.note}`;
-          }
-        } else {
-          rows.set(ingredient.name, {
-            name: ingredient.name,
-            stations: new Set([ingredient.station]),
-            usableG,
-            purchaseG,
-            wasteG,
-            yieldRatio: ingredient.yieldRatio,
-            note: ingredient.note ?? "",
-          });
-        }
-      }
-    }
-
-    if (tortillaType === "purchased") {
-      rows.set("Ready Tortilla Bread", {
-        name: "Ready Tortilla Bread",
-        stations: new Set(["Store"]),
-        usableG: batchQuantity,
-        purchaseG: Math.ceil(batchQuantity * 1.03),
-        wasteG: null,
-        yieldRatio: 1,
-        note: "Purchased ready item. Suggested 3% buffer.",
-      });
-    }
-
-    return Array.from(rows.values());
-  }, [batchQuantity, tortillaType]);
-
-  const visibleTasks = useMemo(() => {
-    if (pilotStation === "Full Pilot Flow") {
-      return baseTasks;
-    }
-
-    return baseTasks.filter((task) => task.station === pilotStation);
-  }, [pilotStation]);
-
-  const totalUsableWeight = purchaseRows.reduce((sum, row) => {
-    if (row.name === "Ready Tortilla Bread") {
-      return sum;
-    }
-
-    return sum + row.usableG;
-  }, 0);
-
-  const totalPurchaseWeight = purchaseRows.reduce((sum, row) => {
-    if (row.name === "Ready Tortilla Bread") {
-      return sum;
-    }
-
-    return sum + row.purchaseG;
-  }, 0);
-
-  const chickenRawUsable = batchQuantity * 180;
-  const chickenCookedLow = chickenRawUsable * 0.55;
-  const chickenCookedHigh = chickenRawUsable * 0.6;
+  const readyCount = selectedProduct.modules.filter((moduleItem) => moduleItem.status === "Ready").length;
+  const verifyCount = selectedProduct.modules.filter((moduleItem) => moduleItem.status === "Verify").length;
+  const tbdCount = selectedProduct.modules.filter((moduleItem) => moduleItem.status === "TBD Live").length;
 
   return (
     <main className="min-h-screen bg-[#06111F] text-white">
@@ -480,7 +558,7 @@ export default function PilotIntakePage() {
               href="/pilot-onboarding"
               className="rounded-full border border-white/15 px-4 py-2 transition hover:border-[#CCFF33]/40 hover:text-[#CCFF33]"
             >
-              Back to Pilot Onboarding
+              Back to Client Workspace
             </Link>
 
             <div className="flex flex-wrap gap-2">
@@ -510,46 +588,43 @@ export default function PilotIntakePage() {
           <div className="grid gap-8 xl:grid-cols-[1fr_430px]">
             <div>
               <div className="inline-flex rounded-full border border-[#CCFF33]/25 bg-[#CCFF33]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-                G7 Pilot Intake Command
+                G7 5-Product Pilot Intake
               </div>
 
               <h1 className="mt-5 max-w-5xl text-[42px] font-black leading-[0.9] tracking-[-0.065em] text-white sm:text-[62px] lg:text-[76px]">
-                Turn the client’s first real product into production flow.
+                Turn Salem&apos;s diet recipes into Product Builds.
               </h1>
 
               <p className="mt-5 max-w-3xl text-[15px] leading-7 text-slate-300 sm:text-[17px]">
-                This is the missing page after the demo close. When a client
-                says yes, G7 starts the first pilot product, structures it as a Product Build with G7 Culinary Modules,
-                calculates purchase/yield, generates Module Tasks, and shows
-                worker responsibilities.
+                This intake accepts written SOPs, chef interviews, photos, handwritten sheets, and live kitchen observation. G7 structures each item into Culinary Modules, Packaging Module Build Cards, Module Tasks, QA release gates, and pilot-ready missing-data checks.
               </p>
             </div>
 
             <aside className="rounded-[28px] border border-cyan-300/20 bg-cyan-300/[0.07] p-5">
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-200">
-                First Live Test
+                Paid Pilot Package
               </p>
 
               <h2 className="mt-3 text-[32px] font-black leading-[0.95] tracking-[-0.055em] text-white">
-                Chicken Fajita with Bread and Guacamole.
+                G7 5-Product Pilot Implementation.
               </h2>
 
               <div className="mt-5 grid gap-3">
                 <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
                   <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-                    Batch Quantity
+                    Client
                   </p>
                   <p className="mt-1 text-[26px] font-black text-white">
-                    {batchQuantity} portions
+                    {clientName}
                   </p>
                 </div>
 
                 <div className="rounded-[22px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-4">
                   <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#CCFF33]">
-                    Runtime Output
+                    Pilot Output
                   </p>
                   <p className="mt-1 text-[18px] font-black leading-tight text-white">
-                    Product Build → G7 Culinary Modules → Module Tasks → Workers → QA
+                    5 Product Builds → Modules → Build Cards → Module Tasks → QA
                   </p>
                 </div>
               </div>
@@ -557,14 +632,14 @@ export default function PilotIntakePage() {
           </div>
         </header>
 
-        <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
+        <section className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-              Step 1 — Client Tenant
+              Step 1 — Client Workspace
             </p>
 
             <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-              Pilot workspace setup.
+              Pilot setup details.
             </h2>
 
             <div className="mt-6 grid gap-4">
@@ -598,28 +673,9 @@ export default function PilotIntakePage() {
                   type="number"
                   min={1}
                   value={batchQuantity}
-                  onChange={(event) =>
-                    setBatchQuantity(Math.max(1, Number(event.target.value) || 1))
-                  }
+                  onChange={(event) => setBatchQuantity(Math.max(1, Number(event.target.value) || 1))}
                   className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm font-bold text-white outline-none transition focus:border-cyan-300/50"
                 />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-                  Pilot Station Scope
-                </span>
-                <select
-                  value={pilotStation}
-                  onChange={(event) => setPilotStation(event.target.value)}
-                  className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm font-bold text-white outline-none transition focus:border-cyan-300/50"
-                >
-                  {controlledStations.map((station) => (
-                    <option key={station} value={station}>
-                      {station}
-                    </option>
-                  ))}
-                </select>
               </label>
 
               <div className="rounded-[24px] border border-cyan-300/15 bg-cyan-300/[0.06] p-4">
@@ -629,6 +685,7 @@ export default function PilotIntakePage() {
                 <div className="mt-3 grid gap-2 text-[13px] font-bold leading-6 text-slate-200">
                   <p>Client: {clientName}</p>
                   <p>Kitchen: {kitchenName}</p>
+                  <p>Package: 5 Product Builds</p>
                   <p>Currency: EGP</p>
                   <p>Timezone: Africa/Cairo</p>
                   <p>Units: g / kg / portion / piece</p>
@@ -639,336 +696,275 @@ export default function PilotIntakePage() {
 
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
-              Step 2 — Product Build Setup
+              Step 2 — Intake Method
             </p>
 
             <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-              One dish becomes a Product Build with G7 Culinary Modules.
+              G7 captures recipes even when they are not perfectly written.
             </h2>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {baseCulinaryModules.map((culinaryModule, index) => (
-                <article
-                  key={culinaryModule.name}
-                  className="rounded-[26px] border border-white/10 bg-black/20 p-4"
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              {intakeMethods.map((method) => (
+                <button
+                  key={method.label}
+                  type="button"
+                  onClick={() => setSelectedMethod(method.label)}
+                  className={`rounded-[24px] border p-4 text-left transition ${
+                    selectedMethod === method.label
+                      ? "border-[#CCFF33]/40 bg-[#CCFF33]/10"
+                      : "border-white/10 bg-black/20 hover:border-white/25"
+                  }`}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#CCFF33]/25 bg-[#CCFF33]/10 text-sm font-black text-[#CCFF33]">
-                      {index + 1}
-                    </span>
-                    <span className="rounded-full border border-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
-                      {culinaryModule.moduleType}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-[18px] font-black leading-none tracking-[-0.035em] text-white">
+                        {method.label}
+                      </h3>
+                      <p className="mt-2 text-[12px] font-bold leading-5 text-cyan-100">
+                        {method.source}
+                      </p>
+                    </div>
+                    <span className={`rounded-full border px-3 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${statusClass(method.status)}`}>
+                      {method.status}
                     </span>
                   </div>
-
-                  <h3 className="mt-4 text-[22px] font-black leading-none tracking-[-0.04em] text-white">
-                    {culinaryModule.name}
-                  </h3>
-
                   <p className="mt-3 text-[12px] font-bold leading-5 text-slate-300">
-                    Station: {culinaryModule.station}
+                    {method.note}
                   </p>
-
-                  <p className="mt-2 text-[12px] font-bold leading-5 text-slate-400">
-                    Production: {culinaryModule.productionType}
-                  </p>
-                </article>
+                </button>
               ))}
-            </div>
-
-            <div className="mt-6 rounded-[26px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-                Tortilla Production Decision
-              </p>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setTortillaType("in-house")}
-                  className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
-                    tortillaType === "in-house"
-                      ? "border-[#CCFF33]/50 bg-[#CCFF33]/15 text-[#E9FF9A]"
-                      : "border-white/10 bg-black/20 text-slate-300 hover:border-white/25"
-                  }`}
-                >
-                  In-house bakery tortilla
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTortillaType("purchased")}
-                  className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
-                    tortillaType === "purchased"
-                      ? "border-[#CCFF33]/50 bg-[#CCFF33]/15 text-[#E9FF9A]"
-                      : "border-white/10 bg-black/20 text-slate-300 hover:border-white/25"
-                  }`}
-                >
-                  Purchased ready tortilla
-                </button>
-              </div>
             </div>
           </div>
         </section>
 
         <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200">
-            Step 3 — Raw Recipe Per Portion
-          </p>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
+                Step 3 — 5 Product Build Scope
+              </p>
+              <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
+                Select a product to structure into modules.
+              </h2>
+            </div>
+            <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-amber-100">
+              Paid Pilot Scope
+            </span>
+          </div>
 
-          <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-            Every G7 Culinary Module has its own raw-weight recipe.
-          </h2>
-
-          <div className="mt-6 grid gap-4 xl:grid-cols-3">
-            {baseCulinaryModules.map((culinaryModule) => (
-              <article
-                key={culinaryModule.name}
-                className="rounded-[28px] border border-white/10 bg-black/20 p-5"
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {productBuilds.map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                onClick={() => setSelectedProductId(product.id)}
+                className={`rounded-[26px] border p-4 text-left transition ${
+                  selectedProductId === product.id
+                    ? "border-[#CCFF33]/45 bg-[#CCFF33]/10 shadow-[0_0_35px_rgba(204,255,51,0.08)]"
+                    : "border-white/10 bg-black/20 hover:border-cyan-300/35"
+                }`}
               >
-                <h3 className="text-[24px] font-black leading-none tracking-[-0.04em] text-white">
-                  {culinaryModule.name}
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#CCFF33]/25 bg-[#CCFF33]/10 text-sm font-black text-[#CCFF33]">
+                    {product.number}
+                  </span>
+                  <span className={`rounded-full border px-3 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${statusClass(product.sourceStatus)}`}>
+                    {product.sourceStatus}
+                  </span>
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-200">
+                  {product.daypart}
+                </p>
+                <h3 className="mt-3 text-[20px] font-black leading-none tracking-[-0.04em] text-white">
+                  {product.name}
                 </h3>
-
-                <div className="mt-4 grid gap-2">
-                  {culinaryModule.ingredients.map((ingredient) => (
-                    <div
-                      key={`${culinaryModule.name}-${ingredient.name}-${ingredient.stage}`}
-                      className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-black text-white">
-                            {ingredient.name}
-                          </p>
-                          <p className="mt-1 text-[11px] font-bold leading-5 text-slate-400">
-                            {ingredient.stage}
-                          </p>
-                        </div>
-                        <p className="shrink-0 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-black text-cyan-100">
-                          {ingredient.amountG}g
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-4 grid gap-2">
-                  {culinaryModule.notes.map((note) => (
-                    <p
-                      key={note}
-                      className="rounded-2xl border border-[#CCFF33]/15 bg-[#CCFF33]/[0.06] p-3 text-[12px] font-bold leading-5 text-slate-300"
-                    >
-                      {note}
-                    </p>
-                  ))}
-                </div>
-              </article>
+                <p className="mt-3 text-[12px] font-bold leading-5 text-slate-300">
+                  {product.intakeSource}
+                </p>
+              </button>
             ))}
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-              Step 4 — Purchase & Yield Calculation
-            </p>
-
-            <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-              Raw usable weight becomes purchase requirement.
-            </h2>
-
-            <div className="mt-6 overflow-hidden rounded-[24px] border border-white/10">
-              <div className="grid grid-cols-[1.25fr_0.8fr_0.8fr_0.8fr_1fr] gap-0 bg-white/[0.06] px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
-                <span>Ingredient</span>
-                <span>Usable</span>
-                <span>Yield</span>
-                <span>Purchase</span>
-                <span>Station / Note</span>
-              </div>
-
-              <div className="divide-y divide-white/10">
-                {purchaseRows.map((row) => (
-                  <div
-                    key={row.name}
-                    className="grid grid-cols-[1.25fr_0.8fr_0.8fr_0.8fr_1fr] gap-0 px-4 py-3 text-[12px] font-bold leading-5 text-slate-200"
-                  >
-                    <span className="text-white">{row.name}</span>
-                    <span>
-                      {row.name === "Ready Tortilla Bread"
-                        ? `${row.usableG} pieces`
-                        : formatWeightFromGrams(row.usableG)}
-                    </span>
-                    <span>{formatYield(row.yieldRatio)}</span>
-                    <span>
-                      {row.name === "Ready Tortilla Bread"
-                        ? `${row.purchaseG} pieces`
-                        : formatWeightFromGrams(row.purchaseG)}
-                    </span>
-                    <span className="text-slate-400">
-                      {Array.from(row.stations).join(" / ")}
-                      {row.note ? ` — ${row.note}` : ""}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <aside className="rounded-[32px] border border-cyan-300/15 bg-cyan-300/[0.06] p-5 sm:p-6">
+        <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
+          <div className="rounded-[32px] border border-cyan-300/15 bg-cyan-300/[0.06] p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-200">
-              Pilot Calculation Summary
+              Selected Product Build
             </p>
-
-            <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-              What G7 calculated.
+            <h2 className="mt-3 text-[38px] font-black leading-[0.95] tracking-[-0.055em] text-white">
+              {selectedProduct.name}
             </h2>
 
             <div className="mt-6 grid gap-3">
-              <div className="rounded-[24px] border border-white/10 bg-black/20 p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-                  Total usable recipe weight
-                </p>
-                <p className="mt-2 text-[28px] font-black text-white">
-                  {formatWeightFromGrams(totalUsableWeight)}
-                </p>
+              <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Category</p>
+                <p className="mt-1 text-sm font-black text-white">{selectedProduct.category}</p>
               </div>
-
-              <div className="rounded-[24px] border border-white/10 bg-black/20 p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-                  Estimated purchase / issue weight
-                </p>
-                <p className="mt-2 text-[28px] font-black text-white">
-                  {formatWeightFromGrams(totalPurchaseWeight)}
-                </p>
+              <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Serving Condition</p>
+                <p className="mt-1 text-sm font-black text-white">{selectedProduct.servingCondition}</p>
               </div>
-
-              <div className="rounded-[24px] border border-amber-300/20 bg-amber-300/10 p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-100">
-                  Chicken cooked output estimate
-                </p>
-                <p className="mt-2 text-[20px] font-black text-white">
-                  {formatWeightFromGrams(chickenCookedLow)} –{" "}
-                  {formatWeightFromGrams(chickenCookedHigh)}
-                </p>
-                <p className="mt-2 text-sm font-bold leading-6 text-slate-200">
-                  Based on expected 40–45% cooking loss. Actual cooked output
-                  must be measured during the live pilot.
-                </p>
+              <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Packaging Style</p>
+                <p className="mt-1 text-sm font-black text-white">{selectedProduct.packagingStyle}</p>
               </div>
-
-              <div className="rounded-[24px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#CCFF33]">
-                  Live measurement still required
-                </p>
-                <p className="mt-2 text-sm font-bold leading-6 text-slate-200">
-                  Chicken butchery yield, chicken cooking yield, tomato yield,
-                  cilantro yield, fish yield, beef yield, and final packed
-                  output must be measured in the first live pilot.
+              <div className="rounded-[22px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#CCFF33]">Module Readiness</p>
+                <p className="mt-1 text-sm font-black text-white">
+                  Ready: {readyCount} / Verify: {verifyCount} / TBD Live: {tbdCount}
                 </p>
               </div>
             </div>
-          </aside>
+          </div>
+
+          <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
+              Step 4 — G7 Culinary Modules
+            </p>
+            <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
+              Product structure before production.
+            </h2>
+
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              {selectedProduct.modules.map((moduleItem) => (
+                <article key={`${selectedProduct.id}-${moduleItem.name}`} className="rounded-[24px] border border-white/10 bg-black/20 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-200">{moduleItem.type}</p>
+                      <h3 className="mt-2 text-[20px] font-black leading-none tracking-[-0.04em] text-white">{moduleItem.name}</h3>
+                    </div>
+                    <span className={`rounded-full border px-3 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${statusClass(moduleItem.status)}`}>
+                      {moduleItem.status}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-[12px] font-bold leading-5 text-slate-300">{moduleItem.summary}</p>
+                  <div className="mt-4 grid gap-2 text-[11px] font-bold leading-5 text-slate-400">
+                    <p>Station: {moduleItem.station}</p>
+                    <p>Owner: {moduleItem.owner}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200">
-            Step 4B — Cooking Yield Rules
+            Step 5 — Product Intake Template
           </p>
-
           <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-            G7 tracks raw, cooked, and packed output.
+            Ingredients and source data captured for {selectedProduct.name}.
           </h2>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {cookingYieldRules.map((rule) => (
-              <article
-                key={rule.item}
-                className="rounded-[26px] border border-white/10 bg-black/20 p-5"
-              >
-                <h3 className="text-[22px] font-black leading-none tracking-[-0.04em] text-white">
-                  {rule.item}
-                </h3>
+          <div className="mt-6 overflow-hidden rounded-[24px] border border-white/10">
+            <div className="grid grid-cols-[1.15fr_0.55fr_0.75fr_0.9fr_0.9fr_1fr] gap-0 bg-white/[0.06] px-4 py-3 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+              <span>Ingredient</span>
+              <span>Unit</span>
+              <span>Qty</span>
+              <span>Module</span>
+              <span>Station</span>
+              <span>Note</span>
+            </div>
 
-                <div className="mt-4 grid gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-                      Cooking Loss
-                    </p>
-                    <p className="mt-1 text-xl font-black text-amber-100">
-                      {rule.cookingLoss}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-                      Cooked Yield
-                    </p>
-                    <p className="mt-1 text-xl font-black text-[#CCFF33]">
-                      {rule.cookedYield}
-                    </p>
-                  </div>
-
-                  <p className="text-[12px] font-bold leading-6 text-slate-300">
-                    {rule.note}
-                  </p>
+            <div className="divide-y divide-white/10">
+              {selectedProduct.ingredients.map((ingredient) => (
+                <div key={`${selectedProduct.id}-${ingredient.name}-${ingredient.qty}`} className="grid grid-cols-[1.15fr_0.55fr_0.75fr_0.9fr_0.9fr_1fr] gap-0 px-4 py-3 text-[12px] font-bold leading-5 text-slate-200">
+                  <span className="text-white">{ingredient.name}</span>
+                  <span>{ingredient.unit}</span>
+                  <span>{ingredient.qty}</span>
+                  <span className="text-cyan-100">{ingredient.module}</span>
+                  <span className="text-slate-300">{ingredient.station}</span>
+                  <span className="text-slate-400">{ingredient.note ?? "Captured"}</span>
                 </div>
-              </article>
-            ))}
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-4 xl:grid-cols-3">
+          <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
+              Prep / Cooking Notes
+            </p>
+            <h2 className="mt-3 text-[28px] font-black leading-none tracking-[-0.05em] text-white">
+              Method captured.
+            </h2>
+            <div className="mt-5 grid gap-3">
+              {[...selectedProduct.prepNotes, ...selectedProduct.cookingNotes].map((note) => (
+                <p key={note} className="rounded-2xl border border-white/10 bg-black/20 p-3 text-[12px] font-bold leading-5 text-slate-300">
+                  {note}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-5 sm:p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
+              Packaging Module Build Card
+            </p>
+            <h2 className="mt-3 text-[28px] font-black leading-none tracking-[-0.05em] text-white">
+              Worker-facing build sequence.
+            </h2>
+            <div className="mt-5 grid gap-3">
+              {selectedProduct.packagingSteps.map((step, index) => (
+                <div key={`${selectedProduct.id}-packaging-${step}`} className="grid grid-cols-[46px_1fr] gap-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#CCFF33]/25 bg-[#CCFF33]/10 text-sm font-black text-[#CCFF33]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <p className="text-[12px] font-bold leading-5 text-slate-200">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-amber-300/20 bg-amber-300/10 p-5 sm:p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-100">
+              QA Release Gate
+            </p>
+            <h2 className="mt-3 text-[28px] font-black leading-none tracking-[-0.05em] text-white">
+              What QA must check.
+            </h2>
+            <div className="mt-5 grid gap-3">
+              {selectedProduct.qaChecks.map((check) => (
+                <p key={`${selectedProduct.id}-qa-${check}`} className="rounded-2xl border border-white/10 bg-black/20 p-3 text-[12px] font-bold leading-5 text-slate-200">
+                  {check}
+                </p>
+              ))}
+            </div>
           </div>
         </section>
 
         <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-5 sm:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
-            Step 5 — Generated Module Tasks
+            Step 6 — Generated Module Tasks
           </p>
-
           <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
-            One product becomes controlled Module Tasks.
+            G7 turns the selected Product Build into station tasks.
           </h2>
 
           <div className="mt-6 grid gap-3">
-            {visibleTasks.map((task) => (
-              <article
-                key={task.step}
-                className="rounded-[26px] border border-white/10 bg-black/20 p-5"
-              >
-                <div className="grid gap-4 lg:grid-cols-[80px_170px_1fr_210px] lg:items-start">
+            {selectedTasks.map((task) => (
+              <article key={`${selectedProduct.id}-${task.step}`} className="rounded-[26px] border border-white/10 bg-black/20 p-5">
+                <div className="grid gap-4 lg:grid-cols-[80px_190px_1fr_220px] lg:items-start">
                   <div className="flex h-14 w-14 items-center justify-center rounded-[20px] border border-[#CCFF33]/25 bg-[#CCFF33]/10 text-[18px] font-black text-[#CCFF33]">
                     {task.step}
                   </div>
 
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
-                      Station
-                    </p>
-                    <p className="mt-2 text-[18px] font-black text-white">
-                      {task.station}
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Station</p>
+                    <p className="mt-2 text-[16px] font-black text-white">{task.station}</p>
                   </div>
 
                   <div>
-                    <h3 className="text-[22px] font-black leading-none tracking-[-0.04em] text-white">
-                      {task.task}
-                    </h3>
-                    <p className="mt-3 text-[13px] font-bold leading-6 text-slate-300">
-                      {task.expectedOutput}
-                    </p>
+                    <h3 className="text-[22px] font-black leading-none tracking-[-0.04em] text-white">{task.task}</h3>
+                    <p className="mt-3 text-[13px] font-bold leading-6 text-slate-300">{task.output}</p>
                   </div>
 
                   <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
-                      Worker
-                    </p>
-                    <p className="mt-2 text-sm font-black text-white">
-                      {task.worker}
-                    </p>
-
-                    <p className="mt-4 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
-                      Approval
-                    </p>
-                    <p className="mt-2 text-sm font-bold leading-5 text-[#CCFF33]">
-                      {task.approval}
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Worker</p>
+                    <p className="mt-2 text-sm font-black text-white">{task.worker}</p>
+                    <p className="mt-4 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Approval</p>
+                    <p className="mt-2 text-sm font-bold leading-5 text-[#CCFF33]">{task.approval}</p>
                   </div>
                 </div>
               </article>
@@ -976,44 +972,53 @@ export default function PilotIntakePage() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-6 sm:p-8">
-          <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
-                Intake Result
-              </p>
-
-              <h2 className="mt-3 text-[38px] font-black leading-[0.95] tracking-[-0.055em] text-white">
-                The client’s first product is ready for runtime simulation.
-              </h2>
-
-              <p className="mt-4 max-w-4xl text-[14px] leading-7 text-slate-200">
-                This page proves the promise after the demo: G7 can take a real
-                product, structure it as a Product Build with G7 Culinary Modules,
-                calculate purchasing and yield, generate Module Tasks, assign
-                workers, and prepare the first controlled pilot flow.
-              </p>
+        <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-[32px] border border-amber-300/20 bg-amber-300/10 p-5 sm:p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-100">
+              Missing Data / TBD Live
+            </p>
+            <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
+              Nothing is guessed. G7 marks what must be measured.
+            </h2>
+            <div className="mt-6 grid gap-3">
+              {selectedProduct.missingData.map((item) => (
+                <p key={`${selectedProduct.id}-missing-${item}`} className="rounded-2xl border border-white/10 bg-black/20 p-3 text-[12px] font-bold leading-5 text-slate-200">
+                  {item}
+                </p>
+              ))}
             </div>
+          </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-              <Link
-                href="/production-tasks"
-                className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-3 text-center text-sm font-black text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]"
-              >
+          <div className="rounded-[32px] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-5 sm:p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#CCFF33]">
+              Pilot Result Preview
+            </p>
+            <h2 className="mt-3 text-[34px] font-black leading-none tracking-[-0.055em] text-white">
+              Salem&apos;s diet pilot workspace is ready for the first controlled run.
+            </h2>
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              {[
+                "5 Product Builds captured",
+                "Mixed data sources accepted",
+                "Culinary Modules structured",
+                "Packaging Build Cards prepared",
+                "Module Tasks generated",
+                "QA gates mapped",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 text-xs font-black text-[#CCFF33]">✓</span>
+                  <p className="text-sm font-bold text-slate-200">{item}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link href="/production-tasks" className="rounded-full border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-3 text-center text-sm font-black text-[#CCFF33] transition hover:border-[#CCFF33] hover:bg-[#CCFF33]/15 hover:text-[#E9FF9A]">
                 View Production Tasks
               </Link>
-
-              <Link
-                href="/worker-task"
-                className="rounded-full border border-white/30 px-6 py-3 text-center text-sm font-black text-white transition hover:border-white"
-              >
+              <Link href="/worker-task" className="rounded-full border border-white/30 px-6 py-3 text-center text-sm font-black text-white transition hover:border-white">
                 View Worker Task
               </Link>
-
-              <Link
-                href="/kitchen"
-                className="rounded-full border border-cyan-300/30 px-6 py-3 text-center text-sm font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10"
-              >
+              <Link href="/kitchen" className="rounded-full border border-cyan-300/30 px-6 py-3 text-center text-sm font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10">
                 Runtime Preview
               </Link>
             </div>
