@@ -1,4 +1,4 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 
 const clientGets = [
   "A sellable production control story from demand to runtime",
@@ -89,6 +89,12 @@ export default function DemoClosePage() {
                 Pilot Onboarding
               </Link>
 
+              <Link
+                href="/client-activation"
+                className="rounded-full border border-amber-300/40 bg-amber-300/15 px-6 py-3 text-center text-sm font-black text-amber-50 transition hover:border-amber-200/70 hover:bg-amber-300/25"
+              >
+                Activate Client Workspace
+              </Link>
               <Link
                 href="/production-tasks"
                 className="rounded-full border border-white/15 px-4 py-2 transition hover:border-amber-300/40 hover:text-amber-200"
@@ -319,6 +325,12 @@ export default function DemoClosePage() {
                 Start Pilot Onboarding
               </Link>
 
+              <Link
+                href="/client-activation"
+                className="rounded-full border border-amber-300/40 bg-amber-300/15 px-6 py-3 text-center text-sm font-black text-amber-50 transition hover:border-amber-200/70 hover:bg-amber-300/25"
+              >
+                Activate Client Workspace
+              </Link>
               <Link
                 href="/production-tasks"
                 className="rounded-full border border-white/30 px-6 py-3 text-center text-sm font-black text-white transition hover:border-white"
