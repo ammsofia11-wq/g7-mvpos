@@ -12,7 +12,7 @@ const onboardingSteps = [
     number: "02",
     title: "Kitchen Stations Setup",
     description:
-      "Define the real production floor: prep, hot kitchen, cooling, QA, portioning, packaging, dispatch, and handoff.",
+      "Define the real production floor: prep, butchery, hot kitchen, cooling, QA, portioning, packaging, dispatch, and handoff.",
     signal: "Production map",
   },
   {
@@ -24,16 +24,16 @@ const onboardingSteps = [
   },
   {
     number: "04",
-    title: "Recipe & Ingredient Import",
+    title: "G7 Matrix Recipe Intake",
     description:
-      "Import or enter the client’s own recipes, ingredients, yields, allergens, SOPs, and approved supplier rules.",
+      "Enter the client’s own recipes, ingredients, raw weights, yields, allergens, SOPs, and approved supplier rules.",
     signal: "Client data only",
   },
   {
     number: "05",
-    title: "First Pilot Production Batch",
+    title: "First Pilot Product Setup",
     description:
-      "Run one controlled batch through station tasks, worker guidance, cooling control, QA gate, and release approval.",
+      "Convert one real client product into purchase requirements, station tasks, worker responsibilities, QA gates, and runtime preview.",
     signal: "Live pilot",
   },
   {
@@ -49,8 +49,8 @@ const readinessChecks = [
   "Tenant workspace created",
   "Stations and production flow mapped",
   "Client roles and permissions approved",
-  "Sample recipes entered by client team",
-  "First batch selected for pilot",
+  "First G7 Matrix recipe entered",
+  "First pilot product generated",
   "QA and release process confirmed",
 ];
 
@@ -87,18 +87,25 @@ export default function PilotOnboardingPage() {
 
               <div className="space-y-5">
                 <h1 className="max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
-                  From Demo Close to Controlled Kitchen Pilot.
+                  From Demo Close to First Product Intake.
                 </h1>
 
                 <p className="max-w-2xl text-base leading-8 text-white/68 sm:text-lg">
                   G7 starts safely: no client secrets exposed, no forced recipe
                   migration, and no fake production promise. The pilot begins
-                  with one protected tenant, one real kitchen flow, and one
-                  controlled batch.
+                  with one protected tenant, one real product, and one
+                  controlled kitchen workflow.
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/pilot-intake"
+                  className="rounded-2xl border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.22em] text-[#CCFF33] shadow-[0_0_28px_rgba(204,255,51,0.12)] transition hover:bg-[#CCFF33]/15"
+                >
+                  Start First Product Intake
+                </Link>
+
                 <Link
                   href="/demo-sale"
                   className="rounded-2xl border border-cyan-300/35 bg-cyan-300/12 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.22em] text-cyan-100 shadow-[0_0_28px_rgba(34,211,238,0.14)] transition hover:bg-cyan-300/18"
@@ -190,19 +197,20 @@ export default function PilotOnboardingPage() {
                 Next Commercial Step
               </p>
               <h2 className="mt-2 text-2xl font-semibold text-white">
-                Approve pilot scope, then start with one kitchen workflow.
+                Approve pilot scope, then enter the first real product.
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-7 text-white/60">
-                This page is the bridge between the cinematic demo and a real
-                paid pilot. It keeps the sale focused, safe, and operational.
+                This page is the bridge between the cinematic demo and the first
+                practical client setup. The next step is not another demo; it is
+                the first product intake.
               </p>
             </div>
 
             <Link
-              href="/production-tasks"
-              className="rounded-2xl border border-amber-300/35 bg-amber-300/10 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-amber-100 transition hover:bg-amber-300/15"
+              href="/pilot-intake"
+              className="rounded-2xl border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#CCFF33] transition hover:bg-[#CCFF33]/15"
             >
-              View Task Flow
+              Start First Product Intake
             </Link>
           </footer>
         </div>
