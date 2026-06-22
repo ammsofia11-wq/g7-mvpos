@@ -1,529 +1,382 @@
-import Link from "next/link"
+import Image from "next/image";
+import Link from "next/link";
 
-type TaskStepTone = "cyan" | "lime" | "amber" | "red"
-
-type TaskStep = {
-  id: string
-  title: string
-  station: string
-  instruction: string
-  proof: string
-  media: string
-  tone: TaskStepTone
-}
-
-type CompletionGateCheck = {
-  label: string
-  status: string
-  note: string
-  tone: TaskStepTone
-}
-
-const taskSteps: TaskStep[] = [
+const executionFlow = [
   {
-    id: "01",
-    title: "Prep setup",
-    station: "Prep table",
+    step: "01",
+    title: "Read Build Card",
+    text: "Start from the approved product build, not from memory or scattered instructions.",
+  },
+  {
+    step: "02",
+    title: "Follow Module Task",
+    text: "Execute the assigned G7 Culinary Module task for the correct station and product stage.",
+  },
+  {
+    step: "03",
+    title: "Confirm Handoff",
+    text: "Mark the task ready only when the station output is complete and ready for the next gate.",
+  },
+  {
+    step: "04",
+    title: "Respect Cooling Gate",
+    text: "Do not move product forward when cooling is required before QA or packaging.",
+  },
+  {
+    step: "05",
+    title: "Wait for QA Release",
+    text: "Only released product can move to packaging, fridge call-off, or dispatch handoff.",
+  },
+];
+
+const workerTasks = [
+  {
+    module: "Protein Module",
+    station: "Cooking Station",
+    task: "Cook approved protein batch",
+    status: "Ready",
     instruction:
-      "Confirm the approved task, sanitize the station, check tools, and prepare the component tray before work starts.",
-    proof: "Worker confirms station readiness before touching product.",
-    media: "Photo guide: station setup, tools, tray layout.",
-    tone: "cyan",
+      "Follow the build card timing, doneness standard, yield expectation, and handoff rule.",
   },
   {
-    id: "02",
-    title: "Cutting instruction",
-    station: "Butchery / prep",
+    module: "Carb Module",
+    station: "Prep Station",
+    task: "Prepare carb component",
+    status: "Ready",
     instruction:
-      "Follow the approved cut size and movement pattern. Do not change thickness, shape, or trim logic without supervisor approval.",
-    proof: "Cut size and prep movement are checked before the batch moves forward.",
-    media: "Short video: safe knife movement and approved cut example.",
-    tone: "lime",
+      "Prepare according to the module task and keep the output aligned with the product build.",
   },
   {
-    id: "03",
-    title: "Cooking method",
-    station: "Hot kitchen",
+    module: "Sauce Module",
+    station: "Finishing Station",
+    task: "Prepare sauce for controlled assembly",
+    status: "In sequence",
     instruction:
-      "Cook using the approved method, batch sequence, pan loading rule, and visual readiness check defined by the chef.",
-    proof: "Cooking method is logged as completed before temperature confirmation.",
-    media: "Short video: cooking motion, pan spacing, and visual finish.",
-    tone: "amber",
+      "Use the approved sauce logic and hold until the product build is ready for assembly.",
   },
   {
-    id: "04",
-    title: "Temperature check",
-    station: "QA checkpoint",
+    module: "Cooling Gate",
+    station: "Cooling Area",
+    task: "Hold product before QA",
+    status: "Gate required",
     instruction:
-      "Record the required tenant-defined temperature check. If the reading fails, stop the task and escalate.",
-    proof: "Temperature check is required before cooling or portioning can continue.",
-    media: "Photo guide: probe placement and reading capture.",
-    tone: "red",
+      "Confirm cooling requirement before product moves into QA, packaging, or fridge call-off.",
   },
   {
-    id: "05",
-    title: "Cooling control",
-    station: "Cooling / blast chiller",
+    module: "Packaging Module",
+    station: "Packaging Station",
+    task: "Package only QA released product",
+    status: "Protected",
     instruction:
-      "Move the batch into the assigned cooling location, record entry time, cooling status, and exit readiness.",
-    proof: "Cooling evidence must be completed before QA release.",
-    media: "Short video: tray spacing, cooling label, and handoff movement.",
-    tone: "cyan",
+      "Package after release only, following packaging rule, label logic, and dispatch handoff.",
   },
-  {
-    id: "06",
-    title: "Portioning instruction",
-    station: "Portioning line",
-    instruction:
-      "Portion the component using the assigned size split, tray count, and production quantity from the locked demand.",
-    proof: "Portioning accuracy is checked before packaging.",
-    media: "Photo guide: portion cup, tray position, and portion layout.",
-    tone: "lime",
-  },
-  {
-    id: "07",
-    title: "Barcode and storage",
-    station: "Storage handoff",
-    instruction:
-      "Scan or assign the batch barcode, confirm fridge or holding location, and keep traceability visible.",
-    proof: "Batch identity and storage location must be known before dispatch readiness.",
-    media: "Photo guide: barcode placement and fridge shelf location.",
-    tone: "amber",
-  },
-  {
-    id: "08",
-    title: "Packing and QA escalation",
-    station: "Packaging / QA",
-    instruction:
-      "Confirm packing rule, sealing, label handoff, and escalate to QA or supervisor if any evidence is missing.",
-    proof: "No batch is released when cooling, label, barcode, or QA evidence is missing.",
-    media: "Short video: sealing movement, label check, and QA handoff.",
-    tone: "red",
-  },
-]
+];
 
-const checklist = [
-  "Approved task loaded",
-  "Start button visible",
-  "Step-by-step SOP visible",
-  "Photo guide available",
-  "Short video guidance available",
-  "Prep and cutting instructions visible",
-  "Cooking method visible",
-  "Temperature check required",
-  "Cooling evidence required",
-  "Barcode scan placeholder visible",
-  "Fridge / storage location visible",
-  "Portioning instruction visible",
-  "Packing and sealing handoff visible",
-  "QA or supervisor escalation visible",
-]
+const workerRules = [
+  "Follow the Build Card",
+  "Execute one Module Task at a time",
+  "Do not skip Cooling Gate",
+  "Do not package before QA Release",
+  "Do not change chef logic from the station",
+  "Escalate blocked task instead of improvising",
+  "Confirm handoff before next movement",
+  "Keep dispatch readiness visible",
+];
 
-const taskFacts = [
+const nextLinks = [
   {
-    label: "Task",
-    value: "Chicken Shawarma Component Batch",
-    note: "Demo-safe task name",
+    label: "Production Tasks",
+    href: "/production-tasks",
+    text: "Return to the full production task structure.",
   },
   {
-    label: "Batch Code",
-    value: "DEMO-BATCH-204",
-    note: "Sample traceability code",
+    label: "Kitchen Runtime",
+    href: "/kitchen",
+    text: "Open the production floor execution view.",
   },
   {
-    label: "Station",
-    value: "Hot Kitchen",
-    note: "Worker execution area",
+    label: "Recipe Studio",
+    href: "/recipe-studio",
+    text: "Review chef logic and product build intelligence.",
   },
   {
-    label: "Assigned Role",
-    value: "Cook / Commis",
-    note: "Role-based task view",
+    label: "Client Activation",
+    href: "/client-activation",
+    text: "Return to the pilot activation path.",
   },
-]
+];
 
-const completionGateChecks: CompletionGateCheck[] = [
-  {
-    label: "Temperature proof",
-    status: "Required",
-    note: "The batch cannot move forward when the required temperature evidence is missing.",
-    tone: "red",
-  },
-  {
-    label: "Cooling evidence",
-    status: "Required",
-    note: "Cooling entry, status, and exit readiness must be visible before QA release.",
-    tone: "cyan",
-  },
-  {
-    label: "Barcode identity",
-    status: "Awaiting scan",
-    note: "The worker must keep traceability attached to the batch before storage or handoff.",
-    tone: "amber",
-  },
-  {
-    label: "Storage location",
-    status: "Confirm location",
-    note: "Fridge, rack, shelf, or holding location must be clear to the next station.",
-    tone: "lime",
-  },
-  {
-    label: "Packing and seal",
-    status: "Check before handoff",
-    note: "Packing rule, sealing movement, and label handoff must be confirmed.",
-    tone: "amber",
-  },
-  {
-    label: "QA clearance",
-    status: "Supervisor gate",
-    note: "Any missing proof keeps the task locked and triggers QA or supervisor escalation.",
-    tone: "red",
-  },
-]
-
-const handoffCards = [
-  {
-    title: "Barcode scan",
-    value: "Awaiting scan",
-    note: "Batch identity stays attached to the task before storage or dispatch.",
-  },
-  {
-    title: "Fridge location",
-    value: "Cooling Rack A · Shelf 03",
-    note: "Sample storage location. Tenant kitchens define their own layout.",
-  },
-  {
-    title: "Label handoff",
-    value: "QA label check required",
-    note: "The worker cannot release the batch without label and QA evidence.",
-  },
-  {
-    title: "Escalation",
-    value: "Supervisor / QA",
-    note: "Missing temperature, cooling, barcode, or label evidence triggers escalation.",
-  },
-]
-
-export default function WorkerTaskExecutionPage() {
+export default function WorkerTaskPage() {
   return (
-    <main className="min-h-screen bg-[#050B14] px-4 py-5 text-white sm:px-6 lg:px-8">
-      <section className="mx-auto w-full max-w-[1380px] space-y-5">
-        <section className="rounded-[34px] border border-cyan-300/15 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.35)] sm:p-7">
-          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] xl:items-end">
+    <main className="min-h-screen overflow-hidden bg-[#061622] text-white">
+      <section className="relative isolate px-6 py-8 sm:px-10 lg:px-16">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(184,115,51,0.16),transparent_34%)]" />
+        <div className="absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
+
+        <header className="mx-auto flex max-w-7xl items-center justify-between gap-6">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/images/g7-logo-clean.png"
+              alt="G7 logo"
+              width={54}
+              height={54}
+              priority
+              className="h-12 w-auto"
+            />
             <div>
-              <p className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200">
-                G7 Worker Task Execution
+              <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
+                Genius Kitchen by G7
               </p>
-
-              <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-[-0.07em] text-white sm:text-6xl">
-                Tablet-first SOP for real kitchen workers.
-              </h1>
-
-              <p className="mt-5 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-                This isolated demo shows how G7 turns an approved batch into a
-                clear worker task: start, follow the SOP, view movement guidance,
-                record proof, scan barcode, confirm storage, and escalate when a
-                gate is missing.
+              <p className="text-sm font-semibold text-white">
+                Worker Execution
               </p>
+            </div>
+          </Link>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href="#worker-screen"
-                  className="rounded-full bg-cyan-300 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#06111F] shadow-[0_0_28px_rgba(34,211,238,0.25)] transition hover:bg-cyan-200"
-                >
-                  Start task
-                </Link>
+          <div className="hidden items-center gap-3 sm:flex">
+            <Link
+              href="/production-tasks"
+              className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
+            >
+              Production Tasks
+            </Link>
+            <Link
+              href="/kitchen"
+              className="rounded-full border border-cyan-300/40 px-5 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10"
+            >
+              Kitchen Runtime
+            </Link>
+          </div>
+        </header>
 
-                <Link
-                  href="/kitchen"
-                  className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white transition hover:border-cyan-300/45 hover:bg-cyan-300/10"
-                >
-                  Back to kitchen runtime
-                </Link>
-              </div>
+        <div className="mx-auto grid max-w-7xl gap-10 pb-12 pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-20">
+          <div>
+            <div className="mb-6 inline-flex rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
+              Worker Task Screen
             </div>
 
-            <div className="rounded-[30px] border border-lime-300/20 bg-lime-300/[0.055] p-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-lime-300">
-                Product truth
-              </p>
+            <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Turn chef logic into simple worker execution.
+            </h1>
 
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.06em] text-white">
-                Reduce dependency on specific people.
-              </h2>
+            <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
+              The worker screen shows how Genius Kitchen converts the Build
+              Card into clear G7 Culinary Module tasks. Workers see what to do,
+              which station owns the task, when to stop, and when QA release is
+              required before the next movement.
+            </p>
 
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                The worker should not need to remember every chef movement from
-                memory. The system gives the task, the movement, the proof, and
-                the escalation path.
-              </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/kitchen"
+                className="rounded-full bg-cyan-300 px-7 py-4 text-center text-sm font-black uppercase tracking-[0.22em] text-[#061622] transition hover:bg-cyan-200"
+              >
+                Open Kitchen Runtime
+              </Link>
+              <Link
+                href="/production-tasks"
+                className="rounded-full border border-white/20 px-7 py-4 text-center text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:border-white/40 hover:bg-white/10"
+              >
+                Back to Production Tasks
+              </Link>
+            </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {taskFacts.map((fact) => (
-                  <div
-                    key={fact.label}
-                    className="rounded-[22px] border border-white/10 bg-black/20 p-4"
-                  >
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-                      {fact.label}
-                    </p>
-                    <p className="mt-2 text-lg font-black leading-6 text-white">
-                      {fact.value}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-slate-400">
-                      {fact.note}
-                    </p>
-                  </div>
-                ))}
+            <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                  Source
+                </p>
+                <p className="mt-2 font-bold text-white">Build Card</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                  Unit
+                </p>
+                <p className="mt-2 font-bold text-white">Module Task</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                  Protection
+                </p>
+                <p className="mt-2 font-bold text-white">QA Release</p>
               </div>
             </div>
           </div>
-        </section>
 
-        <section className="grid gap-5 xl:grid-cols-[0.85fr_1.15fr]">
-          <aside className="space-y-5">
-            <section
-              id="worker-screen"
-              className="scroll-mt-6 rounded-[30px] border border-white/10 bg-white/[0.035] p-5"
-            >
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
-                Worker screen
+          <div className="rounded-[2rem] border border-cyan-300/20 bg-white/[0.05] p-5 shadow-2xl shadow-cyan-950/40 backdrop-blur">
+            <div className="rounded-[1.5rem] border border-white/10 bg-[#081c2a]/90 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
+                Worker Execution Flow
               </p>
 
-              <h2 className="mt-3 text-2xl font-black tracking-[-0.05em]">
-                What the worker sees
-              </h2>
-
-              <div className="mt-5 space-y-2">
-                {checklist.map((item) => (
+              <div className="mt-6 space-y-4">
+                {executionFlow.map((item) => (
                   <div
-                    key={item}
-                    className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/20 px-3 py-2.5"
+                    key={item.step}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
                   >
-                    <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(34,211,238,0.7)]" />
-                    <span className="text-xs font-bold leading-5 text-slate-300">
-                      {item}
-                    </span>
+                    <div className="flex items-start gap-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-cyan-300/40 bg-cyan-300/10 text-sm font-black text-cyan-100">
+                        {item.step}
+                      </span>
+                      <div>
+                        <h2 className="font-black text-white">{item.title}</h2>
+                        <p className="mt-2 text-sm leading-6 text-slate-300">
+                          {item.text}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-            </section>
 
-            <section className="rounded-[30px] border border-amber-300/15 bg-amber-300/[0.045] p-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-amber-200">
-                Safe demo boundary
-              </p>
-
-              <h2 className="mt-3 text-2xl font-black tracking-[-0.05em]">
-                No private recipe logic is exposed.
-              </h2>
-
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                This route is a product demo layer. It uses sample task names and
-                operational placeholders only. Client kitchens will enter their
-                own recipes, photos, videos, SOPs, stations, barcode rules,
-                storage locations, and QA requirements.
-              </p>
-            </section>
-          </aside>
-
-          <section className="space-y-4">
-            {taskSteps.map((step) => (
-              <TaskStepCard key={step.id} step={step} />
-            ))}
-          </section>
-        </section>
-
-        <section className="rounded-[32px] border border-red-300/20 bg-[radial-gradient(circle_at_top_left,rgba(248,113,113,0.16),transparent_34%),linear-gradient(135deg,rgba(248,113,113,0.07),rgba(34,211,238,0.035))] p-5 sm:p-6">
-          <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr] xl:items-start">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-red-200">
-                Completion Gate
-              </p>
-
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.06em] text-white">
-                Task completion stays locked until proof is cleared.
-              </h2>
-
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                A worker should not finish a batch by memory, pressure, or verbal
-                approval. G7 keeps the completion gate visible until temperature,
-                cooling, barcode, storage, packing, label, and QA evidence are
-                confirmed.
-              </p>
-
-              <div className="mt-5 rounded-[24px] border border-red-300/25 bg-red-300/[0.075] p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-100">
-                  Current completion state
+              <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-5">
+                <p className="text-sm font-bold text-amber-100">
+                  Worker protection rule
                 </p>
-
-                <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-white">
-                  Complete task locked
-                </p>
-
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  The task can move forward only after required operational proof
-                  is present or a supervisor clears the exception.
+                  The worker should not decide the chef logic. The worker
+                  executes the approved Module Task and escalates when blocked.
                 </p>
-
-                <button className="mt-4 rounded-full border border-red-200/25 bg-black/20 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-red-100">
-                  Escalate missing proof
-                </button>
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              {completionGateChecks.map((check) => (
-                <CompletionGateCard key={check.label} check={check} />
+        <section className="mx-auto grid max-w-7xl gap-6 border-t border-white/10 py-12 lg:grid-cols-[0.85fr_1.15fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
+              Active Module Tasks
+            </p>
+            <h2 className="mt-4 text-3xl font-black text-white sm:text-4xl">
+              What the worker sees
+            </h2>
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
+              Each task is simplified for execution while still staying tied to
+              the Build Card, G7 Culinary Modules, cooling gate, QA release, and
+              dispatch readiness.
+            </p>
+          </div>
+
+          <div className="grid gap-4">
+            {workerTasks.map((task) => (
+              <div
+                key={`${task.module}-${task.task}`}
+                className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">
+                      {task.module}
+                    </p>
+                    <h3 className="mt-2 text-xl font-black text-white">
+                      {task.task}
+                    </h3>
+                    <p className="mt-1 text-sm font-semibold text-slate-400">
+                      {task.station}
+                    </p>
+                  </div>
+
+                  <span className="w-fit rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-100">
+                    {task.status}
+                  </span>
+                </div>
+
+                <p className="mt-4 text-sm leading-6 text-slate-300">
+                  {task.instruction}
+                </p>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-[#071a27] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                      Start
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-white">
+                      Follow task
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-[#071a27] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                      Proof
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-white">
+                      Confirm handoff
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-[#071a27] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                      Gate
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-white">
+                      QA protected
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto grid max-w-7xl gap-6 border-t border-white/10 py-12 lg:grid-cols-2">
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
+              Worker Guardrails
+            </p>
+            <h2 className="mt-4 text-3xl font-black text-white">
+              What protects execution
+            </h2>
+            <p className="mt-5 text-base leading-7 text-slate-300">
+              Genius Kitchen keeps the worker screen simple while protecting the
+              approved chef logic behind the task.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {workerRules.map((rule) => (
+                <div
+                  key={rule}
+                  className="rounded-2xl border border-white/10 bg-[#071a27] p-4"
+                >
+                  <p className="text-sm font-bold text-white">{rule}</p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-500">
+                    Execution guardrail
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-cyan-300/20 bg-cyan-300/10 p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-100">
+              Continue Flow
+            </p>
+            <h2 className="mt-4 text-3xl font-black text-white">
+              Move from worker execution into runtime control.
+            </h2>
+            <p className="mt-5 text-base leading-7 text-slate-200">
+              After worker tasks are clear, the pilot can continue into kitchen
+              runtime visibility, recipe intelligence, and client activation
+              review.
+            </p>
+
+            <div className="mt-7 grid gap-3">
+              {nextLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="rounded-2xl border border-white/15 bg-white/[0.06] p-5 transition hover:border-cyan-200/50 hover:bg-white/[0.1]"
+                >
+                  <p className="text-base font-black text-white">
+                    {link.label}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    {link.text}
+                  </p>
+                </Link>
               ))}
             </div>
           </div>
         </section>
-
-        <section className="rounded-[32px] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.08),rgba(204,255,51,0.04))] p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
-                Barcode · Storage · QA Handoff
-              </p>
-
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.06em]">
-                The task does not end until traceability is clear.
-              </h2>
-
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-300">
-                G7 should connect worker execution to barcode, fridge location,
-                packaging readiness, sealing, label handoff, and QA escalation so
-                the production floor does not depend on verbal memory.
-              </p>
-            </div>
-
-            <Link
-              href="/demo-sale"
-              className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-cyan-100 transition hover:bg-cyan-300 hover:text-[#06111F]"
-            >
-              Open demo story
-            </Link>
-          </div>
-
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {handoffCards.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-[22px] border border-white/10 bg-black/20 p-4"
-              >
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  {card.title}
-                </p>
-                <p className="mt-2 text-base font-black text-white">
-                  {card.value}
-                </p>
-                <p className="mt-2 text-xs leading-5 text-slate-400">
-                  {card.note}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
       </section>
     </main>
-  )
-}
-
-function TaskStepCard({ step }: { step: TaskStep }) {
-  const toneClass =
-    step.tone === "red"
-      ? "border-red-300/20 bg-red-300/[0.045] text-red-100"
-      : step.tone === "amber"
-        ? "border-amber-300/20 bg-amber-300/[0.045] text-amber-100"
-        : step.tone === "lime"
-          ? "border-lime-300/20 bg-lime-300/[0.045] text-lime-100"
-          : "border-cyan-300/20 bg-cyan-300/[0.045] text-cyan-100"
-
-  return (
-    <article className="rounded-[30px] border border-white/10 bg-white/[0.035] p-5">
-      <div className="grid gap-4 lg:grid-cols-[88px_1fr_0.95fr]">
-        <div className={`flex h-16 w-16 items-center justify-center rounded-[22px] border text-2xl font-black ${toneClass}`}>
-          {step.id}
-        </div>
-
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
-            {step.station}
-          </p>
-
-          <h3 className="mt-2 text-2xl font-black tracking-[-0.05em] text-white">
-            {step.title}
-          </h3>
-
-          <p className="mt-3 text-sm leading-7 text-slate-300">
-            {step.instruction}
-          </p>
-
-          <div className="mt-4 rounded-[20px] border border-white/10 bg-black/20 p-4">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-300">
-              Required proof
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              {step.proof}
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded-[24px] border border-white/10 bg-[#06101d] p-4">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-            Visual guidance
-          </p>
-
-          <div className="mt-3 flex min-h-[150px] items-center justify-center rounded-[22px] border border-dashed border-cyan-300/20 bg-cyan-300/[0.035] p-4 text-center">
-            <div>
-              <p className="text-sm font-black text-cyan-100">
-                Photo / video placeholder
-              </p>
-              <p className="mt-2 text-xs leading-5 text-slate-400">
-                {step.media}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-white">
-              View photo
-            </button>
-
-            <button className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.08] px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">
-              Play video
-            </button>
-          </div>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function CompletionGateCard({ check }: { check: CompletionGateCheck }) {
-  const toneClass =
-    check.tone === "red"
-      ? "border-red-300/20 bg-red-300/[0.055] text-red-100"
-      : check.tone === "amber"
-        ? "border-amber-300/20 bg-amber-300/[0.055] text-amber-100"
-        : check.tone === "lime"
-          ? "border-lime-300/20 bg-lime-300/[0.055] text-lime-100"
-          : "border-cyan-300/20 bg-cyan-300/[0.055] text-cyan-100"
-
-  return (
-    <div className={`rounded-[22px] border p-4 ${toneClass}`}>
-      <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-80">
-        {check.status}
-      </p>
-
-      <h3 className="mt-2 text-lg font-black leading-6 text-white">
-        {check.label}
-      </h3>
-
-      <p className="mt-2 text-xs leading-5 text-slate-300">
-        {check.note}
-      </p>
-    </div>
-  )
+  );
 }
