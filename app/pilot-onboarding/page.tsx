@@ -1,529 +1,318 @@
-"use client";
-
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-
-type ClientProfile = {
-  companyName: string;
-  contactName: string;
-  kitchenName: string;
-  country: string;
-  currency: string;
-  timezone: string;
-  units: string;
-  operatingLanguage: string;
-};
-
-const selectedPackage = {
-  name: "G7 5-Product Pilot Implementation",
-  scope: "5 Product Builds",
-  fee: "150,000 EGP",
-  duration: "7–14 days",
-  creditRule:
-    "If the client proceeds to full rollout within 30 days, part of the pilot fee can be credited toward the setup fee.",
-};
 
 const onboardingSteps = [
   {
-    number: "01",
-    title: "Client Registration",
-    description:
-      "Create the first safe pilot workspace with company name, kitchen name, local currency, timezone, units, and operating language.",
-    signal: "Tenant start",
+    step: "01",
+    title: "Confirm Founding Pilot",
+    text: "Lock the paid pilot model, selected product count, commercial structure, and delivery direction.",
   },
   {
-    number: "02",
-    title: "Roles & Permissions",
-    description:
-      "Assign protected access for owner, chef, production manager, QA, storekeeper, purchasing, and workers.",
-    signal: "Role protection",
+    step: "02",
+    title: "Select 4–5 Products",
+    text: "Choose the first products that will be converted into Genius Kitchen operating intelligence.",
   },
   {
-    number: "03",
-    title: "Kitchen Stations Setup",
-    description:
-      "Map the real production floor: store, prep, butchery, hot kitchen, cold prep, cooling, portioning, Packaging Module, QA, dispatch, and handoff.",
-    signal: "Production map",
+    step: "03",
+    title: "Capture Chef Logic",
+    text: "Collect the chef decisions behind build structure, yield chain, cooling control, QA gates, packaging, and dispatch.",
   },
   {
-    number: "04",
-    title: "5 Product Builds",
-    description:
-      "Convert five real client products into Product Builds with G7 Culinary Modules, purchase/yield calculations, Build Cards, and Module Tasks.",
-    signal: "Pilot scope",
+    step: "04",
+    title: "Build Pilot Workspace",
+    text: "Translate the selected products into controlled execution cards, gates, handoffs, and activation flow.",
   },
   {
-    number: "05",
-    title: "Worker & QA Simulation",
-    description:
-      "Show station responsibilities, worker task flow, Packaging Module Build Card, and QA release gate for the selected products.",
-    signal: "Controlled run",
-  },
-  {
-    number: "06",
-    title: "Pilot Result Report",
-    description:
-      "Deliver readiness notes, blocked points, training needs, rollout recommendation, and next commercial step.",
-    signal: "Rollout decision",
+    step: "05",
+    title: "Activate Client Path",
+    text: "Move from onboarding into intake, client activation, and the delivery-ready pilot workspace.",
   },
 ];
 
-const readinessChecks = [
-  "Pilot package selected",
-  "Client workspace profile prepared",
-  "Roles and permissions mapped",
-  "Kitchen stations mapped",
-  "5 Product Builds ready for intake",
-  "Pilot result report planned",
+const requiredInputs = [
+  "Selected pilot products",
+  "Product build logic",
+  "Yield chain notes",
+  "Cooling requirements",
+  "QA checkpoints",
+  "Packaging rules",
+  "Fridge call-off needs",
+  "Dispatch handoff",
+  "Worker task flow",
 ];
 
-const pilotRoles = [
+const pilotOutputs = [
   {
-    role: "Owner",
-    access: "Commercial view, rollout decision, protected summary",
-    responsibility: "Approves pilot scope and full rollout proposal",
+    title: "Chef Logic Map",
+    text: "A clear structure for how chef decisions become production rules and controlled execution.",
   },
   {
-    role: "Executive Chef",
-    access: "Product Builds, costing confidence, yield, SOPs",
-    responsibility: "Approves Culinary Modules, taste, and production method",
+    title: "Product Build Structure",
+    text: "Each selected product is organized into build logic, stages, gates, and handoff points.",
   },
   {
-    role: "Production Manager",
-    access: "Station plan, Module Tasks, output readiness",
-    responsibility: "Coordinates stations and confirms production handoff",
+    title: "Yield Chain Setup",
+    text: "The pilot defines how product flow is controlled from prep through delivery handoff.",
   },
   {
-    role: "QA",
-    access: "QA gates, release checklist, hold/reject notes",
-    responsibility: "Checks weight, appearance, label, barcode, and release",
+    title: "Cooling & QA Gates",
+    text: "Critical control points are made visible before packaging, fridge call-off, and dispatch.",
   },
   {
-    role: "Storekeeper",
-    access: "Issue list, purchase quantities, handoff confirmation",
-    responsibility: "Controls raw material issue and station handoff",
+    title: "Worker Task Flow",
+    text: "Production teams receive simplified execution logic instead of scattered instructions.",
   },
   {
-    role: "Packaging Worker",
-    access: "Packaging Module Build Card and assigned Module Tasks only",
-    responsibility: "Executes portioning, closing, sleeve, label, and handoff",
+    title: "Client Activation Path",
+    text: "The onboarding output connects directly to intake, activation, and delivery review.",
   },
 ];
 
-const stationPlan = [
-  "Store",
-  "Butchery",
-  "Vegetable Prep",
-  "Hot Kitchen",
-  "Cold Prep",
-  "Cooling",
-  "Portioning",
-  "Packaging",
-  "QA",
-  "Dispatch",
-];
-
-const pilotProducts = [
+const nextLinks = [
   {
-    number: "01",
-    name: "Club Sandwich",
-    modules:
-      "Protein Module / Carb Module / Sauce Module / Garnish Module / Packaging Module",
+    label: "Pilot Intake",
+    href: "/pilot-intake",
+    text: "Collect product and operating details for the selected pilot scope.",
   },
   {
-    number: "02",
-    name: "Green Thai Chicken Curry",
-    modules:
-      "Protein Module / Carb Module / Sauce Module / Garnish Module / Packaging Module",
+    label: "Client Activation",
+    href: "/client-activation",
+    text: "Prepare the pilot workspace for client delivery and review.",
   },
   {
-    number: "03",
-    name: "Qatari Pasta Chicken Machboos",
-    modules:
-      "Protein Module / Carb Module / Sauce Module / Garnish Module / Packaging Module",
+    label: "Genius Kitchen Workspace",
+    href: "/genius-kitchen",
+    text: "Open the public-facing pilot workspace preview.",
   },
   {
-    number: "04",
-    name: "Rice Pudding",
-    modules: "Carb Module / Sauce Module / Garnish Module / Packaging Module",
-  },
-  {
-    number: "05",
-    name: "Tomato Sauce Batch",
-    modules: "Sauce Module / Packaging Module / QA Release Gate",
+    label: "Production Tasks",
+    href: "/production-tasks",
+    text: "Preview controlled execution tasks after the pilot is structured.",
   },
 ];
 
 export default function PilotOnboardingPage() {
-  const [clientProfile, setClientProfile] = useState<ClientProfile>({
-    companyName: "Salem's diet",
-    contactName: "Operations Owner",
-    kitchenName: "Main Central Kitchen",
-    country: "Egypt",
-    currency: "EGP",
-    timezone: "Africa/Cairo",
-    units: "g / kg / portion / piece",
-    operatingLanguage: "English / Arabic",
-  });
-
-  function updateClientProfile(field: keyof ClientProfile, value: string) {
-    setClientProfile((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  }
-
   return (
-    <main className="min-h-screen overflow-hidden bg-[#06111f] text-white">
-      <section className="relative min-h-screen px-6 py-8 sm:px-10 lg:px-16">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_34%),radial-gradient(circle_at_80%_20%,rgba(202,138,4,0.18),transparent_28%),linear-gradient(135deg,#06111f_0%,#071827_48%,#020617_100%)]" />
-        <div className="absolute left-0 top-0 h-px w-full bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
+    <main className="min-h-screen overflow-hidden bg-[#061622] text-white">
+      <section className="relative isolate px-6 py-8 sm:px-10 lg:px-16">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(184,115,51,0.16),transparent_34%)]" />
+        <div className="absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
 
-        <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-8">
-          <header className="flex flex-wrap items-center justify-between gap-4">
+        <header className="mx-auto flex max-w-7xl items-center justify-between gap-6">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/images/g7-logo-clean.png"
+              alt="G7 logo"
+              width={54}
+              height={54}
+              priority
+              className="h-12 w-auto"
+            />
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
+                Genius Kitchen by G7
+              </p>
+              <p className="text-sm font-semibold text-white">
+                Founding Pilot Onboarding
+              </p>
+            </div>
+          </Link>
+
+          <div className="hidden items-center gap-3 sm:flex">
             <Link
               href="/demo-close"
-              className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100 transition hover:border-cyan-300/50 hover:bg-cyan-300/10"
+              className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
             >
               Back to Close
             </Link>
+            <Link
+              href="/pilot-intake"
+              className="rounded-full border border-cyan-300/40 px-5 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10"
+            >
+              Continue Intake
+            </Link>
+          </div>
+        </header>
 
-            <div className="flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_18px_rgba(190,242,100,0.9)]" />
-              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
-                First Client Pilot Workspace
-              </span>
-            </div>
-          </header>
-
-          <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-            <div className="space-y-7">
-              <div className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
-                Paid Pilot Implementation
-              </div>
-
-              <div className="space-y-5">
-                <h1 className="max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
-                  Start the first real client journey from registration to 5 Product Builds.
-                </h1>
-
-                <p className="max-w-2xl text-base leading-8 text-white/68 sm:text-lg">
-                  This page is the bridge between the signed pilot agreement and
-                  the first operational setup. G7 creates a limited client pilot
-                  workspace, maps the kitchen, protects role access, and prepares
-                  five Product Builds for intake.
-                </p>
-              </div>
-
-              <div className="grid gap-3 rounded-[2rem] border border-[#CCFF33]/25 bg-[#CCFF33]/10 p-5 sm:grid-cols-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#CCFF33]">
-                    Selected Package
-                  </p>
-                  <p className="mt-2 text-lg font-semibold leading-tight text-white">
-                    {selectedPackage.name}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#CCFF33]">
-                    Scope
-                  </p>
-                  <p className="mt-2 text-lg font-semibold leading-tight text-white">
-                    {selectedPackage.scope}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#CCFF33]">
-                    Founder Pricing
-                  </p>
-                  <p className="mt-2 text-lg font-semibold leading-tight text-white">
-                    {selectedPackage.fee}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/pilot-intake"
-                  className="rounded-2xl border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.22em] text-[#CCFF33] shadow-[0_0_28px_rgba(204,255,51,0.12)] transition hover:bg-[#CCFF33]/15"
-                >
-                  Start 5 Product Intake
-                </Link>
-
-                <Link
-                  href="/production-tasks"
-                  className="rounded-2xl border border-cyan-300/35 bg-cyan-300/10 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.22em] text-cyan-100 shadow-[0_0_28px_rgba(34,211,238,0.14)] transition hover:bg-cyan-300/15"
-                >
-                  Preview Module Tasks
-                </Link>
-
-                <Link
-                  href="/worker-task"
-                  className="rounded-2xl border border-lime-300/30 bg-lime-300/10 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.22em] text-lime-100 transition hover:bg-lime-300/15"
-                >
-                  Worker Task Preview
-                </Link>
-              </div>
+        <div className="mx-auto grid max-w-7xl gap-10 pb-12 pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-20">
+          <div>
+            <div className="mb-6 inline-flex rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
+              Genius Kitchen Founding Pilot
             </div>
 
-            <div className="rounded-[2rem] border border-white/12 bg-white/[0.045] p-5 shadow-2xl shadow-black/30 backdrop-blur">
-              <div className="rounded-[1.5rem] border border-cyan-300/18 bg-[#071827]/80 p-6">
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100/70">
-                      Client Workspace
-                    </p>
-                    <h2 className="mt-2 text-2xl font-semibold text-white">
-                      Registration Details
-                    </h2>
-                  </div>
-                  <div className="rounded-full border border-lime-300/30 bg-lime-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-lime-100">
-                    Draft
-                  </div>
-                </div>
+            <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Onboard the client into a controlled pilot implementation.
+            </h1>
 
-                <div className="grid gap-3">
-                  {(
-                    [
-                      ["companyName", "Company Name"],
-                      ["contactName", "Main Contact"],
-                      ["kitchenName", "Kitchen Name"],
-                      ["country", "Country"],
-                      ["currency", "Currency"],
-                      ["timezone", "Timezone"],
-                      ["units", "Units"],
-                      ["operatingLanguage", "Operating Language"],
-                    ] as [keyof ClientProfile, string][]
-                  ).map(([field, label]) => (
-                    <label key={field} className="grid gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">
-                        {label}
-                      </span>
-                      <input
-                        value={clientProfile[field]}
-                        onChange={(event) =>
-                          updateClientProfile(field, event.target.value)
-                        }
-                        className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/30 focus:border-cyan-300/50"
-                      />
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
+            <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
+              This onboarding page starts the transition from commercial close
+              into implementation. The goal is to prepare 4–5 selected products
+              for Genius Kitchen operating intelligence: chef logic, yield
+              chain, cooling gate, QA gates, worker tasks, packaging, fridge
+              call-off, and dispatch control.
+            </p>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {onboardingSteps.map((step) => (
-              <article
-                key={step.number}
-                className="group rounded-[1.6rem] border border-white/10 bg-white/[0.045] p-5 transition hover:border-cyan-300/35 hover:bg-white/[0.07]"
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/pilot-intake"
+                className="rounded-full bg-cyan-300 px-7 py-4 text-center text-sm font-black uppercase tracking-[0.22em] text-[#061622] transition hover:bg-cyan-200"
               >
-                <div className="mb-5 flex items-center justify-between">
-                  <span className="text-sm font-semibold tracking-[0.28em] text-cyan-100/70">
-                    {step.number}
-                  </span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 group-hover:border-cyan-300/30 group-hover:text-cyan-100">
-                    {step.signal}
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-semibold text-white">
-                  {step.title}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-white/62">
-                  {step.description}
-                </p>
-              </article>
-            ))}
-          </section>
-
-          <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-            <article className="rounded-[2rem] border border-white/10 bg-white/[0.045] p-5">
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100/70">
-                    Roles Setup
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">
-                    Access is protected before the first Product Build.
-                  </h2>
-                </div>
-                <span className="rounded-full border border-[#CCFF33]/25 bg-[#CCFF33]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#CCFF33]">
-                  {pilotRoles.length} roles
-                </span>
-              </div>
-
-              <div className="grid gap-3">
-                {pilotRoles.map((role) => (
-                  <div
-                    key={role.role}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <h3 className="text-lg font-semibold text-white">
-                        {role.role}
-                      </h3>
-                      <span className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                        Pilot Access
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-cyan-100/75">
-                      {role.access}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-white/55">
-                      {role.responsibility}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </article>
-
-            <article className="rounded-[2rem] border border-white/10 bg-white/[0.045] p-5">
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-100/70">
-                    Kitchen Stations
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">
-                    The production floor is mapped before intake.
-                  </h2>
-                </div>
-                <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-100">
-                  {stationPlan.length} stations
-                </span>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {stationPlan.map((station, index) => (
-                  <div
-                    key={station}
-                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10 text-xs font-semibold text-cyan-100">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <p className="text-sm font-semibold text-white/75">
-                      {station}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-100/80">
-                  Protection Rule
-                </p>
-                <p className="mt-2 text-sm leading-6 text-white/68">
-                  G7 onboarding uses the client’s own operational data. The
-                  sales presentation never exposes proprietary G7 recipes, real
-                  costing, or protected internal assets.
-                </p>
-              </div>
-            </article>
-          </section>
-
-          <section className="rounded-[2rem] border border-white/10 bg-white/[0.045] p-5">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#CCFF33]">
-                  5-Product Pilot Scope
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
-                  The client can see what will be built before intake starts.
-                </h2>
-              </div>
-              <div className="rounded-full border border-[#CCFF33]/25 bg-[#CCFF33]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#CCFF33]">
-                {selectedPackage.duration}
-              </div>
+                Continue to Pilot Intake
+              </Link>
+              <Link
+                href="/genius-kitchen"
+                className="rounded-full border border-white/20 px-7 py-4 text-center text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:border-white/40 hover:bg-white/10"
+              >
+                Open Pilot Workspace
+              </Link>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-              {pilotProducts.map((product) => (
-                <article
-                  key={product.number}
-                  className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4"
-                >
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#CCFF33]/25 bg-[#CCFF33]/10 text-sm font-semibold text-[#CCFF33]">
-                      {product.number}
-                    </span>
-                    <span className="rounded-full border border-white/10 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/45">
-                      Product Build
-                    </span>
-                  </div>
+            <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                  Model
+                </p>
+                <p className="mt-2 font-bold text-white">Paid Pilot</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                  Scope
+                </p>
+                <p className="mt-2 font-bold text-white">4–5 Products</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                  Status
+                </p>
+                <p className="mt-2 font-bold text-white">Ready for Intake</p>
+              </div>
+            </div>
+          </div>
 
-                  <h3 className="text-lg font-semibold leading-tight text-white">
-                    {product.name}
+          <div className="rounded-[2rem] border border-cyan-300/20 bg-white/[0.05] p-5 shadow-2xl shadow-cyan-950/40 backdrop-blur">
+            <div className="rounded-[1.5rem] border border-white/10 bg-[#081c2a]/90 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
+                Onboarding Path
+              </p>
+
+              <div className="mt-6 space-y-4">
+                {onboardingSteps.map((item) => (
+                  <div
+                    key={item.step}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+                  >
+                    <div className="flex items-start gap-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-cyan-300/40 bg-cyan-300/10 text-sm font-black text-cyan-100">
+                        {item.step}
+                      </span>
+                      <div>
+                        <h2 className="font-black text-white">{item.title}</h2>
+                        <p className="mt-2 text-sm leading-6 text-slate-300">
+                          {item.text}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-5">
+                <p className="text-sm font-bold text-amber-100">
+                  Commercial structure locked
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Founding Pilot Implementation: 25,000 EGP total — 10,000 EGP
+                  upfront and 15,000 EGP on delivery.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section className="mx-auto grid max-w-7xl gap-6 border-t border-white/10 py-12 lg:grid-cols-[0.85fr_1.15fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
+              Intake Requirements
+            </p>
+            <h2 className="mt-4 text-3xl font-black text-white sm:text-4xl">
+              What must be collected before build
+            </h2>
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
+              The pilot needs enough operating detail to convert chef
+              intelligence into controlled execution. The client does not need
+              a complete system rollout at this stage; the focus is a clear,
+              testable pilot scope.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {requiredInputs.map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm font-bold text-white"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto grid max-w-7xl gap-6 border-t border-white/10 py-12 lg:grid-cols-2">
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
+              Pilot Build Output
+            </p>
+            <h2 className="mt-4 text-3xl font-black text-white">
+              What onboarding prepares
+            </h2>
+
+            <div className="mt-6 grid gap-4">
+              {pilotOutputs.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-white/10 bg-[#071a27] p-5"
+                >
+                  <h3 className="text-base font-black text-white">
+                    {item.title}
                   </h3>
-                  <p className="mt-3 text-xs font-semibold leading-6 text-cyan-100/70">
-                    {product.modules}
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    {item.text}
                   </p>
-                </article>
+                </div>
               ))}
             </div>
-          </section>
+          </div>
 
-          <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-            <article className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/45">
-                Workspace Summary
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                {clientProfile.companyName || "Client"} is ready to start the paid pilot.
-              </h2>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {readinessChecks.map((check) => (
-                  <div
-                    key={check}
-                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3"
-                  >
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full border border-lime-300/35 bg-lime-300/10 text-xs text-lime-100">
-                      ✓
-                    </div>
-                    <p className="text-sm text-white/72">{check}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-5 text-sm leading-7 text-white/60">
-                {selectedPackage.creditRule}
-              </p>
-            </article>
+          <div className="rounded-[2rem] border border-cyan-300/20 bg-cyan-300/10 p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-100">
+              Continue Flow
+            </p>
+            <h2 className="mt-4 text-3xl font-black text-white">
+              Move into intake and activation.
+            </h2>
+            <p className="mt-5 text-base leading-7 text-slate-200">
+              After onboarding, the pilot moves into structured intake, client
+              activation, and the production execution preview.
+            </p>
 
-            <footer className="rounded-[2rem] border border-[#CCFF33]/20 bg-[#CCFF33]/10 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#CCFF33]">
-                Next Operational Step
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                Start the 5 Product Build intake.
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-white/68">
-                The next page converts the selected products into G7 Culinary
-                Modules, Module Tasks, purchase/yield calculations, Packaging
-                Module Build Cards, and QA release gates.
-              </p>
-
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row lg:flex-col">
+            <div className="mt-7 grid gap-3">
+              {nextLinks.map((link) => (
                 <Link
-                  href="/pilot-intake"
-                  className="rounded-2xl border border-[#CCFF33]/35 bg-[#CCFF33]/10 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#CCFF33] transition hover:bg-[#CCFF33]/15"
+                  key={link.href}
+                  href={link.href}
+                  className="rounded-2xl border border-white/15 bg-white/[0.06] p-5 transition hover:border-cyan-200/50 hover:bg-white/[0.1]"
                 >
-                  Start 5 Product Intake
+                  <p className="text-base font-black text-white">
+                    {link.label}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    {link.text}
+                  </p>
                 </Link>
-
-                <Link
-                  href="/demo-sale"
-                  className="rounded-2xl border border-white/15 bg-white/5 px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-white/70 transition hover:border-cyan-300/35 hover:text-cyan-100"
-                >
-                  Review Sales Journey
-                </Link>
-              </div>
-            </footer>
-          </section>
-        </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </section>
     </main>
   );
