@@ -43,6 +43,80 @@ const clientData = [
   "Dispatch rules",
 ];
 
+const clientDataHandoff = [
+  {
+    title: "Recipes / Products",
+    clientRequired:
+      "Approved product list, recipes, yields, portion sizes, batch sizes, SOP notes.",
+    g7Structures:
+      "Product Builds, Build Cards, G7 Culinary Modules, Module Tasks.",
+    goLiveDependency:
+      "Required before production tasks, worker execution, QA release, and costing protection can be configured.",
+  },
+  {
+    title: "Ingredients",
+    clientRequired:
+      "Ingredient list, units, specs, allergens, storage needs, substitutions.",
+    g7Structures:
+      "Ingredient master, prep references, storage rules, approved alternatives.",
+    goLiveDependency:
+      "Required before recipe structure, purchasing logic, inventory control, and QA validation.",
+  },
+  {
+    title: "Suppliers",
+    clientRequired:
+      "Approved suppliers, contact details, supply items, lead times, order rules.",
+    g7Structures:
+      "Supplier map, purchasing handoff, receiving checks, approved source records.",
+    goLiveDependency:
+      "Required before procurement, receiving, substitution control, and supply risk tracking.",
+  },
+  {
+    title: "Packaging",
+    clientRequired:
+      "Packaging items, sizes, labels, containers, sealing rules, shelf-life notes.",
+    g7Structures:
+      "Packaging Modules, packing tasks, label rules, product handoff checks.",
+    goLiveDependency:
+      "Required before portioning, packaging station setup, dispatch readiness, and customer handoff.",
+  },
+  {
+    title: "Stations",
+    clientRequired:
+      "Kitchen stations, equipment, station capacity, prep/cook/cooling/packing flow.",
+    g7Structures:
+      "Station map, task routing, production sequence, runtime ownership.",
+    goLiveDependency:
+      "Required before tasks can be assigned to workers and production flow can be controlled.",
+  },
+  {
+    title: "Staff",
+    clientRequired:
+      "Staff list, roles, skill levels, station ownership, shift structure.",
+    g7Structures:
+      "Role permissions, worker task views, station assignment, escalation paths.",
+    goLiveDependency:
+      "Required before worker execution, task protection, production responsibility, and escalation logic.",
+  },
+  {
+    title: "QA Rules",
+    clientRequired:
+      "Critical checks, temperature rules, cooling checks, release standards, rejection rules.",
+    g7Structures: "QA gates, hold/release logic, sign-off rules, exception flags.",
+    goLiveDependency:
+      "Required before batches can move safely from production to release.",
+  },
+  {
+    title: "Dispatch Rules",
+    clientRequired:
+      "Dispatch timing, route rules, vehicle checks, cold-chain rules, delivery handoff standards.",
+    g7Structures:
+      "Dispatch readiness, release-to-delivery handoff, packing confirmation, delivery checks.",
+    goLiveDependency:
+      "Required before Go-Live because production is not complete until handoff is controlled.",
+  },
+];
+
 const readinessChecklist = [
   "First category selected",
   "First products approved",
@@ -166,7 +240,7 @@ export default function ClientActivationPage() {
             </div>
           </section>
 
-          <section className="grid gap-6 lg:grid-cols-3">
+          <section className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-[2rem] border border-cyan-300/20 bg-white/[0.04] p-6">
               <p className="text-xs font-bold uppercase tracking-[0.26em] text-cyan-100">
                 Workspace Setup
@@ -214,32 +288,108 @@ export default function ClientActivationPage() {
                 ))}
               </div>
             </div>
+          </section>
 
-            <div className="rounded-[2rem] border border-amber-300/25 bg-amber-300/10 p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.26em] text-amber-100">
-                Go-Live Readiness Checklist
-              </p>
-              <h2 className="mt-3 text-2xl font-black text-white">
-                Ready for first live batch
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-200">
-                Activation is complete only when the first category, products,
-                stations, worker tasks, and QA release flow are ready.
-              </p>
-
-              <div className="mt-5 grid gap-3">
-                {readinessChecklist.map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-3 rounded-2xl border border-amber-100/15 bg-[#0d1f2b] px-4 py-3 text-sm font-semibold text-white"
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-300/15 text-xs font-black text-cyan-100">
-                      ✓
-                    </span>
-                    {item}
-                  </div>
-                ))}
+          <section className="rounded-[2rem] border border-cyan-300/20 bg-white/[0.04] p-6 shadow-2xl shadow-black/30 md:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.26em] text-cyan-100">
+                  Client Data Intake Handoff
+                </p>
+                <h2 className="mt-3 text-3xl font-black text-white">
+                  Client Data Intake Handoff
+                </h2>
+                <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+                  Before Go-Live, the client prepares the operational data G7
+                  needs to structure the workspace safely.
+                </p>
+                <p className="mt-3 max-w-5xl text-sm leading-7 text-slate-300">
+                  Activation does not start with empty assumptions. The client
+                  provides the real kitchen inputs, and G7 turns them into
+                  structured production, QA, staffing, and dispatch workflows.
+                </p>
               </div>
+
+              <div className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-100">
+                Data before Go-Live
+              </div>
+            </div>
+
+            <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {clientDataHandoff.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-3xl border border-white/10 bg-[#061725] p-5"
+                >
+                  <h3 className="text-lg font-black text-white">
+                    {item.title}
+                  </h3>
+
+                  <div className="mt-5 grid gap-4">
+                    <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">
+                        Client Required
+                      </p>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-200">
+                        {item.clientRequired}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-100">
+                        G7 Structures
+                      </p>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-200">
+                        {item.g7Structures}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200">
+                        Go-Live Dependency
+                      </p>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+                        {item.goLiveDependency}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-[2rem] border border-amber-300/25 bg-amber-300/10 p-6 shadow-2xl shadow-black/30 md:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.26em] text-amber-100">
+                  Go-Live Readiness Checklist
+                </p>
+                <h2 className="mt-3 text-3xl font-black text-white">
+                  Ready for first live batch
+                </h2>
+                <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-200">
+                  Activation is complete only when the first category, products,
+                  stations, worker tasks, and QA release flow are ready.
+                </p>
+              </div>
+
+              <div className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">
+                First batch gate
+              </div>
+            </div>
+
+            <div className="mt-7 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {readinessChecklist.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-3 rounded-2xl border border-amber-100/15 bg-[#0d1f2b] px-4 py-4 text-sm font-semibold text-white"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-300/15 text-xs font-black text-cyan-100">
+                    ✓
+                  </span>
+                  {item}
+                </div>
+              ))}
             </div>
           </section>
 
@@ -316,6 +466,7 @@ export default function ClientActivationPage() {
               ))}
             </div>
           </section>
+
           <section className="rounded-[2rem] border border-white/10 bg-[#061725]/90 p-6 shadow-2xl shadow-black/40 md:p-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
@@ -356,4 +507,3 @@ export default function ClientActivationPage() {
     </main>
   );
 }
-
