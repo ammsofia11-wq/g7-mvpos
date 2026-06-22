@@ -87,13 +87,13 @@ const demoStages: DemoStage[] = [
 const proofStats = [
   {
     label: "Founder-Proven Model",
-    value: "4,000-5,000",
-    note: "meals daily production scale",
+    value: "Real Kitchen Ops",
+    note: "built from live production pressure",
   },
   {
-    label: "Food Cost Control",
-    value: "21%",
-    note: "operational food cost benchmark",
+    label: "Commercial Safety",
+    value: "No Private Metrics",
+    note: "protected numbers are not exposed",
   },
   {
     label: "Runtime Scope",
@@ -269,9 +269,10 @@ export default function DemoSalePage() {
               </h2>
 
               <p className="mt-4 text-[13px] leading-6 text-slate-300">
-                Scaled from 4,000 to 5,000 meals daily with food cost at 21%.
-                The demo explains the system layer, not protected private recipes
-                or client-owned operational data.
+                Built from real kitchen operations and chef-based operating
+                logic. The demo explains the system layer, not protected private
+                recipes, client-owned operational data, or private operational
+                numbers.
               </p>
 
               <div className="mt-5 grid gap-3">
