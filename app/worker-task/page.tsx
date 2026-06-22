@@ -227,9 +227,12 @@ export default function WorkerTaskExecutionPage() {
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <button className="rounded-full bg-cyan-300 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#06111F] shadow-[0_0_28px_rgba(34,211,238,0.25)]">
+                <Link
+                  href="#worker-screen"
+                  className="rounded-full bg-cyan-300 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#06111F] shadow-[0_0_28px_rgba(34,211,238,0.25)] transition hover:bg-cyan-200"
+                >
                   Start task
-                </button>
+                </Link>
 
                 <Link
                   href="/kitchen"
@@ -279,7 +282,10 @@ export default function WorkerTaskExecutionPage() {
 
         <section className="grid gap-5 xl:grid-cols-[0.85fr_1.15fr]">
           <aside className="space-y-5">
-            <section className="rounded-[30px] border border-white/10 bg-white/[0.035] p-5">
+            <section
+              id="worker-screen"
+              className="scroll-mt-6 rounded-[30px] border border-white/10 bg-white/[0.035] p-5"
+            >
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
                 Worker screen
               </p>
