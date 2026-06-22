@@ -40,6 +40,11 @@ const pilotFlow = [
 
 const workspaceLinks = [
   {
+    label: "Founding Pilot Offer",
+    href: "/founding-pilot",
+    text: "Open the one-page client pilot summary with scope, price, and delivery structure.",
+  },
+  {
     label: "Pilot Onboarding",
     href: "/pilot-onboarding",
     text: "Start the client pilot setup path.",
@@ -103,12 +108,20 @@ export default function GeniusKitchenPage() {
             </div>
           </Link>
 
-          <Link
-            href="/demo-sale"
-            className="hidden rounded-full border border-cyan-300/40 px-5 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10 sm:inline-flex"
-          >
-            Back to Demo
-          </Link>
+          <div className="hidden items-center gap-3 sm:flex">
+            <Link
+              href="/founding-pilot"
+              className="rounded-full border border-amber-300/40 px-5 py-2 text-sm font-semibold text-amber-100 transition hover:border-amber-200 hover:bg-amber-300/10"
+            >
+              Founding Pilot
+            </Link>
+            <Link
+              href="/demo-sale"
+              className="rounded-full border border-cyan-300/40 px-5 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10"
+            >
+              Back to Demo
+            </Link>
+          </div>
         </header>
 
         <div className="mx-auto grid max-w-7xl gap-10 pb-12 pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-20">
@@ -130,16 +143,16 @@ export default function GeniusKitchenPage() {
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/pilot-onboarding"
+                href="/founding-pilot"
                 className="rounded-full bg-cyan-300 px-7 py-4 text-center text-sm font-black uppercase tracking-[0.22em] text-[#061622] transition hover:bg-cyan-200"
               >
-                Start Pilot Onboarding
+                Open Founding Pilot Offer
               </Link>
               <Link
-                href="/client-activation"
+                href="/pilot-onboarding"
                 className="rounded-full border border-white/20 px-7 py-4 text-center text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:border-white/40 hover:bg-white/10"
               >
-                Client Activation
+                Start Pilot Onboarding
               </Link>
             </div>
 
@@ -186,6 +199,22 @@ export default function GeniusKitchenPage() {
                   </div>
                 ))}
               </div>
+
+              <Link
+                href="/founding-pilot"
+                className="mt-6 flex items-center justify-between rounded-2xl border border-amber-300/30 bg-amber-300/10 p-5 transition hover:border-amber-200/60 hover:bg-amber-300/15"
+              >
+                <div>
+                  <p className="text-sm font-black text-amber-100">
+                    One-page Founding Pilot offer
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Open the client-facing summary with scope, price, payment
+                    structure, and deliverables.
+                  </p>
+                </div>
+                <span className="text-xl text-amber-100">→</span>
+              </Link>
 
               <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-5">
                 <p className="text-sm font-bold text-amber-100">
@@ -245,14 +274,14 @@ export default function GeniusKitchenPage() {
               </div>
 
               <Link
-                href="/demo-close"
-                className="rounded-full border border-cyan-300/40 px-6 py-3 text-center text-sm font-bold uppercase tracking-[0.2em] text-cyan-100 transition hover:bg-cyan-300/10"
+                href="/founding-pilot"
+                className="rounded-full border border-amber-300/40 px-6 py-3 text-center text-sm font-bold uppercase tracking-[0.2em] text-amber-100 transition hover:bg-amber-300/10"
               >
-                Close Pilot
+                Founding Pilot Offer
               </Link>
             </div>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {workspaceLinks.map((link) => (
                 <Link
                   key={link.href}
