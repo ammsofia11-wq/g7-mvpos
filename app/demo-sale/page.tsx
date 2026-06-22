@@ -19,8 +19,8 @@ const demoPath = [
   },
   {
     step: "04",
-    title: "Paid Pilot Decision",
-    text: "Move from demo understanding into a focused Founding Pilot Implementation.",
+    title: "Pilot Workspace Preview",
+    text: "Open the Genius Kitchen workspace to see how the Founding Pilot is delivered.",
   },
 ];
 
@@ -45,6 +45,24 @@ const pilotScope = [
   "Worker task flow",
   "Packaging and dispatch handoff",
   "Pilot delivery workspace",
+];
+
+const nextActions = [
+  {
+    title: "Open Pilot Workspace",
+    href: "/genius-kitchen",
+    text: "Preview the Genius Kitchen Founding Pilot workspace and delivery structure.",
+  },
+  {
+    title: "Close Demo",
+    href: "/demo-close",
+    text: "Move from demo understanding into the paid pilot decision page.",
+  },
+  {
+    title: "Start Pilot Onboarding",
+    href: "/pilot-onboarding",
+    text: "Begin the client setup path after the pilot decision is confirmed.",
+  },
 ];
 
 export default function DemoSalePage() {
@@ -74,12 +92,20 @@ export default function DemoSalePage() {
             </div>
           </Link>
 
-          <Link
-            href="/demo-close"
-            className="hidden rounded-full border border-cyan-300/40 px-5 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10 sm:inline-flex"
-          >
-            Close Demo
-          </Link>
+          <div className="hidden items-center gap-3 sm:flex">
+            <Link
+              href="/genius-kitchen"
+              className="rounded-full border border-cyan-300/40 px-5 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10"
+            >
+              Pilot Workspace
+            </Link>
+            <Link
+              href="/demo-close"
+              className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
+            >
+              Close Demo
+            </Link>
+          </div>
         </header>
 
         <div className="mx-auto grid max-w-7xl gap-10 pb-12 pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-20">
@@ -101,16 +127,16 @@ export default function DemoSalePage() {
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/demo-close"
+                href="/genius-kitchen"
                 className="rounded-full bg-cyan-300 px-7 py-4 text-center text-sm font-black uppercase tracking-[0.22em] text-[#061622] transition hover:bg-cyan-200"
               >
-                Start Founding Pilot
+                Open Pilot Workspace
               </Link>
               <Link
-                href="/demo-deck"
+                href="/demo-close"
                 className="rounded-full border border-white/20 px-7 py-4 text-center text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:border-white/40 hover:bg-white/10"
               >
-                Open Category Deck
+                Close Demo
               </Link>
             </div>
 
@@ -139,7 +165,7 @@ export default function DemoSalePage() {
           <div className="rounded-[2rem] border border-cyan-300/20 bg-white/[0.05] p-5 shadow-2xl shadow-cyan-950/40 backdrop-blur">
             <div className="rounded-[1.5rem] border border-white/10 bg-[#081c2a]/90 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
-                Demand to Dispatch
+                Recommended Demo Path
               </p>
 
               <div className="mt-6 space-y-4">
@@ -162,6 +188,21 @@ export default function DemoSalePage() {
                   </div>
                 ))}
               </div>
+
+              <Link
+                href="/genius-kitchen"
+                className="mt-6 flex items-center justify-between rounded-2xl border border-cyan-300/30 bg-cyan-300/10 p-5 transition hover:border-cyan-200/60 hover:bg-cyan-300/15"
+              >
+                <div>
+                  <p className="text-sm font-black text-cyan-100">
+                    Open Genius Kitchen Workspace
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Review the pilot workspace before moving to close.
+                  </p>
+                </div>
+                <span className="text-xl text-cyan-100">→</span>
+              </Link>
 
               <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-5">
                 <p className="text-sm font-bold text-amber-100">
@@ -240,19 +281,21 @@ export default function DemoSalePage() {
               path.
             </p>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/demo-close"
-                className="rounded-full bg-white px-7 py-4 text-center text-sm font-black uppercase tracking-[0.22em] text-[#061622] transition hover:bg-cyan-100"
-              >
-                Close Demo
-              </Link>
-              <Link
-                href="/pilot-onboarding"
-                className="rounded-full border border-white/25 px-7 py-4 text-center text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:bg-white/10"
-              >
-                View Pilot Flow
-              </Link>
+            <div className="mt-7 grid gap-3">
+              {nextActions.map((action) => (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  className="rounded-2xl border border-white/15 bg-white/[0.06] p-5 transition hover:border-cyan-200/50 hover:bg-white/[0.1]"
+                >
+                  <p className="text-base font-black text-white">
+                    {action.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    {action.text}
+                  </p>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
