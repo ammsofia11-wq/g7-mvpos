@@ -24,7 +24,7 @@ const pilotOffer = [
   },
   {
     label: "Delivery Focus",
-    value: "Genius Kitchen pilot workspace",
+    value: "G7 Kitchen OS pilot workspace",
   },
 ];
 
@@ -44,7 +44,7 @@ const closeSteps = [
   {
     step: "01",
     title: "Confirm Pilot Products",
-    text: "Select the 4–5 products that will become the first Genius Kitchen pilot scope.",
+    text: "Select the 4–5 products that will become the first G7 Kitchen OS pilot scope.",
   },
   {
     step: "02",
@@ -67,7 +67,7 @@ const nextLinks = [
   {
     label: "Open Pilot Workspace",
     href: "/genius-kitchen",
-    text: "Review the Genius Kitchen workspace before onboarding.",
+    text: "Review the G7 Kitchen OS workspace before onboarding.",
   },
   {
     label: "Start Pilot Onboarding",
@@ -105,7 +105,7 @@ export default function DemoClosePage() {
             />
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
               <p className="text-sm font-semibold text-white">
                 Chef-Based Kitchen Operating Intelligence
@@ -136,11 +136,11 @@ export default function DemoClosePage() {
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Move from demo to Genius Kitchen implementation.
+              Move from demo to G7 Kitchen OS implementation.
             </h1>
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
-              This is the close point for the G7 / Genius Kitchen Founding
+              This is the close point for the G7 / G7 Kitchen OS Founding
               Pilot. The next step is a focused paid implementation where
               selected products are converted into chef-based operating
               intelligence, controlled execution gates, worker tasks, and
@@ -261,7 +261,7 @@ export default function DemoClosePage() {
               Next Actions
             </p>
             <h2 className="mt-4 text-3xl font-black text-white">
-              Continue the Genius Kitchen pilot journey.
+              Continue the G7 Kitchen OS pilot journey.
             </h2>
             <p className="mt-5 text-base leading-7 text-slate-200">
               After the close decision, the flow moves into onboarding, intake,
