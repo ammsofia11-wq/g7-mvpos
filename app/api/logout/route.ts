@@ -1,9 +1,7 @@
-﻿import { NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { G7_SESSION_COOKIE } from "@/lib/g7-auth";
 
-export async function POST() {
-  const response = NextResponse.json({ ok: true });
-
+function clearSession(response: NextResponse) {
   response.cookies.set(G7_SESSION_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -13,4 +11,13 @@ export async function POST() {
   });
 
   return response;
+}
+
+export async function POST() {
+  return clearSession(NextResponse.json({ ok: true }));
+}
+
+export async function GET(request: NextRequest) {
+  const loginUrl = new URL("/login", request.url);
+  return clearSession(NextResponse.redirect(loginUrl));
 }

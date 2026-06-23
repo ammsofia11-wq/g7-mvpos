@@ -1,4 +1,5 @@
 import "./globals.css"
+import PilotSessionBar from "@/components/PilotSessionBar";
 
 export default function RootLayout({
   children,
@@ -18,6 +19,7 @@ export default function RootLayout({
 
         </div>
 
+        <PilotSessionBar />
         {children}
 
       </body>
