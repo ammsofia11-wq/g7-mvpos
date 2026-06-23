@@ -1,219 +1,123 @@
-"use client"
+﻿"use client";
 
-import { useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+import { FormEvent, useState } from "react";
+
+type LoginResult = {
+  ok?: boolean;
+  error?: string;
+  redirectTo?: string;
+};
 
 export default function LoginPage() {
-  const router = useRouter()
+  const [clientId, setClientId] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [mode, setMode] = useState<"login" | "signup">("login")
-  const [message, setMessage] = useState("")
-
-  const handleAuth = async () => {
-    setMessage("")
-
-    if (!email.trim() || !password.trim()) {
-      setMessage("Email and password are required")
-      return
-    }
-
-    if (password.length < 6) {
-      setMessage("Password must be at least 6 characters")
-      return
-    }
-
-    setLoading(true)
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
-      const result =
-        mode === "signup"
-          ? await supabase.auth.signUp({
-              email: email.trim(),
-              password,
-            })
-          : await supabase.auth.signInWithPassword({
-              email: email.trim(),
-              password,
-            })
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ clientId, username, password }),
+      });
 
-      if (result.error) {
-        setMessage(result.error.message)
-        return
+      const data = (await response.json()) as LoginResult;
+
+      if (!response.ok || !data.redirectTo) {
+        setError(data.error || "Login failed.");
+        return;
       }
 
-      if (mode === "login") {
-        router.push("/dashboard")
-      } else {
-        setMode("login")
-        setMessage("Account created. Check your email if confirmation is required.")
-      }
+      window.location.href = data.redirectTo;
     } catch {
-      setMessage("Unexpected error occurred")
+      setError("Unable to connect. Please try again.");
     } finally {
-      setLoading(false)
+      setIsLoading(false);
     }
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(circle at top, #12213a 0%, #050814 45%, #02040a 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        color: "#ffffff",
-      }}
-    >
-      <section
-        style={{
-          width: "100%",
-          maxWidth: "460px",
-          background: "#0b1020",
-          border: "1px solid rgba(34, 211, 238, 0.45)",
-          borderRadius: "28px",
-          padding: "34px",
-          boxShadow: "0 30px 90px rgba(0,0,0,0.55)",
-        }}
-      >
-        <p
-          style={{
-            color: "#22d3ee",
-            fontSize: "12px",
-            letterSpacing: "4px",
-            fontWeight: 900,
-            marginBottom: "12px",
-          }}
-        >
-          G7 CULINARY INTELLIGENCE
-        </p>
+    <main className="min-h-screen bg-[#06131f] text-white flex items-center justify-center px-6 py-10">
+      <section className="w-full max-w-md rounded-[28px] border border-cyan-300/20 bg-white/[0.06] p-7 shadow-2xl backdrop-blur">
+        <div className="mb-7">
+          <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">
+            G7 Kitchen OS
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold">
+            Pilot Workspace Login
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-slate-300">
+            Protected access for client pilot workspaces. Enter your Client ID,
+            username, and password to continue.
+          </p>
+        </div>
 
-        <h1
-          style={{
-            color: "#ffffff",
-            fontSize: "42px",
-            lineHeight: "1",
-            fontWeight: 900,
-            marginBottom: "10px",
-          }}
-        >
-          {mode === "login" ? "Login" : "Create Account"}
-        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm text-slate-200">Client ID</span>
+            <input
+              value={clientId}
+              onChange={(event) => setClientId(event.target.value)}
+              autoComplete="organization"
+              className="w-full rounded-2xl border border-cyan-300/20 bg-slate-950/70 px-4 py-3 text-white outline-none ring-0 placeholder:text-slate-500 focus:border-cyan-300"
+              placeholder="founding-pilot-001"
+              required
+            />
+          </label>
 
-        <p
-          style={{
-            color: "#cbd5e1",
-            fontSize: "15px",
-            marginBottom: "26px",
-          }}
-        >
-          Access your G7 nutrition operating system.
-        </p>
+          <label className="block">
+            <span className="mb-2 block text-sm text-slate-200">Username</span>
+            <input
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="username"
+              className="w-full rounded-2xl border border-cyan-300/20 bg-slate-950/70 px-4 py-3 text-white outline-none ring-0 placeholder:text-slate-500 focus:border-cyan-300"
+              placeholder="admin@client.com"
+              required
+            />
+          </label>
 
-        {message && (
-          <div
-            style={{
-              background: "rgba(34, 211, 238, 0.12)",
-              border: "1px solid rgba(34, 211, 238, 0.35)",
-              color: "#cffafe",
-              padding: "12px",
-              borderRadius: "14px",
-              marginBottom: "18px",
-              fontSize: "14px",
-            }}
+          <label className="block">
+            <span className="mb-2 block text-sm text-slate-200">Password</span>
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              type="password"
+              className="w-full rounded-2xl border border-cyan-300/20 bg-slate-950/70 px-4 py-3 text-white outline-none ring-0 placeholder:text-slate-500 focus:border-cyan-300"
+              placeholder="Password"
+              required
+            />
+          </label>
+
+          {error ? (
+            <div className="rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+              {error}
+            </div>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-2xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {message}
-          </div>
-        )}
+            {isLoading ? "Checking access..." : "Enter Pilot Workspace"}
+          </button>
+        </form>
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "15px 16px",
-            marginBottom: "14px",
-            background: "#111827",
-            color: "#ffffff",
-            border: "1px solid rgba(255,255,255,0.18)",
-            borderRadius: "14px",
-            outline: "none",
-            fontSize: "16px",
-          }}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "15px 16px",
-            marginBottom: "18px",
-            background: "#111827",
-            color: "#ffffff",
-            border: "1px solid rgba(255,255,255,0.18)",
-            borderRadius: "14px",
-            outline: "none",
-            fontSize: "16px",
-          }}
-        />
-
-        <button
-          onClick={handleAuth}
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "16px 20px",
-            background: loading ? "#64748b" : "#22d3ee",
-            color: "#001018",
-            border: "2px solid #67e8f9",
-            borderRadius: "16px",
-            fontSize: "19px",
-            fontWeight: 900,
-            cursor: loading ? "not-allowed" : "pointer",
-            boxShadow: "0 12px 35px rgba(34, 211, 238, 0.35)",
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          {loading
-            ? "Processing..."
-            : mode === "login"
-            ? "LOGIN"
-            : "CREATE ACCOUNT"}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === "login" ? "signup" : "login")
-            setMessage("")
-          }}
-          style={{
-            width: "100%",
-            marginTop: "22px",
-            background: "transparent",
-            color: "#67e8f9",
-            border: "none",
-            fontSize: "14px",
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          {mode === "login"
-            ? "Don't have an account? Sign up"
-            : "Already have an account? Login"}
-        </button>
+        <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-xs leading-5 text-slate-400">
+          Worker users only see their assigned execution screen. Chef and admin
+          users receive broader operational access.
+        </div>
       </section>
     </main>
-  )
+  );
 }
