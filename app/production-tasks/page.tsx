@@ -136,7 +136,7 @@ export default function ProductionTasksPage() {
             />
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
               <p className="text-sm font-semibold text-white">
                 Production Tasks
@@ -163,7 +163,7 @@ export default function ProductionTasksPage() {
         <div className="mx-auto grid max-w-7xl gap-10 pb-12 pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-20">
           <div>
             <div className="mb-6 inline-flex rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
-              Genius Kitchen Execution Preview
+              G7 Kitchen OS Execution Preview
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
@@ -171,7 +171,7 @@ export default function ProductionTasksPage() {
             </h1>
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
-              Production Tasks shows how Genius Kitchen converts chef logic into
+              Production Tasks shows how G7 Kitchen OS converts chef logic into
               build cards, G7 Culinary Modules, module tasks, worker execution,
               cooling gate, QA gates, packaging, fridge call-off, and dispatch
               control.

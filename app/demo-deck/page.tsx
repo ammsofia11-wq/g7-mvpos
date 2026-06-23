@@ -7,10 +7,10 @@ import Link from "next/link";
 const categorySlides = [
   {
     no: "01",
-    kicker: "Genius Kitchen by G7",
+    kicker: "G7 Kitchen OS",
     title: "Chef-Based Kitchen Operating Intelligence.",
-    accent: "Chef intelligence becomes controlled execution.",
-    body: "Genius Kitchen by G7 turns demand, chef logic, yield chain, cooling, QA, packaging, fridge call-off, worker tasks, and dispatch into one controlled operating flow.",
+    accent: "Chef-Based Kitchen Operating Intelligence.",
+    body: "G7 Kitchen OS turns demand, chef logic, yield chain, cooling, QA, packaging, fridge call-off, worker tasks, and dispatch into one controlled operating flow.",
     visual: "category",
   },
   {
@@ -23,7 +23,7 @@ const categorySlides = [
   },
   {
     no: "03",
-    kicker: "What Genius Kitchen Is",
+    kicker: "What G7 Kitchen OS Is",
     title: "A chef-based operating layer for central kitchen production.",
     accent: "Not a recipe list. Not a generic dashboard. Not a full SaaS rollout at pilot stage.",
     body: "The Founding Pilot starts focused: selected products are converted into chef-approved logic, production structure, gates, tasks, and handoffs that can be reviewed and delivered.",
@@ -34,7 +34,7 @@ const categorySlides = [
     kicker: "Chef Logic Layer",
     title: "The chef defines the operating intelligence.",
     accent: "Standards, build logic, modules, yield, QA, and release rules.",
-    body: "Genius Kitchen starts where real production control starts: chef logic. That logic becomes a visible operating system for product builds, G7 Culinary Modules, and station execution.",
+    body: "G7 Kitchen OS starts where real production control starts: chef logic. That logic becomes a visible operating system for product builds, G7 Culinary Modules, and station execution.",
     visual: "chef",
   },
   {
@@ -50,7 +50,7 @@ const categorySlides = [
     kicker: "Yield Chain Layer",
     title: "Yield control protects execution before waste grows.",
     accent: "Raw prep. Cooked yield. Cooling. Portioning. Packaging. Dispatch.",
-    body: "Genius Kitchen makes the yield chain visible so production can understand where output changes, where control is needed, and where product consistency must be protected.",
+    body: "G7 Kitchen OS makes the yield chain visible so production can understand where output changes, where control is needed, and where product consistency must be protected.",
     visual: "yield",
   },
   {
@@ -66,7 +66,7 @@ const categorySlides = [
     kicker: "Worker Task Layer",
     title: "Chef logic becomes worker-ready execution.",
     accent: "Right task. Right station. Right step. Right handoff.",
-    body: "Genius Kitchen converts approved product logic into simple worker task flow so production teams can execute with clarity instead of scattered instructions.",
+    body: "G7 Kitchen OS converts approved product logic into simple worker task flow so production teams can execute with clarity instead of scattered instructions.",
     visual: "execution",
   },
   {
@@ -74,7 +74,7 @@ const categorySlides = [
     kicker: "Control Layer",
     title: "Consistency, waste control, and readiness stay visible.",
     accent: "Station pressure. QA hold. Output gap. Release readiness.",
-    body: "Management needs visibility while production is running. Genius Kitchen helps show what is active, delayed, blocked, waiting for QA, ready for packaging, or ready for dispatch.",
+    body: "Management needs visibility while production is running. G7 Kitchen OS helps show what is active, delayed, blocked, waiting for QA, ready for packaging, or ready for dispatch.",
     visual: "runtime",
   },
   {
@@ -82,7 +82,7 @@ const categorySlides = [
     kicker: "Founding Pilot",
     title: "Start with 4–5 products and prove the operating model.",
     accent: "Focused scope. Clear delivery. Controlled pilot workspace.",
-    body: "The Founding Pilot converts a small selected product set into Genius Kitchen operating intelligence, ready for onboarding, intake, activation, production preview, and client review.",
+    body: "The Founding Pilot converts a small selected product set into G7 Kitchen OS operating intelligence, ready for onboarding, intake, activation, production preview, and client review.",
     visual: "pilot",
   },
 ];
@@ -109,7 +109,7 @@ const visualFlows: Record<string, string[]> = {
     "Demand Signal",
     "Product Build",
     "Kitchen Execution",
-    "Genius Kitchen Control",
+    "G7 Kitchen OS Control",
   ],
   chef: [
     "Chef Standard",
@@ -165,7 +165,7 @@ const visualFlows: Record<string, string[]> = {
 
 const nextPathCards = [
   {
-    title: "Genius Kitchen Workspace",
+    title: "G7 Kitchen OS Workspace",
     href: "/genius-kitchen",
     label: "Open Pilot Workspace",
     body: "Review the Founding Pilot workspace and how selected products become controlled operating intelligence.",
@@ -174,7 +174,7 @@ const nextPathCards = [
     title: "Demo Close",
     href: "/demo-close",
     label: "Move To Pilot Decision",
-    body: "Move from the deck into the Genius Kitchen Founding Pilot close path and commercial decision.",
+    body: "Move from the deck into the G7 Kitchen OS Founding Pilot close path and commercial decision.",
   },
   {
     title: "Pilot Onboarding",
@@ -198,7 +198,7 @@ function LogoLockup() {
       <div className="h-11 w-px bg-[#C8753C]/75" />
       <div>
         <p className="text-[11px] font-black uppercase tracking-[0.42em] text-[#C8753C]">
-          Genius Kitchen by G7
+          G7 Kitchen OS
         </p>
         <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-cyan-100/80">
           Culinary Intelligence
@@ -241,7 +241,7 @@ function CoreVisual() {
           priority
         />
         <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.24em] text-white/80">
-          Genius Kitchen
+          G7 Kitchen OS
         </p>
       </div>
 
@@ -324,7 +324,7 @@ function DemandVisual() {
 
         <div className="rounded-[32px] border border-[#C8753C]/35 bg-[#C8753C]/10 p-6 shadow-[0_0_55px_rgba(200,117,60,0.12)]">
           <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#F0B27A]">
-            Genius Kitchen Layer
+            G7 Kitchen OS Layer
           </p>
           <p className="mt-4 text-4xl font-black leading-tight text-white">
             Chef-Based Operating Intelligence
@@ -572,7 +572,7 @@ export default function DemoDeckPage() {
               </p>
 
               <h1 className="max-w-[720px] text-[48px] font-black leading-[0.92] tracking-[-0.06em] xl:text-[60px]">
-                Move from deck to Genius Kitchen pilot workspace.
+                Move from deck to G7 Kitchen OS pilot workspace.
               </h1>
 
               <div className="mt-5 h-px max-w-[520px] bg-gradient-to-r from-cyan-300/85 via-cyan-300/20 to-transparent" />
@@ -584,7 +584,7 @@ export default function DemoDeckPage() {
               <div className="mt-6 border-l-2 border-cyan-300/75 pl-5">
                 <p className="max-w-[620px] text-[18px] leading-7 text-slate-50 xl:text-[20px]">
                   After the deck, continue into the Founding Pilot path: open
-                  the Genius Kitchen workspace, close the demo decision, and
+                  the G7 Kitchen OS workspace, close the demo decision, and
                   move into onboarding, intake, activation, and execution
                   preview.
                 </p>
@@ -621,7 +621,7 @@ export default function DemoDeckPage() {
             <Signature />
 
             <div className="rounded-full border border-cyan-300/20 bg-cyan-300/5 px-5 py-2 text-[9px] font-black uppercase tracking-[0.32em] text-slate-300">
-              Genius Kitchen{" "}
+              G7 Kitchen OS{" "}
               <span className="text-[#C8753C]">
                 connected to the pilot path.
               </span>

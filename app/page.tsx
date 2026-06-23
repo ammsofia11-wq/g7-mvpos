@@ -18,7 +18,7 @@ const journey = [
   {
     label: "Client Demo",
     href: "/demo-sale",
-    text: "Start the Genius Kitchen commercial demo path.",
+    text: "Start the G7 Kitchen OS commercial demo path.",
   },
   {
     label: "Pilot Workspace",
@@ -59,7 +59,7 @@ export default function HomePage() {
                 G7 Culinary Intelligence
               </p>
               <p className="text-sm font-semibold text-white">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
             </div>
           </Link>
@@ -87,7 +87,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="max-w-5xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Genius Kitchen turns chef intelligence into controlled execution.
+              G7 Kitchen OS.
             </h1>
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
@@ -116,7 +116,7 @@ export default function HomePage() {
                 <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
                   Product
                 </p>
-                <p className="mt-2 font-bold text-white">Genius Kitchen</p>
+                <p className="mt-2 font-bold text-white">G7 Kitchen OS</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
@@ -138,7 +138,7 @@ export default function HomePage() {
           <div className="rounded-[2rem] border border-cyan-300/20 bg-white/[0.05] p-5 shadow-2xl shadow-cyan-950/40 backdrop-blur">
             <div className="rounded-[1.5rem] border border-white/10 bg-[#081c2a]/90 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
-                Genius Kitchen Operating Layers
+                G7 Kitchen OS Operating Layers
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">

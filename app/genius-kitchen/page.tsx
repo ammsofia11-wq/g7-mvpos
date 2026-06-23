@@ -100,7 +100,7 @@ export default function GeniusKitchenPage() {
             />
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
               <p className="text-sm font-semibold text-white">
                 Chef-Based Kitchen Operating Intelligence
@@ -131,11 +131,11 @@ export default function GeniusKitchenPage() {
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
-              A controlled pilot workspace for Genius Kitchen implementation.
+              A controlled pilot workspace for G7 Kitchen OS implementation.
             </h1>
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
-              This workspace shows how Genius Kitchen by G7 converts selected
+              This workspace shows how G7 Kitchen OS converts selected
               products into chef-based operating intelligence: demand to
               dispatch, chef logic, yield chain, cooling gate, QA gates, worker
               tasks, packaging, fridge call-off, and dispatch control.
@@ -222,7 +222,7 @@ export default function GeniusKitchenPage() {
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
                   10,000 EGP upfront to start the pilot, then 15,000 EGP on
-                  delivery of the agreed Genius Kitchen pilot workspace.
+                  delivery of the agreed G7 Kitchen OS pilot workspace.
                 </p>
               </div>
             </div>
@@ -232,7 +232,7 @@ export default function GeniusKitchenPage() {
         <section className="mx-auto grid max-w-7xl gap-6 border-t border-white/10 py-12 lg:grid-cols-[0.85fr_1.15fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
-              Chef Intelligence Becomes Controlled Execution
+              Chef-Based Kitchen Operating Intelligence
             </p>
             <h2 className="mt-4 text-3xl font-black text-white sm:text-4xl">
               What gets built in the pilot

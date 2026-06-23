@@ -125,7 +125,7 @@ export default function WorkerTaskPage() {
             />
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
               <p className="text-sm font-semibold text-white">
                 Worker Execution
@@ -160,7 +160,7 @@ export default function WorkerTaskPage() {
             </h1>
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
-              The worker screen shows how Genius Kitchen converts the Build
+              The worker screen shows how G7 Kitchen OS converts the Build
               Card into clear G7 Culinary Module tasks. Workers see what to do,
               which station owns the task, when to stop, and when QA release is
               required before the next movement.
@@ -326,7 +326,7 @@ export default function WorkerTaskPage() {
               What protects execution
             </h2>
             <p className="mt-5 text-base leading-7 text-slate-300">
-              Genius Kitchen keeps the worker screen simple while protecting the
+              G7 Kitchen OS keeps the worker screen simple while protecting the
               approved chef logic behind the task.
             </p>
 

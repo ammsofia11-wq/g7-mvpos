@@ -4,7 +4,7 @@ import Link from "next/link";
 const demoPath = [
   {
     step: "01",
-    title: "Genius Kitchen Positioning",
+    title: "G7 Kitchen OS Positioning",
     text: "Understand how G7 turns chef intelligence into controlled kitchen execution.",
   },
   {
@@ -20,7 +20,7 @@ const demoPath = [
   {
     step: "04",
     title: "Pilot Workspace Preview",
-    text: "Open the Genius Kitchen workspace to see how the Founding Pilot is delivered.",
+    text: "Open the G7 Kitchen OS workspace to see how the Founding Pilot is delivered.",
   },
 ];
 
@@ -51,7 +51,7 @@ const nextActions = [
   {
     title: "Open Pilot Workspace",
     href: "/genius-kitchen",
-    text: "Preview the Genius Kitchen Founding Pilot workspace and delivery structure.",
+    text: "Preview the G7 Kitchen OS Founding Pilot workspace and delivery structure.",
   },
   {
     title: "Close Demo",
@@ -84,7 +84,7 @@ export default function DemoSalePage() {
             />
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
               <p className="text-sm font-semibold text-white">
                 Culinary Intelligence System
@@ -115,7 +115,7 @@ export default function DemoSalePage() {
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Genius Kitchen turns chef intelligence into controlled execution.
+              G7 Kitchen OS.
             </h1>
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
@@ -195,7 +195,7 @@ export default function DemoSalePage() {
               >
                 <div>
                   <p className="text-sm font-black text-cyan-100">
-                    Open Genius Kitchen Workspace
+                    Open G7 Kitchen OS Workspace
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-300">
                     Review the pilot workspace before moving to close.
@@ -276,7 +276,7 @@ export default function DemoSalePage() {
             </h2>
             <p className="mt-5 text-base leading-7 text-slate-200">
               The next step is not a full SaaS rollout. It is a focused paid
-              pilot where selected products are converted into Genius Kitchen
+              pilot where selected products are converted into G7 Kitchen OS
               operating logic and delivered through a clear client activation
               path.
             </p>

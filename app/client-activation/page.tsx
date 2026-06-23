@@ -10,7 +10,7 @@ const activationStages = [
   {
     step: "02",
     title: "Workspace Setup",
-    text: "Prepare the Genius Kitchen pilot workspace around the agreed 4–5 products and their operating logic.",
+    text: "Prepare the G7 Kitchen OS pilot workspace around the agreed 4–5 products and their operating logic.",
   },
   {
     step: "03",
@@ -42,7 +42,7 @@ const readinessChecks = [
 const activationOutputs = [
   {
     title: "Client Pilot Workspace",
-    text: "A focused Genius Kitchen workspace prepared for the selected product scope.",
+    text: "A focused G7 Kitchen OS workspace prepared for the selected product scope.",
   },
   {
     title: "Build Cards",
@@ -88,7 +88,7 @@ const nextLinks = [
     text: "Review chef logic, product structure, and protected build intelligence.",
   },
   {
-    label: "Genius Kitchen Workspace",
+    label: "G7 Kitchen OS Workspace",
     href: "/genius-kitchen",
     text: "Return to the pilot workspace overview.",
   },
@@ -113,7 +113,7 @@ export default function ClientActivationPage() {
             />
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
               <p className="text-sm font-semibold text-white">
                 Client Pilot Activation
@@ -140,7 +140,7 @@ export default function ClientActivationPage() {
         <div className="mx-auto grid max-w-7xl gap-10 pb-12 pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-20">
           <div>
             <div className="mb-6 inline-flex rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
-              Genius Kitchen Pilot Activation
+              G7 Kitchen OS Pilot Activation
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
@@ -149,7 +149,7 @@ export default function ClientActivationPage() {
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
               Client activation turns the completed pilot intake into a
-              delivery-ready Genius Kitchen workspace. The selected products are
+              delivery-ready G7 Kitchen OS workspace. The selected products are
               organized into chef logic, product builds, G7 Culinary Modules,
               yield chain, cooling gate, QA gates, worker tasks, packaging,
               fridge call-off, and dispatch handoff.

@@ -19,7 +19,7 @@ const pilotFlow = [
   {
     step: "01",
     title: "Select Products",
-    text: "Confirm the first 4–5 products that will become the Genius Kitchen Founding Pilot scope.",
+    text: "Confirm the first 4–5 products that will become the G7 Kitchen OS Founding Pilot scope.",
   },
   {
     step: "02",
@@ -34,7 +34,7 @@ const pilotFlow = [
   {
     step: "04",
     title: "Review & Deliver",
-    text: "Deliver the Genius Kitchen pilot workspace for client review, execution preview, and sign-off.",
+    text: "Deliver the G7 Kitchen OS pilot workspace for client review, execution preview, and sign-off.",
   },
 ];
 
@@ -67,7 +67,7 @@ const deliverables = [
 
 const nextLinks = [
   {
-    label: "Open Genius Kitchen",
+    label: "Open G7 Kitchen OS",
     href: "/genius-kitchen",
     text: "View the pilot workspace preview.",
   },
@@ -107,7 +107,7 @@ export default function FoundingPilotPage() {
             />
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
               <p className="text-sm font-semibold text-white">
                 Founding Pilot Implementation
@@ -138,11 +138,11 @@ export default function FoundingPilotPage() {
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Genius Kitchen Founding Pilot Implementation.
+              G7 Kitchen OS Founding Pilot Implementation.
             </h1>
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
-              Genius Kitchen by G7 is Chef-Based Kitchen Operating Intelligence.
+              G7 Kitchen OS is Chef-Based Kitchen Operating Intelligence.
               The Founding Pilot converts 4–5 selected products into controlled
               execution: chef logic, yield chain, cooling gate, QA gates, worker
               tasks, packaging, fridge call-off, and dispatch handoff.

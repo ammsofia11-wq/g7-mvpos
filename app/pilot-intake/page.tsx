@@ -4,7 +4,7 @@ import Link from "next/link";
 const intakeBlocks = [
   {
     title: "Pilot Product Selection",
-    text: "Confirm the 4–5 products that will become the first Genius Kitchen implementation scope.",
+    text: "Confirm the 4–5 products that will become the first G7 Kitchen OS implementation scope.",
   },
   {
     title: "Chef Logic",
@@ -116,7 +116,7 @@ export default function PilotIntakePage() {
             />
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Genius Kitchen by G7
+                G7 Kitchen OS
               </p>
               <p className="text-sm font-semibold text-white">
                 Pilot Intake Workspace
@@ -143,7 +143,7 @@ export default function PilotIntakePage() {
         <div className="mx-auto grid max-w-7xl gap-10 pb-12 pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-20">
           <div>
             <div className="mb-6 inline-flex rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
-              Genius Kitchen Pilot Intake
+              G7 Kitchen OS Pilot Intake
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
@@ -152,7 +152,7 @@ export default function PilotIntakePage() {
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
               This intake page organizes the information needed to build the
-              Genius Kitchen Founding Pilot. The focus is 4–5 selected products:
+              G7 Kitchen OS Founding Pilot. The focus is 4–5 selected products:
               chef logic, product build, yield chain, cooling gate, QA gates,
               worker tasks, packaging, fridge call-off, and dispatch control.
             </p>
@@ -227,7 +227,7 @@ export default function PilotIntakePage() {
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
                   The pilot intake should collect only what is needed to build a
-                  focused, testable Genius Kitchen implementation. Full SaaS
+                  focused, testable G7 Kitchen OS implementation. Full SaaS
                   setup comes later.
                 </p>
               </div>
