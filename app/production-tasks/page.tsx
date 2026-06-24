@@ -29,11 +29,16 @@ const taskFlow = [
   },
   {
     step: "06",
+    title: "Internal Production Control",
+    text: "Protect internal modules such as bakery, butchery, trim recovery, return-to-store, and safety gates.",
+  },
+  {
+    step: "07",
     title: "Worker Execution",
     text: "Send simplified task logic to workers only after collection, readiness, gates, and handoffs are clear.",
   },
   {
-    step: "07",
+    step: "08",
     title: "QA Release",
     text: "Protect the final movement with cooling checks, QA gates, packaging checks, and release control.",
   },
@@ -46,6 +51,10 @@ const productionLayers = [
   "G7 Culinary Modules",
   "Station Grocery Report",
   "Storekeeper Trolley Prep",
+  "Internal Production",
+  "Butchery Yield Gate",
+  "Bakery Module Production",
+  "Return-to-Store SKU",
   "Worker Collection",
   "Module Tasks",
   "Worker Tasks",
@@ -105,7 +114,7 @@ const sampleTasks = [
 const groceryReports = [
   {
     station: "Prep Station",
-    owner: "Storekeeper → Prep Team",
+    owner: "Storekeeper to Prep Team",
     trolley: "Trolley A-01",
     status: "Ready for collection",
     items: [
@@ -117,7 +126,7 @@ const groceryReports = [
   },
   {
     station: "Cooking Station",
-    owner: "Storekeeper → Cooking Team",
+    owner: "Storekeeper to Cooking Team",
     trolley: "Trolley C-02",
     status: "Needs chef confirmation",
     items: [
@@ -129,7 +138,7 @@ const groceryReports = [
   },
   {
     station: "Packaging Station",
-    owner: "Storekeeper → Packaging Team",
+    owner: "Storekeeper to Packaging Team",
     trolley: "Trolley P-03",
     status: "Ready after QA",
     items: ["Meal containers", "Labels", "Sleeves and dispatch crates"],
@@ -153,6 +162,97 @@ const grocerySteps = [
   {
     label: "Readiness Gate",
     text: "Missing ingredients block the task before execution, not during cooking.",
+  },
+];
+
+const internalProductionCards = [
+  {
+    title: "Bakery Internal Production",
+    owner: "Bakery Team",
+    status: "Internal module",
+    lines: [
+      "Produce tortilla, bread, or bakery components as internal SKUs.",
+      "Return approved output to store before final station issue.",
+      "Keep bakery batch identity visible for later product builds.",
+    ],
+    control:
+      "Bakery output should become an internal controlled module, not an invisible side task.",
+  },
+  {
+    title: "Butchery Yield Gate",
+    owner: "Butchery / Prep Team",
+    status: "Yield protected",
+    lines: [
+      "Record gross protein weight before trimming or cutting.",
+      "Confirm usable yield before cooking station receives the batch.",
+      "Separate usable protein, scrap, and rejected material clearly.",
+    ],
+    control:
+      "Cooking should not start from purchase weight. It should start from usable yield.",
+  },
+  {
+    title: "Return-to-Store Internal SKU",
+    owner: "Storekeeper",
+    status: "Traceable return",
+    lines: [
+      "Return internal production output to store with batch identity.",
+      "Hold approved internal modules until station call-off.",
+      "Keep remaining quantity visible before next product usage.",
+    ],
+    control:
+      "Internal production should return to controlled store logic before it becomes station grocery.",
+  },
+  {
+    title: "Scrap and Trim Recovery",
+    owner: "Chef / Production Manager",
+    status: "Recovery visible",
+    lines: [
+      "Separate vegetable trim, protein scrap, and usable leftovers.",
+      "Protect food safety before reuse decisions.",
+      "Recommend next best use only after QA-safe classification.",
+    ],
+    control:
+      "Recovery intelligence must never bypass safety, QA, or chef approval.",
+  },
+];
+
+const internalProductionPath = [
+  {
+    label: "Internal Need",
+    text: "Demand and build cards create internal production needs such as bread, butchery prep, or sauce base.",
+  },
+  {
+    label: "Controlled Output",
+    text: "The internal team produces a module with yield, batch identity, and owner visibility.",
+  },
+  {
+    label: "Return to Store",
+    text: "Approved output returns as an internal SKU before it is issued to a station trolley.",
+  },
+  {
+    label: "Next Best Use",
+    text: "Scrap, trim, and surplus are classified for safe reuse, discard, or chef review.",
+  },
+];
+
+const safetyGates = [
+  {
+    gate: "Frozen Protein Safety Gate",
+    status: "Safety hold",
+    detail:
+      "Frozen protein requires thawing control, temperature evidence, and release before butchery or cooking.",
+  },
+  {
+    gate: "Blast Freezer Gate",
+    status: "Cold chain protected",
+    detail:
+      "Blast freezer movement should be tracked before storage, return-to-store, or later call-off.",
+  },
+  {
+    gate: "Chef Approval Gate",
+    status: "Decision required",
+    detail:
+      "Next best use, sensitive scaling, and recovery usage require chef-controlled approval.",
   },
 ];
 
@@ -235,8 +335,9 @@ export default function ProductionTasksPage() {
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
               Production Tasks shows how G7 Kitchen OS converts chef logic into
               build cards, G7 Culinary Modules, station grocery reports,
-              storekeeper trolley prep, module tasks, worker execution, cooling
-              gate, QA gates, packaging, fridge call-off, and dispatch control.
+              storekeeper trolley prep, internal production control, module
+              tasks, worker execution, cooling gate, QA gates, packaging, fridge
+              call-off, and dispatch control.
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -271,7 +372,7 @@ export default function ProductionTasksPage() {
                 <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
                   Readiness
                 </p>
-                <p className="mt-2 font-bold text-white">Station Grocery</p>
+                <p className="mt-2 font-bold text-white">Internal Control</p>
               </div>
             </div>
           </div>
@@ -309,8 +410,9 @@ export default function ProductionTasksPage() {
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
                   Workers should receive clear task logic only after the product
-                  build, module structure, station grocery readiness, cooling
-                  gate, and QA requirements are defined.
+                  build, module structure, station grocery readiness, internal
+                  production control, cooling gate, and QA requirements are
+                  defined.
                 </p>
               </div>
             </div>
@@ -327,8 +429,9 @@ export default function ProductionTasksPage() {
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
               Production tasks should not sit alone. They must connect back to
-              chef logic, forward to grocery readiness, and then into QA
-              release, packaging, fridge call-off, and dispatch readiness.
+              chef logic, forward to grocery readiness, internal production
+              control, QA release, packaging, fridge call-off, and dispatch
+              readiness.
             </p>
           </div>
 
@@ -427,6 +530,107 @@ export default function ProductionTasksPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="mx-auto grid max-w-7xl gap-6 border-t border-white/10 py-12">
+          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
+                Internal Production Intelligence
+              </p>
+              <h2 className="mt-4 text-3xl font-black text-white sm:text-4xl">
+                Internal modules must be controlled before they become station
+                grocery.
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
+                This preview maps the next deeper G7 layer: bakery production,
+                butchery yield, return-to-store internal SKUs, scrap and trim
+                recovery, frozen protein safety, and next best use visibility.
+              </p>
+
+              <div className="mt-6 grid gap-3">
+                {internalProductionPath.map((step) => (
+                  <div
+                    key={step.label}
+                    className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4"
+                  >
+                    <p className="text-sm font-black text-emerald-100">
+                      {step.label}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                      {step.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {internalProductionCards.map((card) => (
+                <div
+                  key={card.title}
+                  className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200">
+                        {card.owner}
+                      </p>
+                      <h3 className="mt-2 text-xl font-black text-white">
+                        {card.title}
+                      </h3>
+                    </div>
+                    <span className="w-fit rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-bold text-emerald-100">
+                      {card.status}
+                    </span>
+                  </div>
+
+                  <div className="mt-5 grid gap-3">
+                    {card.lines.map((line) => (
+                      <div
+                        key={line}
+                        className="rounded-2xl border border-white/10 bg-[#071a27] p-4"
+                      >
+                        <p className="text-sm font-bold leading-6 text-white">
+                          {line}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100">
+                      Control rule
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                      {card.control}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            {safetyGates.map((gate) => (
+              <div
+                key={gate.gate}
+                className="rounded-[1.5rem] border border-red-300/20 bg-red-300/[0.06] p-5"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:flex-col">
+                  <h3 className="text-lg font-black text-white">
+                    {gate.gate}
+                  </h3>
+                  <span className="w-fit rounded-full border border-red-300/30 bg-red-300/10 px-3 py-1 text-xs font-bold text-red-100">
+                    {gate.status}
+                  </span>
+                </div>
+                <p className="mt-4 text-sm leading-6 text-slate-300">
+                  {gate.detail}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
 
