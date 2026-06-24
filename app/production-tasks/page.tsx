@@ -263,6 +263,11 @@ const nextLinks = [
     text: "Open the simplified worker execution view.",
   },
   {
+    label: "Inventory OS",
+    href: "/inventory",
+    text: "Open storekeeper trolley control, ingredient issue, internal SKU return, and procurement view.",
+  },
+  {
     label: "Kitchen Runtime",
     href: "/kitchen",
     text: "Review the production floor execution view.",
@@ -314,6 +319,12 @@ export default function ProductionTasksPage() {
               Back to Activation
             </Link>
             <Link
+              href="/inventory"
+              className="rounded-full border border-emerald-300/40 px-5 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-300/10"
+            >
+              Inventory OS
+            </Link>
+            <Link
               href="/worker-task"
               className="rounded-full border border-cyan-300/40 px-5 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10"
             >
@@ -346,6 +357,12 @@ export default function ProductionTasksPage() {
                 className="rounded-full bg-cyan-300 px-7 py-4 text-center text-sm font-black uppercase tracking-[0.22em] text-[#061622] transition hover:bg-cyan-200"
               >
                 Open Worker Task
+              </Link>
+              <Link
+                href="/inventory"
+                className="rounded-full border border-emerald-300/40 px-7 py-4 text-center text-sm font-bold uppercase tracking-[0.22em] text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-300/10"
+              >
+                Open Inventory OS
               </Link>
               <Link
                 href="/kitchen"

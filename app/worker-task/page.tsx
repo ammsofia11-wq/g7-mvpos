@@ -146,6 +146,11 @@ const nextLinks = [
     text: "Return to the full production task structure.",
   },
   {
+    label: "Inventory OS",
+    href: "/inventory",
+    text: "Review storekeeper trolley readiness, ingredient issue, and safety holds before worker collection.",
+  },
+  {
     label: "Kitchen Runtime",
     href: "/kitchen",
     text: "Open the production floor execution view.",
@@ -169,8 +174,7 @@ export default function WorkerTaskPage() {
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(184,115,51,0.16),transparent_34%)]" />
         <div className="absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
 
-        <header className="mx-auto flex max-w-7xl items-center justify-between gap-6">
-          <Link href="/" className="flex items-center gap-3">
+        <header className="mx-auto flex max-w-7xl items-center justify-between gap-6">          <Link href="/" className="flex items-center gap-3">
             <Image
               src="/images/g7-logo-clean.png"
               alt="G7 logo"
@@ -197,6 +201,12 @@ export default function WorkerTaskPage() {
               Production Tasks
             </Link>
             <Link
+              href="/inventory"
+              className="rounded-full border border-emerald-300/40 px-5 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-300/10"
+            >
+              Inventory OS
+            </Link>
+            <Link
               href="/kitchen"
               className="rounded-full border border-cyan-300/40 px-5 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10"
             >
@@ -215,8 +225,7 @@ export default function WorkerTaskPage() {
               Turn chef logic into simple worker execution.
             </h1>
 
-            <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
-              The worker screen shows how G7 Kitchen OS converts the Build Card
+            <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">              The worker screen shows how G7 Kitchen OS converts the Build Card
               into clear G7 Culinary Module tasks. Workers see what to collect,
               what to do, which station owns the task, when to stop, and when QA
               release is required before the next movement.
@@ -230,6 +239,12 @@ export default function WorkerTaskPage() {
                 Open Kitchen Runtime
               </Link>
               <Link
+                href="/inventory"
+                className="rounded-full border border-emerald-300/40 px-7 py-4 text-center text-sm font-bold uppercase tracking-[0.22em] text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-300/10"
+              >
+                Inventory OS
+              </Link>
+              <Link
                 href="/production-tasks"
                 className="rounded-full border border-white/20 px-7 py-4 text-center text-sm font-bold uppercase tracking-[0.22em] text-white transition hover:border-white/40 hover:bg-white/10"
               >
@@ -238,20 +253,17 @@ export default function WorkerTaskPage() {
             </div>
 
             <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
                   Source
                 </p>
                 <p className="mt-2 font-bold text-white">Build Card</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
                   Before Start
                 </p>
                 <p className="mt-2 font-bold text-white">Collect Grocery</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
                   Protection
                 </p>
                 <p className="mt-2 font-bold text-white">QA Release</p>
@@ -269,8 +281,7 @@ export default function WorkerTaskPage() {
                 {executionFlow.map((item) => (
                   <div
                     key={item.step}
-                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
-                  >
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"                  >
                     <div className="flex items-start gap-4">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-cyan-300/40 bg-cyan-300/10 text-sm font-black text-cyan-100">
                         {item.step}
@@ -502,9 +513,9 @@ export default function WorkerTaskPage() {
               Move from worker execution into runtime control.
             </h2>
             <p className="mt-5 text-base leading-7 text-slate-200">
-              After worker tasks are clear, the pilot can continue into kitchen
-              runtime visibility, recipe intelligence, and client activation
-              review.
+              After worker tasks are clear, the pilot can continue into
+              storekeeper trolley control, kitchen runtime visibility, recipe
+              intelligence, and client activation review.
             </p>
 
             <div className="mt-7 grid gap-3">
