@@ -9,21 +9,26 @@ const executionFlow = [
   },
   {
     step: "02",
+    title: "Collect from Store",
+    text: "Use the worker grocery report to collect only the approved ingredients for the assigned station task.",
+  },
+  {
+    step: "03",
     title: "Follow Module Task",
     text: "Execute the assigned G7 Culinary Module task for the correct station and product stage.",
   },
   {
-    step: "03",
+    step: "04",
     title: "Confirm Handoff",
     text: "Mark the task ready only when the station output is complete and ready for the next gate.",
   },
   {
-    step: "04",
+    step: "05",
     title: "Respect Cooling Gate",
     text: "Do not move product forward when cooling is required before QA or packaging.",
   },
   {
-    step: "05",
+    step: "06",
     title: "Wait for QA Release",
     text: "Only released product can move to packaging, fridge call-off, or dispatch handoff.",
   },
@@ -72,8 +77,59 @@ const workerTasks = [
   },
 ];
 
+const groceryChecklist = [
+  {
+    item: "Protein batch",
+    source: "Storekeeper Trolley C-02",
+    quantity: "Batch quantity by tenant units",
+    status: "Collected",
+    note: "Must match butchery usable yield before cooking starts.",
+  },
+  {
+    item: "Sauce module kit",
+    source: "Storekeeper Trolley C-02",
+    quantity: "Controlled kit",
+    status: "Collected",
+    note: "Sensitive ingredients follow chef scaling intelligence.",
+  },
+  {
+    item: "Spice control pack",
+    source: "Dry store issue",
+    quantity: "Approved pack",
+    status: "Check required",
+    note: "Worker should not adjust salt, spice, heat, or aromatics from memory.",
+  },
+  {
+    item: "Labelled handoff tray",
+    source: "Station equipment issue",
+    quantity: "As required",
+    status: "Ready",
+    note: "Output must be traceable before cooling, QA, or packaging movement.",
+  },
+];
+
+const collectionSteps = [
+  {
+    label: "My Grocery Report",
+    text: "Worker sees only the ingredients needed for the assigned module task.",
+  },
+  {
+    label: "Collect from Store",
+    text: "The station collects from the prepared trolley before execution starts.",
+  },
+  {
+    label: "Missing Item Escalation",
+    text: "If an item is missing, the worker escalates instead of improvising.",
+  },
+  {
+    label: "Ready to Start",
+    text: "The task starts only when ingredient readiness is clear.",
+  },
+];
+
 const workerRules = [
   "Follow the Build Card",
+  "Collect approved grocery first",
   "Execute one Module Task at a time",
   "Do not skip Cooling Gate",
   "Do not package before QA Release",
@@ -160,10 +216,10 @@ export default function WorkerTaskPage() {
             </h1>
 
             <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
-              The worker screen shows how G7 Kitchen OS converts the Build
-              Card into clear G7 Culinary Module tasks. Workers see what to do,
-              which station owns the task, when to stop, and when QA release is
-              required before the next movement.
+              The worker screen shows how G7 Kitchen OS converts the Build Card
+              into clear G7 Culinary Module tasks. Workers see what to collect,
+              what to do, which station owns the task, when to stop, and when QA
+              release is required before the next movement.
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -190,9 +246,9 @@ export default function WorkerTaskPage() {
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                  Unit
+                  Before Start
                 </p>
-                <p className="mt-2 font-bold text-white">Module Task</p>
+                <p className="mt-2 font-bold text-white">Collect Grocery</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
@@ -235,13 +291,106 @@ export default function WorkerTaskPage() {
                   Worker protection rule
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  The worker should not decide the chef logic. The worker
-                  executes the approved Module Task and escalates when blocked.
+                  The worker should not decide the chef logic or replace missing
+                  ingredients by memory. The worker collects the approved
+                  grocery, executes the approved Module Task, and escalates when
+                  blocked.
                 </p>
               </div>
             </div>
           </div>
         </div>
+
+        <section className="mx-auto grid max-w-7xl gap-6 border-t border-white/10 py-12">
+          <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200">
+                My Grocery Report
+              </p>
+              <h2 className="mt-4 text-3xl font-black text-white sm:text-4xl">
+                The worker collects before execution.
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
+                This preview protects the start of work. The worker sees what
+                must be collected, where it comes from, what is ready, and what
+                must be escalated before the Module Task starts.
+              </p>
+
+              <div className="mt-6 grid gap-3">
+                {collectionSteps.map((step) => (
+                  <div
+                    key={step.label}
+                    className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4"
+                  >
+                    <p className="text-sm font-black text-cyan-100">
+                      {step.label}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                      {step.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {groceryChecklist.map((item) => (
+                <div
+                  key={`${item.item}-${item.source}`}
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">
+                        {item.item}
+                      </p>
+                      <h3 className="mt-2 text-xl font-black text-white">
+                        {item.source}
+                      </h3>
+                      <p className="mt-1 text-sm font-semibold text-slate-400">
+                        {item.quantity}
+                      </p>
+                    </div>
+                    <span className="w-fit rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-100">
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <p className="mt-4 text-sm leading-6 text-slate-300">
+                    {item.note}
+                  </p>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-white/10 bg-[#071a27] p-4">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                        Check
+                      </p>
+                      <p className="mt-2 text-sm font-bold text-white">
+                        Correct item
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-[#071a27] p-4">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                        Confirm
+                      </p>
+                      <p className="mt-2 text-sm font-bold text-white">
+                        Collected
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-[#071a27] p-4">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                        Escalate
+                      </p>
+                      <p className="mt-2 text-sm font-bold text-white">
+                        If missing
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         <section className="mx-auto grid max-w-7xl gap-6 border-t border-white/10 py-12 lg:grid-cols-[0.85fr_1.15fr]">
           <div>
@@ -253,8 +402,8 @@ export default function WorkerTaskPage() {
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
               Each task is simplified for execution while still staying tied to
-              the Build Card, G7 Culinary Modules, cooling gate, QA release, and
-              dispatch readiness.
+              the Build Card, G7 Culinary Modules, grocery readiness, cooling
+              gate, QA release, and dispatch readiness.
             </p>
           </div>
 
@@ -292,7 +441,7 @@ export default function WorkerTaskPage() {
                       Start
                     </p>
                     <p className="mt-2 text-sm font-bold text-white">
-                      Follow task
+                      After grocery ready
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-[#071a27] p-4">
