@@ -35,6 +35,76 @@ const suppliers = [
   },
 ]
 
+const storekeeperTrolleys = [
+  {
+    title: "Station Trolley Prep",
+    owner: "Storekeeper",
+    status: "READY",
+    lines: [
+      "Prepare ingredient trolley by station, module, and batch need.",
+      "Separate prep, cooking, packaging, and internal SKU issue lines.",
+      "Keep missing items visible before worker collection starts.",
+    ],
+    control:
+      "Station grocery should be prepared before workers start execution.",
+  },
+  {
+    title: "Ingredient Issue",
+    owner: "Store to Station",
+    status: "CONTROLLED",
+    lines: [
+      "Issue approved ingredients to the correct station owner.",
+      "Confirm ingredient identity, quantity, unit, and handoff owner.",
+      "Block substitute ingredients unless chef-approved.",
+    ],
+    control:
+      "Workers collect approved station groceries, not loose ingredients from memory.",
+  },
+  {
+    title: "Internal SKU Return",
+    owner: "Internal Production to Store",
+    status: "TRACEABLE",
+    lines: [
+      "Receive bakery, butchery, sauce base, or prep output back into store.",
+      "Hold returned modules with batch identity until station call-off.",
+      "Keep remaining quantity visible before next usage.",
+    ],
+    control:
+      "Internal production should return to controlled store logic before station issue.",
+  },
+  {
+    title: "Safety Hold",
+    owner: "Storekeeper and QA",
+    status: "HOLD",
+    lines: [
+      "Hold unsafe, unlabelled, thawing, or temperature-risk items.",
+      "Escalate frozen protein, blast freezer, and cold-chain exceptions.",
+      "Release only after the required safety or chef gate is cleared.",
+    ],
+    control:
+      "Storekeeper flow must never bypass QA, food safety, or chef approval.",
+  },
+]
+
+const storekeeperFlow = [
+  {
+    label: "Receive Need",
+    value: "Station grocery report creates the storekeeper preparation list.",
+  },
+  {
+    label: "Prepare Trolley",
+    value: "Ingredients are grouped by station, module, batch, and owner.",
+  },
+  {
+    label: "Issue or Hold",
+    value: "Ready items are issued; missing or unsafe items are escalated.",
+  },
+  {
+    label: "Return Internal SKU",
+    value: "Approved internal production returns to store before station call-off.",
+  },
+]
+
 export default function InventoryPage() {
   const [showSheet, setShowSheet] = useState(false)
 
@@ -144,6 +214,96 @@ export default function InventoryPage() {
             label="Procurement Cost"
             value={`$${procurementCost.toFixed(2)}`}
           />
+        </section>
+
+        <section className="mt-3 rounded-[22px] border border-emerald-300/20 bg-emerald-300/[0.055] p-4 shadow-[0_16px_45px_rgba(0,0,0,0.22)]">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                Storekeeper Trolley Control
+              </p>
+
+              <h2 className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-white">
+                Storekeeper flow between station grocery and worker collection.
+              </h2>
+
+              <p className="mt-2 max-w-3xl text-[12px] leading-5 text-slate-300">
+                This preview connects Station Grocery Reports to controlled
+                storekeeper execution: trolley preparation, ingredient issue,
+                internal SKU return, missing item escalation, safety hold, and
+                readiness for worker collection.
+              </p>
+            </div>
+
+            <div className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-emerald-200">
+              Preview Layer
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-4">
+            {storekeeperFlow.map((step) => (
+              <div
+                key={step.label}
+                className="rounded-[18px] border border-white/10 bg-black/20 p-3"
+              >
+                <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-200/75">
+                  {step.label}
+                </p>
+
+                <p className="mt-2 text-[12px] font-black leading-5 text-white">
+                  {step.value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-3 xl:grid-cols-4">
+            {storekeeperTrolleys.map((card) => (
+              <div
+                key={card.title}
+                className="rounded-[18px] border border-white/10 bg-black/20 p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-200/75">
+                      {card.owner}
+                    </p>
+
+                    <h3 className="mt-1 text-[14px] font-black leading-5 text-white">
+                      {card.title}
+                    </h3>
+                  </div>
+
+                  <span className="inline-flex rounded-full border border-emerald-300/25 bg-emerald-300/10 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-emerald-200">
+                    {card.status}
+                  </span>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {card.lines.map((line) => (
+                    <div
+                      key={line}
+                      className="rounded-[12px] border border-white/10 bg-white/[0.03] px-3 py-2"
+                    >
+                      <p className="text-[10px] font-bold leading-4 text-slate-300">
+                        {line}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-3 rounded-[14px] border border-amber-300/20 bg-amber-300/10 p-3">
+                  <p className="text-[8px] font-black uppercase tracking-[0.16em] text-amber-200">
+                    Control Rule
+                  </p>
+
+                  <p className="mt-2 text-[10px] font-bold leading-4 text-slate-300">
+                    {card.control}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mt-3 rounded-[22px] border border-cyan-300/20 bg-cyan-300/[0.05] p-4 shadow-[0_16px_45px_rgba(0,0,0,0.22)]">
