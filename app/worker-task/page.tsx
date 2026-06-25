@@ -1,3 +1,4 @@
+import RealPilotWorkspace from "@/components/real-pilot/RealPilotWorkspace";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -537,6 +538,7 @@ export default function WorkerTaskPage() {
           </div>
         </section>
       </section>
+        <RealPilotWorkspace mode="worker" />
     </main>
   );
 }

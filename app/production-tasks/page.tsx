@@ -1,3 +1,4 @@
+import RealPilotWorkspace from "@/components/real-pilot/RealPilotWorkspace";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -719,6 +720,7 @@ export default function ProductionTasksPage() {
           </div>
         </section>
       </section>
+        <RealPilotWorkspace mode="head-chef" />
     </main>
   );
 }

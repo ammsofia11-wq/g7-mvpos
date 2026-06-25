@@ -1,5 +1,7 @@
 "use client"
 
+import RealPilotWorkspace from "@/components/real-pilot/RealPilotWorkspace";
+
 import { useState } from "react"
 import {
   INVENTORY,
@@ -631,6 +633,7 @@ export default function InventoryPage() {
           </section>
         )}
       </div>
+        <RealPilotWorkspace mode="inventory" />
     </main>
   )
 }
