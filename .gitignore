@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local G7 audit exports
+G7_CODE_TO_KITCHEN_TRANSLATION_INPUT.txt
+G7_REAL_PILOT_CORE_AUDIT.txt
