@@ -70,6 +70,16 @@ const workspaceLinks = [
     text: "See simplified worker execution flow.",
   },
   {
+    label: "Approval / QA Gates",
+    href: "/approval",
+    text: "Open protected QA, cooling, final release, and chef approval gates.",
+  },
+  {
+    label: "Inventory / Storekeeper",
+    href: "/inventory",
+    text: "Open trolley issue, actual quantities, and storekeeper release.",
+  },
+  {
     label: "Kitchen Runtime",
     href: "/kitchen",
     text: "Open the production floor view.",
