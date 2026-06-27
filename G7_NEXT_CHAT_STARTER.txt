@@ -1,0 +1,21 @@
+﻿Continue G7 from G7_CURRENT_MASTER_REFERENCE.md.
+
+This is not a new project.
+
+Do not start from presentation pages.
+
+Return to the QD-BC-100 Real Pilot operating spine.
+
+Current priority:
+G7-REAL-PILOT-ROLE-DAY-SPLIT-1A
+
+Build real role-day experiences for:
+Worker, Chef, Storekeeper, QA, Production Manager, Owner.
+
+Use the existing Real Pilot runtime:
+components/real-pilot/RealPilotWorkspace.tsx
+lib/g7-real-pilot-runtime.ts
+
+Do not add a new runtime universe.
+Do not rebuild from zero.
+Do not drift into demo pages.
