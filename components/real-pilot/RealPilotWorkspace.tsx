@@ -13,6 +13,7 @@ import {
   masterDispatchPilot,
   PILOT_OUTPUT_FIELDS,
   reopenPilotTask,
+  recordPilotCheckpoint,
   resetPilotState,
   saveTaskOutput,
   startPilotTask,
@@ -261,6 +262,9 @@ function InventoryBoard({
 }) {
   const isDispatched =
     state.batch.status !== "DRAFT" && state.batch.status !== "ACTIVE";
+  const storeIssueCompleted = state.tasks.some(
+    (task) => task.id === "store_issue" && task.status === "COMPLETED",
+  );
 
   return (
     <div className="mt-8 rounded-[1.8rem] border border-white/10 bg-white/[0.035] p-5">
@@ -300,11 +304,13 @@ function InventoryBoard({
       <div className="mt-6 flex flex-wrap gap-3">
         <button
           type="button"
-          disabled={!isDispatched}
+          disabled={!isDispatched || storeIssueCompleted}
           onClick={() => onChange(markTrolleyReady(state))}
           className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-emerald-100 transition hover:bg-emerald-300/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Mark Pilot Trolley Ready
+          {storeIssueCompleted
+            ? "Pilot Trolley Already Ready"
+            : "Mark Pilot Trolley Ready"}
         </button>
       </div>
     </div>
@@ -412,6 +418,7 @@ function TaskCard({
   const canComplete =
     (task.status === "READY" || task.status === "IN_PROGRESS") &&
     isTaskCompleteAllowed(task);
+  const checkpointCount = Number(task.outputs.checkpoint_count ?? 0);
 
   return (
     <div className="rounded-2xl border border-white/10 bg-[#071a27] p-5">
@@ -442,6 +449,8 @@ function TaskCard({
               Depends on: {task.dependsOn.join(", ")}
             </p>
           )}
+
+          <TimingPlan task={task} checkpointCount={checkpointCount} />
         </div>
 
         <div className="flex min-w-[180px] flex-col gap-2">
@@ -454,6 +463,19 @@ function TaskCard({
             Start
           </button>
 
+          {task.timing && (
+            <button
+              type="button"
+              disabled={task.status !== "IN_PROGRESS"}
+              onClick={() =>
+                onChange(recordPilotCheckpoint(state, task.id, task.role))
+              }
+              className="rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-amber-100 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Record Checkpoint
+            </button>
+          )}
+
           <button
             type="button"
             disabled={!canComplete}
@@ -462,7 +484,7 @@ function TaskCard({
             }
             className="rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-emerald-100 transition hover:bg-emerald-300/20 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Complete
+            Complete Task
           </button>
 
           <button
@@ -523,6 +545,90 @@ function TaskCard({
                 )}
               </div>
             </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TimingPlan({
+  task,
+  checkpointCount,
+}: {
+  task: PilotTask;
+  checkpointCount: number;
+}) {
+  if (!task.timing) {
+    return null;
+  }
+
+  const startedAt = task.outputs.started_at
+    ? formatDateTime(String(task.outputs.started_at))
+    : "Not started";
+  const nextCheckpointAt = task.outputs.next_checkpoint_at
+    ? formatDateTime(String(task.outputs.next_checkpoint_at))
+    : "Waiting for start";
+  const lastCheckpointAt = task.outputs.last_checkpoint_at
+    ? formatDateTime(String(task.outputs.last_checkpoint_at))
+    : "No checkpoint yet";
+
+  return (
+    <div className="mt-5 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-100">
+            Timed Cooking / Worker Availability
+          </p>
+
+          <p className="mt-2 text-sm leading-6 text-amber-50">
+            {task.timing.monitoringNotes}
+          </p>
+        </div>
+
+        <StatusBadge status={task.timing.attentionLevel.split("_").join(" ")} />
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Metric
+          label="Active work"
+          value={String(task.timing.activeMinutes) + " min"}
+        />
+        <Metric
+          label="Passive cook / hold"
+          value={String(task.timing.passiveMinutes) + " min"}
+        />
+        <Metric
+          label="Checkpoint every"
+          value={
+            task.timing.checkpointEveryMinutes
+              ? String(task.timing.checkpointEveryMinutes) + " min"
+              : "Not required"
+          }
+        />
+        <Metric label="Checkpoint count" value={String(checkpointCount)} />
+        <Metric label="Started at" value={startedAt} />
+        <Metric label="Last checkpoint" value={lastCheckpointAt} />
+        <Metric label="Next checkpoint" value={nextCheckpointAt} />
+        <Metric
+          label="Worker status"
+          value={
+            task.timing.canWorkerTakeAnotherTask
+              ? "Can take compatible task"
+              : "Stay on task"
+          }
+        />
+      </div>
+
+      {task.timing.nextBestTasks.length > 0 && (
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          {task.timing.nextBestTasks.map((nextTask) => (
+            <div
+              key={nextTask}
+              className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm font-bold text-amber-50"
+            >
+              {nextTask}
+            </div>
           ))}
         </div>
       )}
@@ -688,6 +794,23 @@ function StatusBadge({ status }: { status: string }) {
       {status}
     </span>
   );
+}
+
+function formatDateTime(value: string): string {
+  if (!value) {
+    return "Pending";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatValue(value: number | string | null, unit?: string): string {

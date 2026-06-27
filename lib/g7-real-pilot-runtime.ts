@@ -18,6 +18,13 @@ export type PilotTaskStatus =
   | "HOLD"
   | "REWORK";
 
+export type PilotAttentionLevel =
+  | "HANDS_ON"
+  | "TIMED_MONITORING"
+  | "CONTINUOUS_SUPERVISION"
+  | "WAITING"
+  | "AVAILABLE_FOR_REASSIGNMENT";
+
 export type PilotTaskId =
   | "store_issue"
   | "butchery"
@@ -79,6 +86,15 @@ export type PilotTask = {
   dependsOn: PilotTaskId[];
   instructions: string[];
   outputs: Record<string, PilotOutputValue>;
+  timing?: {
+    activeMinutes: number;
+    passiveMinutes: number;
+    checkpointEveryMinutes?: number;
+    attentionLevel: PilotAttentionLevel;
+    canWorkerTakeAnotherTask: boolean;
+    monitoringNotes: string;
+    nextBestTasks: string[];
+  };
   gateType?: "QA" | "COOLING" | "FINAL_QA" | "SIGN_OFF";
 };
 
@@ -361,7 +377,7 @@ export function createInitialPilotState(): PilotState {
   const now = new Date().toISOString();
 
   return {
-    version: 1,
+    version: 2,
     createdAt: now,
     updatedAt: now,
     product: Q_DIET_BUTTER_CHICKEN_SPEC,
@@ -486,6 +502,20 @@ export function createPilotTasks(): PilotTask[] {
       station: "Hot Kitchen",
       module: "Protein Module",
       dependsOn: ["prep_marinade"],
+      timing: {
+        activeMinutes: 18,
+        passiveMinutes: 7,
+        checkpointEveryMinutes: 5,
+        attentionLevel: "HANDS_ON",
+        canWorkerTakeAnotherTask: false,
+        monitoringNotes:
+          "Chicken cooking is high-risk and mostly hands-on. Worker should not leave the station unless Head Chef assigns station coverage.",
+        nextBestTasks: [
+          "Prepare temperature probe and evidence photo.",
+          "Prepare clean receiving pan for cooked chicken.",
+          "Confirm QA tasting spoon and temp log are ready.",
+        ],
+      },
       instructions: [
         "Cook marinated chicken.",
         "Record final core temperature.",
@@ -501,6 +531,22 @@ export function createPilotTasks(): PilotTask[] {
       station: "Sauce Station",
       module: "Sauce Module",
       dependsOn: ["store_issue"],
+      timing: {
+        activeMinutes: 15,
+        passiveMinutes: 45,
+        checkpointEveryMinutes: 10,
+        attentionLevel: "TIMED_MONITORING",
+        canWorkerTakeAnotherTask: true,
+        monitoringNotes:
+          "Sauce is on timed monitoring. Worker can take compatible work between checkpoints if heat level is stable and station is safe.",
+        nextBestTasks: [
+          "Prepare cooling labels.",
+          "Prepare sauce transfer container.",
+          "Check rice station status.",
+          "Sanitize sauce station side bench.",
+          "Prepare packaging labels for QD-BC-100.",
+        ],
+      },
       instructions: [
         "Cook butter chicken sauce.",
         "Target final sauce weight is 8kg.",
@@ -515,6 +561,21 @@ export function createPilotTasks(): PilotTask[] {
       station: "Rice Station",
       module: "Carb Module",
       dependsOn: ["store_issue"],
+      timing: {
+        activeMinutes: 10,
+        passiveMinutes: 25,
+        checkpointEveryMinutes: 10,
+        attentionLevel: "TIMED_MONITORING",
+        canWorkerTakeAnotherTask: true,
+        monitoringNotes:
+          "Rice cook has passive steaming and resting time. Worker can take safe compatible tasks between checkpoints.",
+        nextBestTasks: [
+          "Prepare rice receiving tray.",
+          "Prepare scale and portioning spoon.",
+          "Check sauce checkpoint if assigned.",
+          "Prepare cooling area for carb module.",
+        ],
+      },
       instructions: [
         "Cook 4.5kg raw basmati rice.",
         "Target cooked rice output is 12kg.",
@@ -630,12 +691,47 @@ export function loadPilotState(): PilotState {
 
   try {
     const parsed = JSON.parse(raw) as PilotState;
-    return refreshPilotState(parsed);
+    const migrated = migratePilotState(parsed);
+
+if (parsed.version !== 2) {
+  return savePilotState(migrated);
+}
+
+return refreshPilotState(migrated);
   } catch {
     const initial = createInitialPilotState();
     savePilotState(initial);
     return initial;
   }
+}
+
+export function migratePilotState(state: PilotState): PilotState {
+  const initial = createInitialPilotState();
+  const latestTasks = createPilotTasks();
+
+  const tasks = latestTasks.map((latestTask) => {
+    const existingTask = state.tasks?.find((task) => task.id === latestTask.id);
+
+    if (!existingTask) {
+      return latestTask;
+    }
+
+    return {
+      ...latestTask,
+      status: existingTask.status,
+      outputs: existingTask.outputs ?? {},
+    };
+  });
+
+  return refreshPilotState({
+    ...initial,
+    ...state,
+    version: 2,
+    product: initial.product,
+    inventory: state.inventory?.length ? state.inventory : initial.inventory,
+    tasks,
+    events: state.events?.length ? state.events : initial.events,
+  });
 }
 
 export function savePilotState(state: PilotState): PilotState {
@@ -733,6 +829,12 @@ export function updateInventoryItem(
 }
 
 export function markTrolleyReady(state: PilotState): PilotState {
+  const storeIssue = getPilotTask(state, "store_issue");
+
+  if (storeIssue?.status === "COMPLETED") {
+    return state;
+  }
+
   const inventory = state.inventory.map((item) => ({
     ...item,
     status: "TROLLEY_READY" as const,
@@ -799,13 +901,93 @@ export function startPilotTask(
               ? "IN_PROGRESS"
               : state.batch.status,
         },
-        tasks: state.tasks.map((item) =>
-          item.id === taskId ? { ...item, status: "IN_PROGRESS" } : item,
-        ),
+        tasks: state.tasks.map((item) => {
+          if (item.id !== taskId) {
+            return item;
+          }
+
+          if (!item.timing) {
+            return { ...item, status: "IN_PROGRESS" };
+          }
+
+          const startedAt = String(
+            item.outputs.started_at ?? new Date().toISOString(),
+          );
+          const checkpointEvery = item.timing.checkpointEveryMinutes ?? 0;
+          const nextCheckpointAt =
+            checkpointEvery > 0
+              ? new Date(Date.now() + checkpointEvery * 60 * 1000).toISOString()
+              : "";
+
+          return {
+            ...item,
+            status: "IN_PROGRESS",
+            outputs: {
+              ...item.outputs,
+              started_at: startedAt,
+              next_checkpoint_at:
+                item.outputs.next_checkpoint_at ?? nextCheckpointAt,
+              checkpoint_count: item.outputs.checkpoint_count ?? 0,
+              worker_availability: item.timing.canWorkerTakeAnotherTask
+                ? "Available for compatible task between checkpoints"
+                : "Occupied by hands-on or continuous monitoring",
+            },
+          };
+        }),
       },
       actor,
       "Task started",
       task.title,
+    ),
+  );
+}
+
+export function recordPilotCheckpoint(
+  state: PilotState,
+  taskId: PilotTaskId,
+  actor = "Worker",
+): PilotState {
+  const task = getPilotTask(state, taskId);
+
+  if (!task || !task.timing || task.status !== "IN_PROGRESS") {
+    return state;
+  }
+
+  const checkpointEvery = task.timing.checkpointEveryMinutes ?? 0;
+  const checkpointCount = Number(task.outputs.checkpoint_count ?? 0) + 1;
+  const now = new Date();
+  const nextCheckpointAt =
+    checkpointEvery > 0
+      ? new Date(now.getTime() + checkpointEvery * 60 * 1000).toISOString()
+      : "";
+
+  let next = updateTaskOutput(
+    state,
+    taskId,
+    "checkpoint_count",
+    checkpointCount,
+  );
+
+  next = updateTaskOutput(
+    next,
+    taskId,
+    "last_checkpoint_at",
+    now.toISOString(),
+  );
+
+  next = updateTaskOutput(
+    next,
+    taskId,
+    "next_checkpoint_at",
+    nextCheckpointAt,
+  );
+
+  return savePilotState(
+    addEvent(
+      next,
+      actor,
+      "Checkpoint recorded",
+      task.title + ": checkpoint " + checkpointCount + " recorded.",
     ),
   );
 }
