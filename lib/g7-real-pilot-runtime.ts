@@ -1,6 +1,13 @@
 export const REAL_PILOT_STORAGE_KEY = "g7-real-pilot-core-v1";
 
-export type RealPilotMode = "head-chef" | "inventory" | "worker";
+export type RealPilotMode =
+  | "head-chef"
+  | "inventory"
+  | "storekeeper"
+  | "worker"
+  | "qa"
+  | "production-manager"
+  | "owner";
 
 export type PilotBatchStatus =
   | "DRAFT"

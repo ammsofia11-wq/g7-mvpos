@@ -30,8 +30,54 @@ type RealPilotWorkspaceProps = {
   mode: RealPilotMode;
 };
 
+type ActivePilotMode = Exclude<RealPilotMode, "inventory">;
+
+const ROLE_DAY_OPTIONS: {
+  mode: ActivePilotMode;
+  label: string;
+  note: string;
+}[] = [
+  {
+    mode: "head-chef",
+    label: "Chef Day",
+    note: "Activate, dispatch, approve exceptions, sign off.",
+  },
+  {
+    mode: "storekeeper",
+    label: "Storekeeper Day",
+    note: "Issue ingredients, trolley, shortage, handoff.",
+  },
+  {
+    mode: "worker",
+    label: "Worker Day",
+    note: "My plan, now working, checkpoints, safe next tasks.",
+  },
+  {
+    mode: "qa",
+    label: "QA Day",
+    note: "Module QA, cooling gate, final release.",
+  },
+  {
+    mode: "production-manager",
+    label: "Production Manager Day",
+    note: "Flow, blockers, pressure, support movement.",
+  },
+  {
+    mode: "owner",
+    label: "Owner Day",
+    note: "Pilot result, variance, QA, rollout readiness.",
+  },
+];
+
+function normalizePilotMode(mode: RealPilotMode): ActivePilotMode {
+  return mode === "inventory" ? "storekeeper" : mode;
+}
+
 export default function RealPilotWorkspace({ mode }: RealPilotWorkspaceProps) {
   const [state, setState] = useState<PilotState | null>(null);
+  const [activeMode, setActiveMode] = useState<ActivePilotMode>(
+    normalizePilotMode(mode),
+  );
 
   useEffect(() => {
     setState(loadPilotState());
@@ -72,17 +118,19 @@ export default function RealPilotWorkspace({ mode }: RealPilotWorkspaceProps) {
   return (
     <section className="mx-auto max-w-7xl border-t border-white/10 py-12">
       <div className="rounded-[2.2rem] border border-cyan-300/25 bg-[#06131f] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.35)] md:p-8">
-        <PilotHeader state={state} mode={mode} />
+        <PilotHeader state={state} mode={activeMode} />
 
-        {mode === "head-chef" && (
+        <RoleDaySwitcher activeMode={activeMode} onChange={setActiveMode} />
+
+        {activeMode === "head-chef" && (
           <HeadChefConsole state={state} onChange={updateState} />
         )}
 
-        {mode === "inventory" && (
+        {activeMode === "storekeeper" && (
           <InventoryBoard state={state} onChange={updateState} />
         )}
 
-        {mode === "worker" && (
+        {activeMode === "worker" && (
           <WorkerBoard state={state} onChange={updateState} />
         )}
 
@@ -115,6 +163,48 @@ export default function RealPilotWorkspace({ mode }: RealPilotWorkspaceProps) {
         </div>
       </div>
     </section>
+  );
+}
+
+function RoleDaySwitcher({
+  activeMode,
+  onChange,
+}: {
+  activeMode: ActivePilotMode;
+  onChange: (mode: ActivePilotMode) => void;
+}) {
+  return (
+    <div className="mt-8 rounded-[1.8rem] border border-white/10 bg-white/[0.035] p-4">
+      <p className="text-xs font-black uppercase tracking-[0.26em] text-cyan-200">
+        Real Pilot Role-Day Split
+      </p>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {ROLE_DAY_OPTIONS.map((option) => {
+          const isActive = option.mode === activeMode;
+
+          return (
+            <button
+              key={option.mode}
+              type="button"
+              onClick={() => onChange(option.mode)}
+              className={
+                "rounded-2xl border p-4 text-left transition " +
+                (isActive
+                  ? "border-cyan-300/60 bg-cyan-300/15"
+                  : "border-white/10 bg-black/20 hover:border-cyan-300/30 hover:bg-cyan-300/10")
+              }
+            >
+              <p className="text-sm font-black text-white">{option.label}</p>
+
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                {option.note}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -377,11 +467,11 @@ function WorkerBoard({
   return (
     <div className="mt-8 rounded-[1.8rem] border border-white/10 bg-white/[0.035] p-5">
       <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-200">
-        Real Pilot Worker Task Flow
+        Worker Day / My Kitchen Day
       </p>
 
       <h3 className="mt-3 text-2xl font-black text-white">
-        Role-based tasks unlocked by gates
+        My assigned production work
       </h3>
 
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
@@ -391,7 +481,19 @@ function WorkerBoard({
       </p>
 
       <div className="mt-6 grid gap-4">
-        {state.tasks.map((task) => (
+        {state.tasks
+          .filter((task) =>
+            [
+              "butchery",
+              "prep_marinade",
+              "cook_chicken",
+              "cook_sauce",
+              "cook_rice",
+              "cooling",
+              "packaging",
+            ].includes(task.id),
+          )
+          .map((task) => (
           <TaskCard
             key={task.id}
             state={state}
@@ -399,6 +501,174 @@ function WorkerBoard({
             onChange={onChange}
           />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function QADayBoard({
+  state,
+  onChange,
+}: {
+  state: PilotState;
+  onChange: (state: PilotState) => void;
+}) {
+  const gateTaskIds = new Set<PilotTask["id"]>([
+    "qa_modules",
+    "cooling",
+    "final_qa",
+  ]);
+
+  const gateTasks = state.tasks.filter((task) => gateTaskIds.has(task.id));
+
+  return (
+    <div className="mt-8 rounded-[1.8rem] border border-white/10 bg-white/[0.035] p-5">
+      <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-200">
+        QA Day / Today?s Gates
+      </p>
+
+      <h3 className="mt-3 text-2xl font-black text-white">
+        Protect release through QA, cooling, and final checks
+      </h3>
+
+      <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
+        QA sees only the protected gates that control whether QD-BC-100 can move
+        forward. Decisions here must protect taste, temperature, cooling,
+        appearance, label, and release.
+      </p>
+
+      <div className="mt-6 grid gap-4">
+        {gateTasks.map((task) => (
+          <TaskCard
+            key={task.id}
+            state={state}
+            task={task}
+            onChange={onChange}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProductionManagerDayBoard({
+  state,
+  onChange,
+}: {
+  state: PilotState;
+  onChange: (state: PilotState) => void;
+}) {
+  const liveTasks = state.tasks.filter((task) =>
+    ["READY", "IN_PROGRESS", "HOLD", "REWORK"].includes(task.status),
+  );
+
+  const timedTasks = state.tasks.filter((task) => task.timing);
+  const inProgress = state.tasks.filter(
+    (task) => task.status === "IN_PROGRESS",
+  ).length;
+  const held = state.tasks.filter((task) => task.status === "HOLD").length;
+  const ready = state.tasks.filter((task) => task.status === "READY").length;
+
+  return (
+    <div className="mt-8 rounded-[1.8rem] border border-white/10 bg-white/[0.035] p-5">
+      <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-200">
+        Production Manager Day / Today?s Kitchen Flow
+      </p>
+
+      <h3 className="mt-3 text-2xl font-black text-white">
+        Flow, pressure, checkpoints, and support movement
+      </h3>
+
+      <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Metric label="Ready tasks" value={String(ready)} />
+        <Metric label="In progress" value={String(inProgress)} />
+        <Metric label="Held / blocked" value={String(held)} />
+        <Metric label="Timed tasks" value={String(timedTasks.length)} />
+      </div>
+
+      <div className="mt-6 grid gap-4">
+        {liveTasks.length > 0 ? (
+          liveTasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              state={state}
+              task={task}
+              onChange={onChange}
+            />
+          ))
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+            <p className="text-sm font-bold text-slate-300">
+              No active pressure right now. QD-BC-100 is waiting for the next
+              unlocked gate or final release.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OwnerDayBoard({ state }: { state: PilotState }) {
+  const report = getPilotReport(state);
+
+  return (
+    <div className="mt-8 rounded-[1.8rem] border border-emerald-300/20 bg-emerald-300/10 p-5">
+      <p className="text-xs font-black uppercase tracking-[0.28em] text-emerald-100">
+        Owner Day / Pilot Intelligence Summary
+      </p>
+
+      <h3 className="mt-3 text-2xl font-black text-white">
+        Did the paid pilot prove control?
+      </h3>
+
+      <p className="mt-3 max-w-4xl text-sm leading-6 text-emerald-50">
+        Owner view does not need every worker button. It needs the result:
+        progress, yield variance, QA decision, packaging result, and rollout
+        readiness.
+      </p>
+
+      <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Metric label="Progress" value={String(report.progress) + "%"} />
+        <Metric label="Planned meals" value={String(report.plannedMeals)} />
+        <Metric
+          label="Packed meals"
+          value={formatValue(report.packedMeals, "meals")}
+        />
+        <Metric
+          label="Packaging variance"
+          value={formatValue(report.packagingVariance, "meals")}
+        />
+        <Metric
+          label="Chicken variance"
+          value={formatValue(report.chickenVarianceKg, "kg")}
+        />
+        <Metric
+          label="Sauce variance"
+          value={formatValue(report.sauceVarianceKg, "kg")}
+        />
+        <Metric
+          label="Rice variance"
+          value={formatValue(report.riceVarianceKg, "kg")}
+        />
+        <Metric
+          label="Fridge location"
+          value={report.fridgeLocation ?? "Pending"}
+        />
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <ActionCard
+          title="QA Result"
+          text={report.qaDecision ?? "Pending QA module decision"}
+          status={report.qaDecision ?? "Pending"}
+        />
+
+        <ActionCard
+          title="Final Release"
+          text={report.finalDecision ?? "Pending final QA release"}
+          status={report.finalDecision ?? "Pending"}
+        />
       </div>
     </div>
   );
